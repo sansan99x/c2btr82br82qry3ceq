@@ -15,19 +15,13 @@
   }
   .wrap { max-width: 900px; margin: 0 auto; }
 
-  h1 {
-    font-family: 'Fraunces', serif;
-    font-size: 24px;
-    color: #3f3f5c;
-    margin-bottom: 4px;
-  }
+  h1 { font-family: 'Fraunces', serif; font-size: 24px; color: #3f3f5c; margin-bottom: 4px; }
   .subtitle { font-size: 13px; color: #7a7a9a; margin-bottom: 20px; }
 
   .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
   .tab-btn {
     font-family: 'Quicksand', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 13px; font-weight: 700;
     padding: 9px 20px;
     border-radius: 999px;
     border: 1px solid rgba(150,140,180,0.3);
@@ -58,15 +52,10 @@
 
   button.primary {
     font-family: 'Quicksand', sans-serif;
-    font-weight: 700;
-    font-size: 13px;
-    color: #fff;
+    font-weight: 700; font-size: 13px; color: #fff;
     background: #b98ac2;
-    border: none;
-    padding: 11px 24px;
-    border-radius: 999px;
-    cursor: pointer;
-    margin-top: 16px;
+    border: none; padding: 11px 24px; border-radius: 999px;
+    cursor: pointer; margin-top: 16px;
   }
 
   .status { font-size: 13px; margin: 14px 0; padding: 10px 14px; border-radius: 10px; display: none; }
@@ -76,57 +65,37 @@
 
   .product-list { display: flex; flex-direction: column; gap: 14px; }
   .product-row {
-    display: flex;
-    gap: 14px;
-    align-items: center;
+    display: flex; gap: 14px; align-items: center;
     background: rgba(255,255,255,0.6);
-    border-radius: 16px;
-    padding: 12px;
+    border-radius: 16px; padding: 12px;
     transition: opacity 0.3s ease;
   }
   .product-row.is-hidden { opacity: 0.45; }
 
   .product-row img {
     width: 64px; height: 64px;
-    object-fit: cover;
-    border-radius: 10px;
+    object-fit: cover; border-radius: 10px;
     box-shadow: 0 6px 14px rgba(120,110,160,0.2);
     flex-shrink: 0;
   }
   .product-info { flex: 1; min-width: 0; }
   .product-title { font-size: 14px; font-weight: 700; color: #3f3f5c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .product-cat {
+  .pill {
     display: inline-block;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: #a85c5c;
-    background: rgba(253,226,228,0.7);
-    padding: 3px 10px;
-    border-radius: 999px;
-    margin-top: 4px;
+    font-size: 10px; font-weight: 700;
+    padding: 3px 10px; border-radius: 999px;
+    margin-top: 4px; margin-right: 6px;
   }
-  .product-badge-hidden {
-    display: inline-block;
-    font-size: 10px;
-    font-weight: 700;
-    color: #6b6b8a;
-    background: rgba(200,200,220,0.5);
-    padding: 3px 10px;
-    border-radius: 999px;
-    margin-top: 4px;
-    margin-left: 6px;
-  }
+  .pill.cat { text-transform: uppercase; color: #a85c5c; background: rgba(253,226,228,0.7); }
+  .pill.photos { color: #3f8f68; background: rgba(208,244,222,0.6); }
+  .pill.hidden { color: #6b6b8a; background: rgba(200,200,220,0.5); }
 
   .product-actions { display: flex; gap: 8px; flex-shrink: 0; }
   .icon-btn {
     font-family: 'Quicksand', sans-serif;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 8px 14px;
-    border-radius: 999px;
-    border: none;
-    cursor: pointer;
+    font-size: 12px; font-weight: 700;
+    padding: 8px 14px; border-radius: 999px;
+    border: none; cursor: pointer;
   }
   .icon-btn.toggle { background: rgba(200,200,255,0.5); color: #5c5c7a; }
   .icon-btn.delete { background: rgba(253,200,200,0.6); color: #a85c5c; }
@@ -137,14 +106,17 @@
   .refresh-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
   .refresh-btn {
     font-family: 'Quicksand', sans-serif;
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 12px; font-weight: 700;
     color: #6b6b8a;
     background: rgba(255,255,255,0.7);
     border: 1px solid rgba(150,140,180,0.3);
-    padding: 8px 16px;
-    border-radius: 999px;
+    padding: 8px 16px; border-radius: 999px;
     cursor: pointer;
+  }
+
+  @media (max-width: 600px) {
+    .product-row { flex-wrap: wrap; }
+    .product-actions { width: 100%; justify-content: flex-end; }
   }
 </style>
 </head>
@@ -173,7 +145,7 @@
     <input type="text" id="ghOwner" placeholder="sansan99x">
 
     <label for="ghRepo">Nama repository</label>
-    <input type="text" id="ghRepo" placeholder="sandesain">
+    <input type="text" id="ghRepo" placeholder="nama-repo-kamu">
 
     <label for="ghPath">Nama file katalog</label>
     <input type="text" id="ghPath" placeholder="katalog.json" value="katalog.json">
@@ -209,7 +181,7 @@
   });
 
   // ============================================================
-  // SETELAN - simpan di localStorage (browser ini saja)
+  // SETELAN - tersimpan di localStorage browser ini saja
   // ============================================================
   function loadSettingsForm() {
     var s = JSON.parse(localStorage.getItem('sdGithubSettings') || '{}');
@@ -246,9 +218,6 @@
     return s;
   }
 
-  // ============================================================
-  // HELPER base64 unicode-safe
-  // ============================================================
   function b64EncodeUnicode(str) {
     var bytes = new TextEncoder().encode(str);
     var binary = '';
@@ -266,10 +235,9 @@
     return 'https://api.github.com/repos/' + settings.ghOwner + '/' + settings.ghRepo + '/contents/' + settings.ghPath;
   }
 
-  // Ambil isi katalog.json + sha (nomor versi file) dari GitHub
   async function fetchCatalog() {
     var settings = getSettings();
-    var res = await fetch(contentsUrl(settings) + '?ref=' + settings.ghBranch, {
+    var res = await fetch(contentsUrl(settings) + '?ref=' + settings.ghBranch + '&t=' + Date.now(), {
       headers: {
         'Authorization': 'Bearer ' + settings.ghToken,
         'Accept': 'application/vnd.github+json'
@@ -277,37 +245,47 @@
     });
     if (!res.ok) throw new Error('Gagal membaca katalog.json (status ' + res.status + ')');
     var fileData = await res.json();
-    var items = JSON.parse(b64DecodeUnicode(fileData.content));
-    return { items: items, sha: fileData.sha };
+    return { items: JSON.parse(b64DecodeUnicode(fileData.content)), sha: fileData.sha };
   }
 
-  // Simpan ulang seluruh array katalog ke GitHub (dipakai untuk hide/unhide & hapus)
-  async function saveCatalog(items, sha, commitMessage) {
+  // Simpan dengan retry anti-konflik: kalau sha basi (409), ambil ulang & terapkan ulang perubahan
+  async function saveCatalogWithRetry(mutateFn, commitMessage) {
     var settings = getSettings();
-    var res = await fetch(contentsUrl(settings), {
-      method: 'PUT',
-      headers: {
-        'Authorization': 'Bearer ' + settings.ghToken,
-        'Accept': 'application/vnd.github+json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: commitMessage,
-        content: b64EncodeUnicode(JSON.stringify(items, null, 2)),
-        sha: sha,
-        branch: settings.ghBranch
-      })
-    });
-    if (!res.ok) {
+    for (var attempt = 1; attempt <= 3; attempt++) {
+      var current = await fetchCatalog();
+      var newItems = mutateFn(current.items.slice());
+      if (newItems === null) return null; // dibatalkan
+
+      var res = await fetch(contentsUrl(settings), {
+        method: 'PUT',
+        headers: {
+          'Authorization': 'Bearer ' + settings.ghToken,
+          'Accept': 'application/vnd.github+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: commitMessage,
+          content: b64EncodeUnicode(JSON.stringify(newItems, null, 2)),
+          sha: current.sha,
+          branch: settings.ghBranch
+        })
+      });
+
+      if (res.ok) return true;
+      if (res.status === 409 && attempt < 3) {
+        await new Promise(function (r) { setTimeout(r, 700); });
+        continue;
+      }
       var errBody = await res.json().catch(function () { return {}; });
-      throw new Error('Gagal menyimpan ke GitHub (status ' + res.status + '): ' + (errBody.message || ''));
+      throw new Error('Gagal menyimpan (status ' + res.status + '): ' + (errBody.message || ''));
     }
+    throw new Error('Gagal menyimpan setelah 3 percobaan. Coba lagi.');
   }
 
   // ============================================================
   // RENDER daftar produk
   // ============================================================
-  var currentSha = null;
+  var catalogItems = [];
 
   function renderProductList(items) {
     var list = document.getElementById('productList');
@@ -319,18 +297,21 @@
       return;
     }
 
-    countLabel.textContent = items.length + ' produk';
+    var visible = items.filter(function (it) { return !it.hidden; }).length;
+    countLabel.textContent = items.length + ' produk (' + visible + ' tampil di web)';
 
     list.innerHTML = items.map(function (item, index) {
       var isHidden = !!item.hidden;
+      var nPhotos = (item.images && item.images.length) || 1;
       var safeTitle = (item.title || '(tanpa judul)').replace(/</g, '&lt;');
       return (
         '<div class="product-row' + (isHidden ? ' is-hidden' : '') + '">' +
           '<img src="' + item.image + '" alt="' + safeTitle + '">' +
           '<div class="product-info">' +
             '<div class="product-title">' + safeTitle + '</div>' +
-            '<span class="product-cat">' + (item.category || '-') + '</span>' +
-            (isHidden ? '<span class="product-badge-hidden">Disembunyikan</span>' : '') +
+            '<span class="pill cat">' + (item.category || '-') + '</span>' +
+            '<span class="pill photos">' + nPhotos + ' foto</span>' +
+            (isHidden ? '<span class="pill hidden">Disembunyikan</span>' : '') +
           '</div>' +
           '<div class="product-actions">' +
             '<button class="icon-btn toggle" data-action="toggle" data-index="' + index + '">' + (isHidden ? 'Tampilkan' : 'Sembunyikan') + '</button>' +
@@ -341,8 +322,6 @@
     }).join('');
   }
 
-  var catalogItems = [];
-
   async function loadCatalog() {
     var statusEl = document.getElementById('status');
     try {
@@ -350,10 +329,8 @@
       statusEl.textContent = 'Memuat katalog dari GitHub...';
       var result = await fetchCatalog();
       catalogItems = result.items;
-      currentSha = result.sha;
       renderProductList(catalogItems);
       statusEl.className = '';
-      statusEl.textContent = '';
       statusEl.style.display = 'none';
     } catch (err) {
       statusEl.className = 'status error';
@@ -364,7 +341,6 @@
 
   document.getElementById('refreshBtn').addEventListener('click', loadCatalog);
 
-  // Klik tombol Sembunyikan/Tampilkan atau Hapus
   document.getElementById('productList').addEventListener('click', async function (e) {
     var btn = e.target.closest('.icon-btn');
     if (!btn) return;
@@ -374,30 +350,37 @@
     var statusEl = document.getElementById('status');
     statusEl.style.display = 'block';
 
+    var targetTitle = (catalogItems[index] && catalogItems[index].title) || '';
+
+    if (action === 'delete') {
+      var ok = confirm('Yakin mau hapus produk "' + targetTitle + '"? Ini tidak bisa dibatalkan.');
+      if (!ok) return;
+    }
+
     var allBtns = document.querySelectorAll('.icon-btn');
     allBtns.forEach(function (b) { b.disabled = true; });
 
     try {
-      if (action === 'toggle') {
-        catalogItems[index].hidden = !catalogItems[index].hidden;
-        statusEl.className = 'status loading';
-        statusEl.textContent = 'Menyimpan perubahan...';
-        await saveCatalog(catalogItems, currentSha, (catalogItems[index].hidden ? 'Sembunyikan' : 'Tampilkan') + ' produk: ' + catalogItems[index].title);
-      } else if (action === 'delete') {
-        var confirmDelete = confirm('Yakin mau hapus produk "' + catalogItems[index].title + '"? Ini tidak bisa dibatalkan.');
-        if (!confirmDelete) {
-          allBtns.forEach(function (b) { b.disabled = false; });
-          return;
-        }
-        var removedTitle = catalogItems[index].title;
-        catalogItems.splice(index, 1);
-        statusEl.className = 'status loading';
-        statusEl.textContent = 'Menghapus produk...';
-        await saveCatalog(catalogItems, currentSha, 'Hapus produk: ' + removedTitle);
-      }
+      statusEl.className = 'status loading';
+      statusEl.textContent = 'Menyimpan perubahan...';
 
-      // Reload biar sha & data selalu sinkron dengan GitHub
+      await saveCatalogWithRetry(function (items) {
+        // Cari berdasarkan judul + etsy_url biar tetap akurat walau urutan berubah
+        var target = catalogItems[index];
+        var i = items.findIndex(function (it) {
+          return it.title === target.title && it.etsy_url === target.etsy_url;
+        });
+        if (i === -1) throw new Error('Produk tidak ditemukan di versi terbaru katalog. Klik "Muat Ulang" lalu coba lagi.');
+        if (action === 'toggle') {
+          items[i].hidden = !items[i].hidden;
+        } else if (action === 'delete') {
+          items.splice(i, 1);
+        }
+        return items;
+      }, (action === 'toggle' ? 'Ubah visibilitas' : 'Hapus') + ' produk: ' + targetTitle);
+
       await loadCatalog();
+      statusEl.style.display = 'block';
       statusEl.className = 'status success';
       statusEl.textContent = 'Berhasil disimpan!';
     } catch (err) {
@@ -412,9 +395,10 @@
     getSettings();
     loadCatalog();
   } catch (e) {
-    document.getElementById('status').className = 'status error';
-    document.getElementById('status').textContent = e.message;
-    document.getElementById('status').style.display = 'block';
+    var st = document.getElementById('status');
+    st.className = 'status error';
+    st.textContent = e.message;
+    st.style.display = 'block';
   }
 </script>
 

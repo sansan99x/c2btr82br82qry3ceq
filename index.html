@@ -522,6 +522,154 @@
       }
     }
 
+    /* Baris judul + ikon link pada kartu produk */
+    .sd-card-img-wrap { position: relative; }
+    .sd-image-container { cursor: pointer; position: relative; }
+    .sd-more-count {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 2;
+      font-size: 10px;
+      font-weight: 700;
+      color: #5c5c7a;
+      background: rgba(255,255,255,0.88);
+      padding: 3px 9px;
+      border-radius: 999px;
+      pointer-events: none;
+    }
+    .sd-card-row { display: flex; align-items: center; gap: 8px; }
+    .sd-card-row .sd-card-title {
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin: 0;
+    }
+    .sd-card-icons { display: flex; gap: 6px; flex-shrink: 0; }
+    .sd-icon-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255,255,255,0.7);
+      text-decoration: none;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .sd-icon-btn svg { width: 16px; height: 16px; fill: currentColor; }
+    .sd-icon-btn.etsy { background: rgba(253,226,228,0.85); color: #a85c5c; }
+    .sd-icon-btn.lynk { background: rgba(208,244,222,0.85); color: #3f8f68; }
+    .sd-icon-btn:hover { transform: translateY(-2px) scale(1.08); box-shadow: 0 8px 14px rgba(120,110,160,0.25); }
+
+    /* Lightbox: gambar fullscreen bisa digeser */
+    .sd-lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .sd-lightbox[hidden] { display: none; }
+    .sd-lb-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(63,63,92,0.6);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+    .sd-lightbox.open .sd-lb-backdrop { opacity: 1; }
+    .sd-lb-close {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      z-index: 3;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255,255,255,0.9);
+      color: #3f3f5c;
+      font-size: 22px;
+      cursor: pointer;
+    }
+    .sd-lb-stage {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      max-width: 100%;
+    }
+    .sd-lb-imgwrap {
+      transform: scale(0.85);
+      opacity: 0;
+      transition: transform 0.3s cubic-bezier(0.2,0.7,0.3,1), opacity 0.3s ease;
+      touch-action: pan-y;
+    }
+    .sd-lightbox.open .sd-lb-imgwrap { transform: scale(1); opacity: 1; }
+    .sd-lb-imgwrap img {
+      max-width: min(84vw, 640px);
+      max-height: 56vh;
+      border-radius: 18px;
+      box-shadow: 0 24px 60px rgba(30,30,60,0.45);
+      display: block;
+      object-fit: contain;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    .sd-lb-arrow {
+      z-index: 2;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255,255,255,0.85);
+      color: #5c5c7a;
+      font-size: 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: transform 0.2s ease;
+    }
+    .sd-lb-arrow:hover { transform: scale(1.1); }
+    .sd-lb-dots { z-index: 2; display: flex; gap: 7px; margin-top: 14px; flex-wrap: wrap; justify-content: center; }
+    .sd-lb-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.45);
+      cursor: pointer;
+      padding: 0;
+    }
+    .sd-lb-dot.active { background: #fff; }
+    .sd-lb-info { z-index: 2; margin-top: 16px; text-align: center; max-width: 640px; padding: 0 10px; }
+    .sd-lb-title {
+      font-family: 'Fraunces', serif;
+      font-size: 17px;
+      color: #fff;
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+    .sd-lb-desc {
+      font-size: 13px;
+      color: rgba(255,255,255,0.85);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+    .sd-lb-buttons { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .sd-lb-buttons .sd-btn-common { min-width: 130px; }
+    .sd-lb-buttons .sd-btn-common.etsy { background: rgba(253,226,228,0.92); color: #a85c5c; }
+    .sd-lb-buttons .sd-btn-common.lynk { background: rgba(208,244,222,0.92); color: #3f8f68; }
+
     /* Media Query: Smartphone (Solusi untuk Logo dan Menu yang tabrakan) */
     @media (max-width: 600px) {
       .sd-nav { 
@@ -542,13 +690,17 @@
       .sd-filters { gap: 8px; }
       .sd-filter-btn { font-size: 12px; padding: 8px 18px; }
       
-      .sd-grid { gap: 16px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+      .sd-grid { gap: 12px; grid-template-columns: repeat(2, 1fr); }
       
       .sd-card-img-wrap { padding: 12px 12px 4px; }
       .sd-card-cat { top: 20px; left: 20px; font-size: 9px; padding: 4px 8px; }
-      .sd-card-body { padding: 10px 14px 18px; }
-      .sd-card-title { font-size: 15px; }
-      .sd-card-desc { font-size: 12px; margin-bottom: 14px; }
+      .sd-card-body { padding: 10px 12px 14px; }
+      .sd-card-row .sd-card-title { font-size: 13px; }
+      .sd-icon-btn { width: 30px; height: 30px; }
+      .sd-icon-btn svg { width: 14px; height: 14px; }
+      .sd-carousel-card { width: 140px; }
+      .sd-lb-arrow { display: none; }
+      .sd-lb-imgwrap img { max-width: 90vw; max-height: 52vh; }
       
       .sd-card-buttons { flex-direction: column; gap: 8px; }
       .sd-card-buttons .sd-btn-common { font-size: 12px; padding: 10px; }
@@ -620,24 +772,33 @@
     planner: 'Planner'
   };
 
+  // Ikon SVG untuk tombol link kecil di kartu
+  var SD_ICON_BAG = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2a5 5 0 0 1 5 5v1h2.4a1 1 0 0 1 1 .92l.9 11A2 2 0 0 1 19.3 22H4.7a2 2 0 0 1-2-2.08l.9-11a1 1 0 0 1 1-.92H7V7a5 5 0 0 1 5-5zm3 6V7a3 3 0 1 0-6 0v1h6z"/></svg>';
+  var SD_ICON_LINK = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10.59 13.41a1 1 0 0 1 0-1.41l2.82-2.83a3 3 0 1 1 4.25 4.24l-1.42 1.42a1 1 0 1 1-1.41-1.42l1.41-1.41a1 1 0 1 0-1.41-1.42l-2.83 2.83a1 1 0 0 1-1.41 0zm2.82-2.82a1 1 0 0 1 0 1.41l-2.82 2.83a3 3 0 1 1-4.25-4.24l1.42-1.42a1 1 0 0 1 1.41 1.42L7.76 12a1 1 0 1 0 1.41 1.42l2.83-2.83a1 1 0 0 1 1.41 0z"/></svg>';
+
   // Bikin 1 kartu produk (HTML) dari 1 baris data katalog.json
-  function sdBuildCardHTML(item) {
+  // Grid hanya menampilkan gambar utama; galeri lengkap dibuka lewat lightbox saat gambar diklik
+  function sdBuildCardHTML(item, index) {
     var catLabel = sdCategoryLabels[item.category] || item.category;
     var safeTitle = (item.title || '').replace(/"/g, '&quot;');
+    var imgs = (item.images && item.images.length) ? item.images : [item.image];
+    var moreBadge = imgs.length > 1 ? '<span class="sd-more-count">+' + (imgs.length - 1) + ' foto</span>' : '';
     return (
-      '<div class="sd-card" data-cat="' + item.category + '">' +
+      '<div class="sd-card" data-cat="' + item.category + '" data-idx="' + index + '">' +
         '<div class="sd-card-img-wrap">' +
           '<span class="sd-card-cat">' + catLabel + '</span>' +
           '<div class="sd-image-container">' +
-            '<img loading="lazy" src="' + item.image + '" alt="' + safeTitle + '">' +
+            '<img loading="lazy" src="' + imgs[0] + '" alt="' + safeTitle + '">' +
+            moreBadge +
           '</div>' +
         '</div>' +
         '<div class="sd-card-body">' +
-          '<p class="sd-card-title">' + item.title + '</p>' +
-          '<p class="sd-card-desc">' + item.description + '</p>' +
-          '<div class="sd-card-buttons">' +
-            '<a class="sd-btn-common etsy" href="' + item.etsy_url + '" target="_blank" rel="noopener">Etsy</a>' +
-            '<a class="sd-btn-common lynk" href="' + item.lynk_url + '" target="_blank" rel="noopener">Lynk.id</a>' +
+          '<div class="sd-card-row">' +
+            '<p class="sd-card-title" title="' + safeTitle + '">' + item.title + '</p>' +
+            '<div class="sd-card-icons">' +
+              '<a class="sd-icon-btn etsy" href="' + item.etsy_url + '" target="_blank" rel="noopener" aria-label="Beli di Etsy" title="Beli di Etsy">' + SD_ICON_BAG + '</a>' +
+              '<a class="sd-icon-btn lynk" href="' + item.lynk_url + '" target="_blank" rel="noopener" aria-label="Beli di Lynk.id" title="Beli di Lynk.id">' + SD_ICON_LINK + '</a>' +
+            '</div>' +
           '</div>' +
         '</div>' +
       '</div>'
@@ -666,7 +827,8 @@
       })
       .then(function(items) {
         var visibleItems = items.filter(function(item) { return !item.hidden; });
-        grid.innerHTML = visibleItems.map(sdBuildCardHTML).join('');
+        window.sdVisibleItems = visibleItems;
+        grid.innerHTML = visibleItems.map(function(item, i) { return sdBuildCardHTML(item, i); }).join('');
         // Carousel digandakan 2x biar looping-nya mulus tanpa jeda
         var carouselHTML = visibleItems.map(sdBuildCarouselCardHTML).join('');
         track.innerHTML = carouselHTML + carouselHTML;
@@ -676,9 +838,149 @@
       });
   }
 
+  // ============================================================
+  // LIGHTBOX: klik gambar di katalog -> tampil fullscreen,
+  // geser ke samping untuk foto berikutnya, ketuk lagi untuk menutup
+  // ============================================================
+  var sdLbState = { imgs: [], imgIdx: 0, touchX: null, swiped: false };
+
+  function sdEnsureLightbox() {
+    if (document.getElementById('sdLightbox')) return;
+    var lb = document.createElement('div');
+    lb.id = 'sdLightbox';
+    lb.className = 'sd-lightbox';
+    lb.hidden = true;
+    lb.innerHTML =
+      '<div class="sd-lb-backdrop"></div>' +
+      '<button class="sd-lb-close" aria-label="Tutup">&times;</button>' +
+      '<div class="sd-lb-stage">' +
+        '<button class="sd-lb-arrow prev" aria-label="Foto sebelumnya">&#10094;</button>' +
+        '<div class="sd-lb-imgwrap"><img id="sdLbImg" src="" alt=""></div>' +
+        '<button class="sd-lb-arrow next" aria-label="Foto berikutnya">&#10095;</button>' +
+      '</div>' +
+      '<div class="sd-lb-dots" id="sdLbDots"></div>' +
+      '<div class="sd-lb-info">' +
+        '<p class="sd-lb-title" id="sdLbTitle"></p>' +
+        '<p class="sd-lb-desc" id="sdLbDesc"></p>' +
+        '<div class="sd-lb-buttons">' +
+          '<a class="sd-btn-common etsy" id="sdLbEtsy" target="_blank" rel="noopener">Beli di Etsy</a>' +
+          '<a class="sd-btn-common lynk" id="sdLbLynk" target="_blank" rel="noopener">Beli di Lynk.id</a>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(lb);
+
+    lb.querySelector('.sd-lb-close').addEventListener('click', sdCloseLightbox);
+    lb.querySelector('.sd-lb-backdrop').addEventListener('click', sdCloseLightbox);
+    lb.querySelector('.sd-lb-arrow.prev').addEventListener('click', function() { sdLbShow(sdLbState.imgIdx - 1); });
+    lb.querySelector('.sd-lb-arrow.next').addEventListener('click', function() { sdLbShow(sdLbState.imgIdx + 1); });
+
+    document.getElementById('sdLbDots').addEventListener('click', function(e) {
+      var dot = e.target.closest('.sd-lb-dot');
+      if (dot) sdLbShow(parseInt(dot.getAttribute('data-dot'), 10));
+    });
+
+    var imgEl = document.getElementById('sdLbImg');
+    // Sentuh: geser ganti foto, ketuk (tanpa geser) menutup
+    imgEl.addEventListener('touchstart', function(e) {
+      sdLbState.touchX = e.touches[0].clientX;
+      sdLbState.swiped = false;
+    }, { passive: true });
+    imgEl.addEventListener('touchend', function(e) {
+      if (sdLbState.touchX === null) return;
+      var dx = e.changedTouches[0].clientX - sdLbState.touchX;
+      sdLbState.touchX = null;
+      if (Math.abs(dx) > 40) {
+        sdLbState.swiped = true;
+        sdLbShow(sdLbState.imgIdx + (dx < 0 ? 1 : -1));
+      }
+    }, { passive: true });
+    // Klik/ketuk gambar (bukan geser) -> tutup, kembali mengecil
+    imgEl.addEventListener('click', function() {
+      if (!sdLbState.swiped) sdCloseLightbox();
+      sdLbState.swiped = false;
+    });
+
+    document.addEventListener('keydown', function(e) {
+      var lbEl = document.getElementById('sdLightbox');
+      if (lbEl.hidden) return;
+      if (e.key === 'Escape') sdCloseLightbox();
+      if (e.key === 'ArrowLeft') sdLbShow(sdLbState.imgIdx - 1);
+      if (e.key === 'ArrowRight') sdLbShow(sdLbState.imgIdx + 1);
+    });
+  }
+
+  function sdLbShow(newIndex) {
+    var total = sdLbState.imgs.length;
+    if (!total) return;
+    var idx = ((newIndex % total) + total) % total;
+    sdLbState.imgIdx = idx;
+    document.getElementById('sdLbImg').src = sdLbState.imgs[idx];
+    var dots = document.querySelectorAll('.sd-lb-dot');
+    dots.forEach(function(dt, di) {
+      if (di === idx) { dt.classList.add('active'); } else { dt.classList.remove('active'); }
+    });
+  }
+
+  function sdOpenLightbox(index) {
+    var item = window.sdVisibleItems[index];
+    if (!item) return;
+    sdEnsureLightbox();
+    sdLbState.imgs = (item.images && item.images.length) ? item.images : [item.image];
+    sdLbState.imgIdx = 0;
+
+    document.getElementById('sdLbTitle').textContent = item.title || '';
+    document.getElementById('sdLbDesc').textContent = item.description || '';
+    document.getElementById('sdLbEtsy').href = item.etsy_url || '#';
+    document.getElementById('sdLbLynk').href = item.lynk_url || '#';
+
+    var dotsWrap = document.getElementById('sdLbDots');
+    if (sdLbState.imgs.length > 1) {
+      var dotsHTML = '';
+      for (var d = 0; d < sdLbState.imgs.length; d++) {
+        dotsHTML += '<button class="sd-lb-dot' + (d === 0 ? ' active' : '') + '" data-dot="' + d + '" aria-label="Foto ' + (d + 1) + '"></button>';
+      }
+      dotsWrap.innerHTML = dotsHTML;
+    } else {
+      dotsWrap.innerHTML = '';
+    }
+
+    document.getElementById('sdLbImg').src = sdLbState.imgs[0];
+
+    var lb = document.getElementById('sdLightbox');
+    lb.hidden = false;
+    requestAnimationFrame(function() { lb.classList.add('open'); });
+    document.body.style.overflow = 'hidden';
+  }
+
+  function sdCloseLightbox() {
+    var lb = document.getElementById('sdLightbox');
+    if (!lb) return;
+    lb.classList.remove('open');
+    setTimeout(function() {
+      lb.hidden = true;
+      document.body.style.overflow = '';
+    }, 260);
+  }
+
+  // Klik gambar di grid -> buka lightbox (ikon link tetap jalan normal)
+  function sdInitGallery() {
+    var grid = document.getElementById('sdGrid');
+    grid.addEventListener('click', function(e) {
+      if (e.target.closest('.sd-icon-btn')) return;
+      var imgArea = e.target.closest('.sd-image-container');
+      if (!imgArea) return;
+      var card = e.target.closest('.sd-card');
+      if (!card) return;
+      sdOpenLightbox(parseInt(card.getAttribute('data-idx'), 10));
+    });
+  }
+
   // Menggunakan DOMContentLoaded standar web untuk GitHub Pages
   document.addEventListener("DOMContentLoaded", function() {
-    sdLoadCatalog().then(sdInitSite);
+    sdLoadCatalog().then(function() {
+      sdInitSite();
+      sdInitGallery();
+    });
   });
 
   // Semua logika filter, animasi, dan carousel dijalankan lewat fungsi ini,

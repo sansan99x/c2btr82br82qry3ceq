@@ -614,36 +614,25 @@
       transition: transform 0.3s cubic-bezier(0.2,0.7,0.3,1), opacity 0.3s ease;
     }
     .sd-lightbox.open .sd-lb-imgwrap { transform: scale(1); opacity: 1; }
-    .sd-lb-viewport {
-      width: min(84vw, 640px);
-      overflow: hidden;
+    .sd-lb-imgwrap img {
+      max-width: min(84vw, 640px);
+      max-height: 56vh;
       border-radius: 18px;
       box-shadow: 0 24px 60px rgba(30,30,60,0.45);
-      touch-action: pan-y;
-      background: rgba(255,255,255,0.05);
-    }
-    .sd-lb-track {
-      display: flex;
-      align-items: center;
-      transition: transform 0.38s cubic-bezier(0.22, 0.8, 0.3, 1);
-      will-change: transform;
-    }
-    .sd-lb-track.dragging { transition: none; }
-    .sd-lb-slide {
-      flex: 0 0 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .sd-lb-slide img {
-      width: 100%;
-      max-height: 56vh;
-      object-fit: contain;
       display: block;
+      object-fit: contain;
       cursor: pointer;
       user-select: none;
       -webkit-user-drag: none;
+      touch-action: pan-y;
+      transition: transform 0.26s cubic-bezier(0.22, 0.8, 0.3, 1), opacity 0.26s ease, filter 0.26s ease;
+      will-change: transform, opacity, filter;
     }
+    /* Animasi pindah foto: meluncur + mengecil + blur + rotasi tipis */
+    #sdLbImg.sd-anim-out-next { transform: translateX(-52px) scale(0.94) rotate(-1.4deg); opacity: 0; filter: blur(10px); }
+    #sdLbImg.sd-anim-out-prev { transform: translateX(52px) scale(0.94) rotate(1.4deg); opacity: 0; filter: blur(10px); }
+    #sdLbImg.sd-anim-in-next  { transition: none; transform: translateX(52px) scale(0.94) rotate(1.4deg); opacity: 0; filter: blur(10px); }
+    #sdLbImg.sd-anim-in-prev  { transition: none; transform: translateX(-52px) scale(0.94) rotate(-1.4deg); opacity: 0; filter: blur(10px); }
     .sd-lb-arrow {
       z-index: 2;
       width: 42px;
@@ -718,8 +707,7 @@
       .sd-icon-btn svg { width: 14px; height: 14px; }
       .sd-carousel-card { width: 140px; }
       .sd-lb-arrow { display: none; }
-      .sd-lb-viewport { width: 90vw; }
-      .sd-lb-slide img { max-height: 52vh; }
+      .sd-lb-imgwrap img { max-width: 90vw; max-height: 52vh; }
       
       .sd-card-buttons { flex-direction: column; gap: 8px; }
       .sd-card-buttons .sd-btn-common { font-size: 12px; padding: 10px; }
@@ -922,22 +910,64 @@
   // LIGHTBOX: klik gambar di katalog -> tampil fullscreen,
   // geser ke samping untuk foto berikutnya, ketuk lagi untuk menutup
   // ============================================================
-  var sdLbState = { imgs: [], imgIdx: 0, touchX: null, dragging: false, swiped: false };
+  var sdLbState = { imgs: [], imgIdx: 0, touchX: null, swiped: false, animating: false };
 
-  function sdLbViewport() { return document.getElementById('sdLbViewport'); }
-  function sdLbTrack() { return document.getElementById('sdLbTrack'); }
+  // Sinkronkan dots & panah dengan foto aktif
+  function sdLbSyncUI() {
+    var idx = sdLbState.imgIdx, total = sdLbState.imgs.length;
+    var dots = document.querySelectorAll('.sd-lb-dot');
+    dots.forEach(function(dt, di) {
+      if (di === idx) { dt.classList.add('active'); } else { dt.classList.remove('active'); }
+    });
+    var lb = document.getElementById('sdLightbox');
+    if (!lb) return;
+    var prevBtn = lb.querySelector('.sd-lb-arrow.prev');
+    var nextBtn = lb.querySelector('.sd-lb-arrow.next');
+    if (prevBtn) prevBtn.style.opacity = idx === 0 ? '0.35' : '1';
+    if (nextBtn) nextBtn.style.opacity = idx === total - 1 ? '0.35' : '1';
+  }
 
-  // Posisikan track ke foto aktif. animated=false -> lompat tanpa transisi
-  function sdLbApply(animated) {
-    var vp = sdLbViewport();
-    var track = sdLbTrack();
-    if (!vp || !track) return;
-    if (animated === false) track.classList.add('dragging');
-    track.style.transform = 'translateX(' + (-sdLbState.imgIdx * vp.clientWidth) + 'px)';
-    if (animated === false) {
-      void track.offsetWidth; // paksa posisi diterapkan dulu sebelum transisi aktif lagi
-      track.classList.remove('dragging');
-    }
+  // Pindah relatif (1 = berikutnya, -1 = sebelumnya)
+  function sdLbGo(delta) { sdLbGoTo(sdLbState.imgIdx + delta); }
+
+  // Pindah ke foto tertentu DENGAN animasi keluar-masuk yang halus
+  function sdLbGoTo(target) {
+    var total = sdLbState.imgs.length;
+    if (!total || sdLbState.animating) return;
+    var idx = Math.max(0, Math.min(total - 1, target)); // berhenti di ujung
+    if (idx === sdLbState.imgIdx) return;
+    var dir = idx > sdLbState.imgIdx ? 1 : -1;
+    sdLbState.animating = true;
+    sdLbState.imgIdx = idx;
+
+    var img = document.getElementById('sdLbImg');
+    var targetSrc = sdLbState.imgs[idx];
+
+    // Preload foto tujuan supaya transisi tidak menampilkan gambar kosong
+    var loaded = false;
+    var pre = new Image();
+    pre.onload = function() { loaded = true; };
+    pre.onerror = function() { loaded = true; };
+    pre.src = targetSrc;
+    if (pre.complete) loaded = true;
+
+    // Fase 1: foto lama meluncur keluar (mengecil + blur + rotasi tipis)
+    img.classList.add(dir === 1 ? 'sd-anim-out-next' : 'sd-anim-out-prev');
+    sdLbSyncUI();
+
+    var started = Date.now();
+    var trySwap = function() {
+      // Tunggu preload selesai (maksimal 700ms) supaya tidak flash kosong
+      if (!loaded && Date.now() - started < 700) { setTimeout(trySwap, 40); return; }
+      // Fase 2: ganti foto, posisikan di sisi berlawanan, lalu meluncur masuk
+      img.src = targetSrc;
+      img.classList.remove('sd-anim-out-next', 'sd-anim-out-prev');
+      img.classList.add(dir === 1 ? 'sd-anim-in-next' : 'sd-anim-in-prev');
+      void img.offsetWidth; // terapkan posisi awal dulu sebelum transisi jalan
+      img.classList.remove('sd-anim-in-next', 'sd-anim-in-prev');
+      setTimeout(function() { sdLbState.animating = false; }, 300);
+    };
+    setTimeout(trySwap, 230); // beri waktu animasi keluar selesai dulu
   }
 
   function sdEnsureLightbox() {
@@ -951,7 +981,7 @@
       '<button class="sd-lb-close" aria-label="Tutup">&times;</button>' +
       '<div class="sd-lb-stage">' +
         '<button class="sd-lb-arrow prev" aria-label="&#10094;">&#10094;</button>' +
-        '<div class="sd-lb-imgwrap"><div class="sd-lb-viewport" id="sdLbViewport"><div class="sd-lb-track" id="sdLbTrack"></div></div></div>' +
+        '<div class="sd-lb-imgwrap"><img id="sdLbImg" src="" alt=""></div>' +
         '<button class="sd-lb-arrow next" aria-label="&#10095;">&#10095;</button>' +
       '</div>' +
       '<div class="sd-lb-dots" id="sdLbDots"></div>' +
@@ -967,87 +997,42 @@
 
     lb.querySelector('.sd-lb-close').addEventListener('click', sdCloseLightbox);
     lb.querySelector('.sd-lb-backdrop').addEventListener('click', sdCloseLightbox);
-    lb.querySelector('.sd-lb-arrow.prev').addEventListener('click', function() { sdLbShow(sdLbState.imgIdx - 1); });
-    lb.querySelector('.sd-lb-arrow.next').addEventListener('click', function() { sdLbShow(sdLbState.imgIdx + 1); });
+    lb.querySelector('.sd-lb-arrow.prev').addEventListener('click', function() { sdLbGo(-1); });
+    lb.querySelector('.sd-lb-arrow.next').addEventListener('click', function() { sdLbGo(1); });
 
     document.getElementById('sdLbDots').addEventListener('click', function(e) {
       var dot = e.target.closest('.sd-lb-dot');
-      if (dot) sdLbShow(parseInt(dot.getAttribute('data-dot'), 10));
+      if (dot) sdLbGoTo(parseInt(dot.getAttribute('data-dot'), 10));
     });
 
-    var vp = sdLbViewport();
-
-    // Sentuh: track MENGIKUTI JARI seperti galeri HP, dilepas -> meluncur halus
-    vp.addEventListener('touchstart', function(e) {
+    var imgEl = document.getElementById('sdLbImg');
+    // Sentuh: geser ganti foto (dengan animasi), ketuk (tanpa geser) menutup
+    imgEl.addEventListener('touchstart', function(e) {
       sdLbState.touchX = e.touches[0].clientX;
-      sdLbState.dragging = true;
       sdLbState.swiped = false;
-      sdLbTrack().classList.add('dragging');
     }, { passive: true });
-
-    vp.addEventListener('touchmove', function(e) {
-      if (!sdLbState.dragging || sdLbState.touchX === null) return;
-      var dx = e.touches[0].clientX - sdLbState.touchX;
-      var atStart = sdLbState.imgIdx === 0 && dx > 0;
-      var atEnd = sdLbState.imgIdx === sdLbState.imgs.length - 1 && dx < 0;
-      if (atStart || atEnd) dx = dx * 0.35; // efek karet di foto pertama/terakhir
-      sdLbTrack().style.transform = 'translateX(' + (-sdLbState.imgIdx * vp.clientWidth + dx) + 'px)';
-    }, { passive: true });
-
-    vp.addEventListener('touchend', function(e) {
-      if (!sdLbState.dragging || sdLbState.touchX === null) return;
+    imgEl.addEventListener('touchend', function(e) {
+      if (sdLbState.touchX === null) return;
       var dx = e.changedTouches[0].clientX - sdLbState.touchX;
-      sdLbState.dragging = false;
       sdLbState.touchX = null;
-      sdLbTrack().classList.remove('dragging');
-      var threshold = Math.min(80, vp.clientWidth * 0.2);
-      if (Math.abs(dx) > threshold) {
+      if (Math.abs(dx) > 40) {
         sdLbState.swiped = true;
-        sdLbShow(sdLbState.imgIdx + (dx < 0 ? 1 : -1)); // meluncur ke foto berikut/sebelumnya
-      } else {
-        if (Math.abs(dx) >= 8) sdLbState.swiped = true;
-        sdLbApply(true); // meluncur balik ke posisi semula
+        sdLbGo(dx < 0 ? 1 : -1);
       }
     }, { passive: true });
-
-    // Klik/ketuk gambar (bukan geser) -> tutup, kembali mengecil
-    vp.addEventListener('click', function(e) {
-      if (!e.target.closest('.sd-lb-slide')) return;
+    imgEl.addEventListener('click', function() {
       if (!sdLbState.swiped) sdCloseLightbox();
       sdLbState.swiped = false;
     });
-    vp.addEventListener('dragstart', function(e) { e.preventDefault(); });
-
-    // Jaga posisi tetap pas kalau ukuran layar berubah (mis. rotasi HP)
-    window.addEventListener('resize', function() {
-      var lbEl = document.getElementById('sdLightbox');
-      if (lbEl && !lbEl.hidden) sdLbApply(false);
-    });
+    imgEl.addEventListener('dragstart', function(e) { e.preventDefault(); });
 
     document.addEventListener('keydown', function(e) {
       var lbEl = document.getElementById('sdLightbox');
       if (lbEl.hidden) return;
       if (e.key === 'Escape') sdCloseLightbox();
-      if (e.key === 'ArrowLeft') sdLbShow(sdLbState.imgIdx - 1);
-      if (e.key === 'ArrowRight') sdLbShow(sdLbState.imgIdx + 1);
+      if (e.key === 'ArrowLeft') sdLbGo(-1);
+      if (e.key === 'ArrowRight') sdLbGo(1);
     });
-  }
-
-  function sdLbShow(newIndex) {
-    var total = sdLbState.imgs.length;
-    if (!total) return;
-    var idx = Math.max(0, Math.min(total - 1, newIndex)); // berhenti di ujung (tidak memutar)
-    sdLbState.imgIdx = idx;
-    sdLbApply(true);
-    var dots = document.querySelectorAll('.sd-lb-dot');
-    dots.forEach(function(dt, di) {
-      if (di === idx) { dt.classList.add('active'); } else { dt.classList.remove('active'); }
-    });
-    var lb = document.getElementById('sdLightbox');
-    var prevBtn = lb.querySelector('.sd-lb-arrow.prev');
-    var nextBtn = lb.querySelector('.sd-lb-arrow.next');
-    if (prevBtn) prevBtn.style.opacity = idx === 0 ? '0.35' : '1';
-    if (nextBtn) nextBtn.style.opacity = idx === total - 1 ? '0.35' : '1';
   }
 
   function sdOpenLightbox(index) {
@@ -1073,14 +1058,11 @@
       dotsWrap.innerHTML = '';
     }
 
-    // Susun semua foto berjajar di dalam track (bahan animasi geser halus)
-    var trackHTML = '';
-    for (var s = 0; s < sdLbState.imgs.length; s++) {
-      trackHTML += '<div class="sd-lb-slide"><img src="' + sdLbState.imgs[s] + '" alt=""></div>';
-    }
-    sdLbTrack().innerHTML = trackHTML;
-    sdLbShow(0);
-    sdLbApply(false);
+    var imgEl = document.getElementById('sdLbImg');
+    imgEl.classList.remove('sd-anim-out-next', 'sd-anim-out-prev', 'sd-anim-in-next', 'sd-anim-in-prev');
+    imgEl.src = sdLbState.imgs[0];
+    sdLbState.animating = false;
+    sdLbSyncUI();
 
     var lb = document.getElementById('sdLightbox');
     lb.hidden = false;

@@ -872,6 +872,7 @@ input[type=text], input[type=number], select, textarea{
             <button type="button" data-mirror-axis="off">Off</button>
             <button type="button" data-mirror-axis="lr">Left ↔ Right</button>
             <button type="button" data-mirror-axis="tb">Top ↔ Bottom</button>
+            <button type="button" data-mirror-axis="quad">All four corners</button>
             <div class="sep"></div>
             <div class="mirror-label" id="mirrorSyncLabel">Copy one side onto the other now</div>
             <div style="display:flex; gap:6px; padding:2px 8px 6px;">
@@ -1424,7 +1425,7 @@ const state = {
   activeColorId: null,
   technique: "graphgan",
   showGrid: true, showNumbers: true, showSymbols: false,
-  mirrorAxis: "off", // "off" | "lr" (left<->right) | "tb" (top<->bottom)
+  mirrorAxis: "off", // "off" | "lr" | "tb" | "quad" (keempat sudut sekaligus)
   gauge: { stPer10:16, rowPer10:18, unit:"cm" },
   hook: "5.0 mm / H-8",
   yarnWeightId: "worsted",
@@ -1645,11 +1646,12 @@ function render(){
     ctx.setLineDash([6,5]);
     ctx.strokeStyle='#C0392B'; ctx.lineWidth=2;
     ctx.beginPath();
-    if(state.mirrorAxis==='lr'){
-      const mxPx = viewX + (state.width/2)*cellPx;
+    const mxPx = viewX + (state.width/2)*cellPx;
+    const myPx = viewY + (state.height/2)*cellPx;
+    if(state.mirrorAxis==='lr' || state.mirrorAxis==='quad'){
       ctx.moveTo(mxPx, viewY); ctx.lineTo(mxPx, viewY+state.height*cellPx);
-    } else {
-      const myPx = viewY + (state.height/2)*cellPx;
+    }
+    if(state.mirrorAxis==='tb' || state.mirrorAxis==='quad'){
       ctx.moveTo(viewX, myPx); ctx.lineTo(viewX+state.width*cellPx, myPx);
     }
     ctx.stroke();
@@ -1737,8 +1739,9 @@ function render(){
       ctx.fillStyle = currentColorHex();
       ctx.fillRect(viewX+x*cellPx, viewY+y*cellPx, cellPx, cellPx);
       if(state.mirrorAxis!=='off'){
-        const [mx,my] = mirrorCoord(x,y);
-        ctx.fillRect(viewX+mx*cellPx, viewY+my*cellPx, cellPx, cellPx);
+        const tw=mirrorTwins(x,y);
+        for(let i=1;i<tw.length;i++)
+          ctx.fillRect(viewX+tw[i][0]*cellPx, viewY+tw[i][1]*cellPx, cellPx, cellPx);
       }
     });
     ctx.globalAlpha=1;
@@ -1855,6 +1858,24 @@ function mirrorCoord(x,y){
   if(state.mirrorAxis==='tb') return [x, state.height-1-y];
   return [x,y];
 }
+/* Titik kembar dari satu kotak. Mode 'quad' mencerminkan ke dua sumbu
+   sekaligus, jadi menggambar di satu sudut mengisi keempat sudut.
+   Hasilnya disaring supaya kotak yang sama tidak dilukis dua kali - itu
+   penting untuk kuas besar, kalau tidak tepinya tertimpa berulang. */
+function mirrorTwins(x,y){
+  const out=[[x,y]];
+  const m=state.mirrorAxis;
+  if(m==='lr') out.push([state.width-1-x, y]);
+  else if(m==='tb') out.push([x, state.height-1-y]);
+  else if(m==='quad'){
+    out.push([state.width-1-x, y]);
+    out.push([x, state.height-1-y]);
+    out.push([state.width-1-x, state.height-1-y]);
+  }
+  const seen=new Set(), uniq=[];
+  for(const [a,b] of out){ const k=a+','+b; if(!seen.has(k)){ seen.add(k); uniq.push([a,b]); } }
+  return uniq;
+}
 function paintAt(x,y, colorIdx){
   const b=state.brush;
   const half=Math.floor(b/2);
@@ -1862,9 +1883,12 @@ function paintAt(x,y, colorIdx){
     setCellRaw(x-half+dx, y-half+dy, colorIdx);
   }
   if(state.mirrorAxis!=='off'){
-    const [mx,my] = mirrorCoord(x,y);
-    for(let dy=0;dy<b;dy++) for(let dx=0;dx<b;dx++){
-      setCellRaw(mx-half+dx, my-half+dy, colorIdx);
+    const tw=mirrorTwins(x,y);
+    for(let i=1;i<tw.length;i++){
+      const [mx,my]=tw[i];
+      for(let dy=0;dy<b;dy++) for(let dx=0;dx<b;dx++){
+        setCellRaw(mx-half+dx, my-half+dy, colorIdx);
+      }
     }
   }
 }
@@ -1945,8 +1969,8 @@ wrap.addEventListener('pointerdown', e=>{
     pushHistory();
     floodFill(cell.x,cell.y, currentColorIndex());
     if(state.mirrorAxis!=='off'){
-      const [mx,my] = mirrorCoord(cell.x,cell.y);
-      floodFill(mx,my, currentColorIndex());
+      const tw=mirrorTwins(cell.x,cell.y);
+      for(let i=1;i<tw.length;i++) floodFill(tw[i][0],tw[i][1], currentColorIndex());
     }
     render(); refreshStatsAllTabs();
   } else if(state.tool==='eyedropper'){
@@ -2830,6 +2854,10 @@ function renderMirrorMenu(){
     label.textContent='Copy one side onto the other now';
     syncA.textContent='Top → Bottom'; syncA.disabled=false;
     syncB.textContent='Bottom → Top'; syncB.disabled=false;
+  } else if(state.mirrorAxis==='quad'){
+    label.textContent='Copy one quarter onto the other three';
+    syncA.textContent='Top-left → all'; syncA.disabled=false;
+    syncB.textContent='Bottom-right → all'; syncB.disabled=false;
   } else {
     label.textContent='Turn on mirror to copy a side';
     syncA.textContent='—'; syncA.disabled=true;
@@ -2858,6 +2886,19 @@ function syncMirrorHalf(direction){
       const srcY = direction==='a' ? y : state.height-1-y;
       const dstY = direction==='a' ? state.height-1-y : y;
       setCellRaw(x,dstY, getCellRaw(x,srcY));
+    }
+  } else if(state.mirrorAxis==='quad'){
+    // Satu perempat disalin ke tiga sisanya. Sumbernya kuadran kiri-atas
+    // atau kanan-bawah, sesuai tombol yang ditekan.
+    const hw=Math.ceil(state.width/2), hh=Math.ceil(state.height/2);
+    for(let y=0;y<hh;y++) for(let x=0;x<hw;x++){
+      const sx = direction==='a' ? x : state.width-1-x;
+      const sy = direction==='a' ? y : state.height-1-y;
+      const v = getCellRaw(sx,sy);
+      setCellRaw(x, y, v);
+      setCellRaw(state.width-1-x, y, v);
+      setCellRaw(x, state.height-1-y, v);
+      setCellRaw(state.width-1-x, state.height-1-y, v);
     }
   }
   render(); refreshStatsAllTabs();

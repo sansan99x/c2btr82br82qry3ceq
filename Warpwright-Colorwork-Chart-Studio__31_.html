@@ -713,6 +713,17 @@ input[type=text], input[type=number], select, textarea{
 .swatch-row.drag-src{ opacity:.45; }
 .swatch-row.drag-over{ box-shadow: inset 0 2px 0 var(--gold, #C8A15A); }
 .swatch-row.is-bg{ border-left:3px solid var(--gold, #C8A15A); }
+
+/* Toolbar kecil yang muncul di dekat seleksi. */
+#selBar{ position:absolute; display:none; gap:4px; z-index:40;
+  background:var(--panel); border:1px solid var(--panel-edge); border-radius:8px;
+  padding:4px; box-shadow:var(--shadow); }
+#selBar.open{ display:flex; }
+#selBar button{ font:600 11px/1 inherit; padding:5px 9px; border-radius:6px; cursor:pointer;
+  border:1px solid var(--panel-edge); background:var(--panel); color:var(--ink); }
+#selBar button:hover{ background:var(--panel-alt, #f3efe8); }
+#selBar button.on{ background:var(--indigo); border-color:var(--indigo); color:#fff; }
+#selBar button:disabled{ opacity:.4; cursor:not-allowed; }
 </style>
 </head>
 <body>
@@ -859,7 +870,7 @@ input[type=text], input[type=number], select, textarea{
         <button class="tool-btn" id="btnGridToggle" title="Toggle grid lines">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
         </button>
-        <button class="tool-btn" id="btnRefToggle" title="Show/hide reference photo" disabled>
+        <button class="tool-btn" id="btnRefToggle" title="Reference photo / trace">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="14" rx="1.5"/><circle cx="8.5" cy="9" r="1.5"/><path d="M3 15l5-4 4 3 3-2.5 6 5.5"/></svg>
         </button>
         <div class="tool-sep"></div>
@@ -893,6 +904,10 @@ input[type=text], input[type=number], select, textarea{
 
       <div id="canvasWrap">
         <canvas id="gridCanvas"></canvas>
+        <div id="selBar">
+          <button id="selCopy" title="Keep the original where it is and move a copy">Copy</button>
+          <button id="selPaste" title="Drop the copy here">Paste</button>
+        </div>
         <div id="refPanel">
           <div class="refHead">
             <span>Reference photo</span>
@@ -901,11 +916,28 @@ input[type=text], input[type=number], select, textarea{
               <button data-ref-act="close" title="Hide">×</button>
             </div>
           </div>
-          <img id="refPanelImg" alt="Original imported photo">
+          <img id="refPanelImg" alt="Reference photo" style="display:none">
           <div class="refBody">
             <label style="font-size:10.5px;color:var(--ink-soft);">Size
               <input type="range" id="refPanelSize" min="120" max="360" value="180">
             </label>
+            <label style="font-size:10.5px;color:var(--ink-soft);display:block;margin-top:6px;">
+              <input type="checkbox" id="traceOn" style="vertical-align:-1px;"> Trace over the canvas
+            </label>
+            <label style="font-size:10.5px;color:var(--ink-soft);display:block;margin-top:4px;">Opacity <span id="traceOpVal">45</span>%
+              <input type="range" id="traceOp" min="5" max="90" value="45">
+            </label>
+            <label style="font-size:10.5px;color:var(--ink-soft);display:block;margin-top:4px;">Scale <span id="traceZoomVal">100</span>%
+              <input type="range" id="traceZoom" min="25" max="400" value="100">
+            </label>
+            <div style="display:flex;gap:5px;margin-top:5px;">
+              <button class="small-btn" id="btnTraceMove" style="flex:1;">Move image</button>
+              <button class="small-btn" id="btnTraceFit" style="flex:1;">Refit</button>
+            </div>
+            <label class="small-btn" style="display:block;text-align:center;cursor:pointer;margin-top:5px;">Load reference only
+              <input type="file" id="refOnlyInput" accept="image/*" style="display:none">
+            </label>
+            <div style="font-size:9.5px;color:var(--ink-soft);margin-top:4px;line-height:1.35;">Picks an image to trace over without touching your grid.</div>
           </div>
         </div>
       </div>
@@ -1693,6 +1725,45 @@ function render(){
     }
   }
 
+  // Jiplakan digambar SETELAH kotak warna tapi SEBELUM garis grid dan
+  // penanda seleksi, supaya garis-garis itu tetap terbaca di atasnya.
+  if(TRACE.on && TRACE.img){
+    const pl = tracePlacement();
+    if(pl){
+      ctx.save();
+      ctx.globalAlpha = TRACE.opacity;
+      ctx.drawImage(TRACE.img, viewX+pl.x*cellPx, viewY+pl.y*cellPx, pl.w*cellPx, pl.h*cellPx);
+      ctx.restore();
+    }
+  }
+
+  // Bayangan tempel: digambar separuh tembus supaya jelas bahwa ini belum
+  // tertulis ke grid, dengan garis putus mengikuti bentuk aslinya.
+  if(pasteFloat && clipBuf){
+    ctx.save();
+    ctx.globalAlpha=.72;
+    for(const [k,v] of clipBuf.cells){
+      const [dx,dy]=k.split(',').map(Number);
+      const x=pasteFloat.ox+dx, y=pasteFloat.oy+dy;
+      if(x<0||y<0||x>=state.width||y>=state.height) continue;
+      ctx.fillStyle = (v>=0 && state.palette[v]) ? state.palette[v].hex : '#ffffff';
+      ctx.fillRect(viewX+x*cellPx, viewY+y*cellPx, cellPx, cellPx);
+    }
+    ctx.globalAlpha=1;
+    ctx.strokeStyle='#B23A48'; ctx.lineWidth=1.8; ctx.setLineDash([4,3]);
+    ctx.beginPath();
+    const has=(a,b)=>clipBuf.cells.has(a+','+b);
+    for(const k of clipBuf.cells.keys()){
+      const [dx,dy]=k.split(',').map(Number);
+      const X=viewX+(pasteFloat.ox+dx)*cellPx, Y=viewY+(pasteFloat.oy+dy)*cellPx;
+      if(!has(dx,dy-1)){ ctx.moveTo(X,Y); ctx.lineTo(X+cellPx,Y); }
+      if(!has(dx,dy+1)){ ctx.moveTo(X,Y+cellPx); ctx.lineTo(X+cellPx,Y+cellPx); }
+      if(!has(dx-1,dy)){ ctx.moveTo(X,Y); ctx.lineTo(X,Y+cellPx); }
+      if(!has(dx+1,dy)){ ctx.moveTo(X+cellPx,Y); ctx.lineTo(X+cellPx,Y+cellPx); }
+    }
+    ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+  }
+
   // selection overlay
   if(selection && !floatBuf){
     const {x0,y0,x1,y1}=normSel(selection);
@@ -1731,7 +1802,9 @@ function render(){
     const bg=backgroundIndex();
     const bgHex = bg>=0 && state.palette[bg] ? state.palette[bg].hex : '#ffffff';
     ctx.save();
-    for(const k of moveFrom){ const [x,y]=k.split(',').map(Number);
+    // Pada mode duplikat, tempat asalnya TIDAK ditutup - aslinya harus
+    // tetap kelihatan supaya jelas ini salinan, bukan pindahan.
+    if(!dupMode) for(const k of moveFrom){ const [x,y]=k.split(',').map(Number);
       ctx.fillStyle=bgHex; ctx.fillRect(viewX+x*cellPx, viewY+y*cellPx, cellPx, cellPx); }
     for(const [k,v] of floatBuf){ const [x,y]=k.split(',').map(Number);
       const nx=x+moveDelta.dx, ny=y+moveDelta.dy;
@@ -1840,6 +1913,9 @@ function liftSelection(){
 // Tempelkan di posisi baru dan isi bekasnya dengan latar.
 function dropSelection(){
   if(!floatBuf || !moveDelta) return;
+  // Mode duplikat: salinan dibiarkan melayang, aslinya tidak disentuh.
+  // Penulisan baru terjadi saat tombol Paste ditekan.
+  if(dupMode){ dupPending=true; render(); return; }
   if(moveDelta.dx===0 && moveDelta.dy===0){ floatBuf=null; moveFrom=null; moveDelta=null; return; }
   pushHistory();
   const bg=backgroundIndex();
@@ -1858,8 +1934,139 @@ function dropSelection(){
   floatBuf=null; moveFrom=null; moveDelta=null;
   render(); refreshStatsAllTabs&&refreshStatsAllTabs();
 }
+/* Salin dan tempel isi seleksi. Yang disalin adalah bentuknya juga, bukan
+   cuma kotak pembatas - jadi hasil laso tetap berbentuk bebas saat ditempel. */
+let clipBuf=null;   // {cells:Map "dx,dy"->idx, w, h}
+
+/* Dua perilaku menggeser seleksi:
+   - tanpa Copy  : pindah biasa, bekasnya diisi warna latar
+   - dengan Copy : aslinya tetap di tempat, yang digeser adalah salinannya,
+                   dan baru diletakkan saat tombol Paste ditekan
+   dupMode ditentukan sebelum menggeser; dupPending berarti salinan masih
+   melayang menunggu Paste. */
+let dupMode=false, dupPending=false, dupAnchor=null, dupBase=null;
+
+function selBounds(){
+  const m=currentMask(); if(!m||!m.size) return null;
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const k of m){ const [x,y]=k.split(',').map(Number);
+    if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+  return {x0,y0,x1,y1};
+}
+// Toolbar ditempel di atas seleksi, dijaga agar tidak keluar dari area kanvas.
+function updateSelBar(){
+  const bar=$('#selBar'); if(!bar) return;
+  const show = !!(currentMask() || dupPending) && !pasteFloat;
+  if(!show){ bar.classList.remove('open'); return; }
+  let bx, by;
+  if(dupPending && floatBuf){
+    let x0=1e9,y0=1e9;
+    for(const k of floatBuf.keys()){ const [x,y]=k.split(',').map(Number);
+      const nx=x+moveDelta.dx, ny=y+moveDelta.dy;
+      if(nx<x0)x0=nx; if(ny<y0)y0=ny; }
+    bx=x0; by=y0;
+  } else {
+    const b=selBounds(); if(!b){ bar.classList.remove('open'); return; }
+    bx=b.x0; by=b.y0;
+  }
+  bar.classList.add('open');
+  const wrapRect=wrap.getBoundingClientRect();
+  let left = viewX + bx*cellPx;
+  let top  = viewY + by*cellPx - bar.offsetHeight - 8;
+  if(top < 4) top = viewY + by*cellPx + 8;
+  left = Math.max(4, Math.min(left, wrapRect.width - bar.offsetWidth - 4));
+  top  = Math.max(4, Math.min(top,  wrapRect.height - bar.offsetHeight - 4));
+  bar.style.left = left+'px'; bar.style.top = top+'px';
+  $('#selCopy').classList.toggle('on', dupMode);
+  $('#selPaste').disabled = !dupPending;
+}
+function commitDup(){
+  if(!dupPending || !floatBuf) return;
+  pushHistory();
+  const placed=new Set();
+  for(const [k,v] of floatBuf){
+    const [x,y]=k.split(',').map(Number);
+    const nx=x+moveDelta.dx, ny=y+moveDelta.dy;
+    if(nx<0||ny<0||nx>=state.width||ny>=state.height) continue;
+    setCellRaw(nx,ny,v); placed.add(nx+','+ny);
+  }
+  floatBuf=null; moveFrom=null; moveDelta=null;
+  dupPending=false; dupMode=false; dupAnchor=null; dupBase=null;
+  selection=null; selMask=placed.size?placed:null;
+  render(); refreshStatsAllTabs&&refreshStatsAllTabs();
+  toast('Copy placed. The original is still where it was.');
+}
+function cancelDup(){
+  if(!dupPending) return;
+  floatBuf=null; moveFrom=null; moveDelta=null;
+  dupPending=false; dupAnchor=null; dupBase=null;
+  render(); toast('Copy discarded. Nothing was changed.');
+}
+
+function copySelection(){
+  const m=currentMask();
+  if(!m || !m.size){ toast('Select something first.'); return false; }
+  let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;
+  for(const k of m){ const [x,y]=k.split(',').map(Number);
+    if(x<minX)minX=x; if(x>maxX)maxX=x; if(y<minY)minY=y; if(y>maxY)maxY=y; }
+  const cells=new Map();
+  for(const k of m){ const [x,y]=k.split(',').map(Number);
+    cells.set((x-minX)+','+(y-minY), getCellRaw(x,y)); }
+  clipBuf={cells, w:maxX-minX+1, h:maxY-minY+1};
+  toast('Copied '+cells.size+' squares.');
+  return true;
+}
+function cutSelection(){
+  if(!copySelection()) return;
+  const m=currentMask(); if(!m) return;
+  pushHistory();
+  const bg=backgroundIndex();
+  for(const k of m){ const [x,y]=k.split(',').map(Number); setCellRaw(x,y,bg); }
+  render(); refreshStatsAllTabs&&refreshStatsAllTabs();
+}
+/* Tempel tidak langsung menimpa grid. Isi papan klip ditampilkan dulu
+   sebagai BAYANGAN yang mengikuti kursor, jadi posisinya bisa ditentukan
+   sebelum apa pun tertulis. Dulu ia langsung dicap di tengah dan menimpa
+   desain yang sudah ada. */
+let pasteFloat=null;   // {ox, oy} sudut kiri-atas bayangan, satuan kotak
+
+function pasteClipboard(){
+  if(!clipBuf){ toast('Nothing copied yet.'); return; }
+  clearSelection();
+  pasteFloat = { ox: Math.round(state.width/2 - clipBuf.w/2),
+                 oy: Math.round(state.height/2 - clipBuf.h/2) };
+  render();
+  toast('Move the mouse to place it, then click. Esc cancels.', 4000);
+}
+function pasteMoveTo(cx,cy){
+  if(!pasteFloat) return;
+  pasteFloat.ox = cx - Math.floor(clipBuf.w/2);
+  pasteFloat.oy = cy - Math.floor(clipBuf.h/2);
+  render();
+}
+function commitPaste(){
+  if(!pasteFloat || !clipBuf) return;
+  pushHistory();
+  const placed=new Set();
+  for(const [k,v] of clipBuf.cells){
+    const [dx,dy]=k.split(',').map(Number);
+    const x=pasteFloat.ox+dx, y=pasteFloat.oy+dy;
+    if(x<0||y<0||x>=state.width||y>=state.height) continue;
+    setCellRaw(x,y,v); placed.add(x+','+y);
+  }
+  pasteFloat=null;
+  selection=null; selMask=placed.size?placed:null;
+  render(); refreshStatsAllTabs&&refreshStatsAllTabs();
+  toast('Pasted '+placed.size+' squares.');
+}
+function cancelPaste(){
+  if(!pasteFloat) return;
+  pasteFloat=null; render(); toast('Paste cancelled. Nothing was changed.');
+}
+
 function clearSelection(){ selection=null; selMask=null; lassoPts=null;
-  floatBuf=null; moveFrom=null; moveDelta=null; }
+  floatBuf=null; moveFrom=null; moveDelta=null;
+  dupMode=false; dupPending=false; dupAnchor=null; dupBase=null; }
 
 function screenToCell(clientX,clientY){
   const r = wrap.getBoundingClientRect();
@@ -1972,6 +2179,16 @@ wrap.addEventListener('pointerdown', e=>{
     return;
   }
   const cell = screenToCell(e.clientX,e.clientY);
+  // Bayangan tempel menunggu satu klik untuk diletakkan. Harus diperiksa
+  // sebelum alat gambar, kalau tidak klik itu malah melukis di bawahnya.
+  if(pasteFloat){ commitPaste(); return; }
+  // Mode geser gambar jiplakan mendahului semua alat gambar, supaya menarik
+  // di atas kanvas memindahkan gambar, bukan melukis di atasnya.
+  if(TRACE.move && TRACE.on && TRACE.img){
+    TRACE.drag = {mx:e.clientX, my:e.clientY, dx:TRACE.dx, dy:TRACE.dy};
+    wrap.classList.add('panning');
+    return;
+  }
   if(state.tool==='pan'){
     panStart={mx:e.clientX,my:e.clientY,viewX,viewY};
     wrap.classList.add('panning');
@@ -2001,6 +2218,14 @@ wrap.addEventListener('pointerdown', e=>{
   } else if(state.tool==='select' || state.tool==='lasso'){
     // Menekan DI DALAM seleksi yang sudah ada berarti ingin menggesernya,
     // bukan memulai seleksi baru.
+    // Salinan yang masih melayang boleh digeser lagi sebelum ditekan Paste.
+    if(dupPending && floatBuf){
+      let inside=false;
+      for(const k of floatBuf.keys()){ const [x,y]=k.split(',').map(Number);
+        if(x+moveDelta.dx===cell.x && y+moveDelta.dy===cell.y){ inside=true; break; } }
+      if(inside){ dupAnchor=cell; dupBase={dx:moveDelta.dx, dy:moveDelta.dy};
+        drawing=true; movingSelection=true; return; }
+    }
     if(maskHas(cell.x,cell.y) && liftSelection()){
       movingSelection=true; drawing=true; lastCell=cell;
     } else if(state.tool==='lasso'){
@@ -2037,6 +2262,16 @@ wrap.addEventListener('pointermove', e=>{
 
   if(!drawing && state.tool!=='pan') return;
 
+  if(pasteFloat){
+    const c = screenToCell(e.clientX,e.clientY);
+    pasteMoveTo(c.x, c.y);
+    return;
+  }
+  if(TRACE.drag){
+    TRACE.dx = TRACE.drag.dx + (e.clientX-TRACE.drag.mx)/cellPx;
+    TRACE.dy = TRACE.drag.dy + (e.clientY-TRACE.drag.my)/cellPx;
+    render(); return;
+  }
   if(state.tool==='pan' && panStart){
     viewX = panStart.viewX + (e.clientX-panStart.mx);
     viewY = panStart.viewY + (e.clientY-panStart.my);
@@ -2060,7 +2295,11 @@ wrap.addEventListener('pointermove', e=>{
     render();
   } else if(state.tool==='select' || state.tool==='lasso'){
     if(movingSelection && floatBuf){
-      moveDelta={dx:cell.x-lastCell.x, dy:cell.y-lastCell.y};
+      if(dupPending && dupAnchor && dupBase){
+        moveDelta={dx:dupBase.dx+(cell.x-dupAnchor.x), dy:dupBase.dy+(cell.y-dupAnchor.y)};
+      } else {
+        moveDelta={dx:cell.x-lastCell.x, dy:cell.y-lastCell.y};
+      }
       render(); return;
     }
     if(state.tool==='lasso' && lassoPts){
@@ -2077,12 +2316,15 @@ wrap.addEventListener('pointermove', e=>{
 
 function endPointer(e){
   activePointers.delete(e.pointerId);
+  if(TRACE.drag){ TRACE.drag=null; wrap.classList.remove('panning'); return; }
   if(activePointers.size<2){ pinchStartDist=0; }
   wrap.classList.remove('panning');
   if(!drawing) { panStart=null; return; }
   drawing=false; panStart=null;
   if(movingSelection){
-    movingSelection=false; dropSelection(); lastCell=null; return;
+    movingSelection=false;
+    if(dupPending){ dupAnchor=null; dupBase=null; render(); lastCell=null; return; }
+    dropSelection(); lastCell=null; return;
   }
   if(state.tool==='lasso' && lassoPts){
     selMask = maskFromLasso(lassoPts);
@@ -2110,7 +2352,14 @@ window.addEventListener('resize', ()=>{ resizeCanvasToWrap(); });
 
 /* delete key removes selection contents */
 window.addEventListener('keydown', e=>{
+  if(e.key==='Escape' && dupPending){ cancelDup(); return; }
+  if(e.key==='Enter' && dupPending){ commitDup(); return; }
+  if(e.key==='Escape' && pasteFloat){ cancelPaste(); return; }
+  if(e.key==='Enter' && pasteFloat){ commitPaste(); return; }
   if((e.key==='Escape') && (selection||selMask||floatBuf)){ clearSelection(); render(); return; }
+  if((e.metaKey||e.ctrlKey) && (e.key==='c'||e.key==='C')){ if(currentMask()){ e.preventDefault(); copySelection(); } return; }
+  if((e.metaKey||e.ctrlKey) && (e.key==='x'||e.key==='X')){ if(currentMask()){ e.preventDefault(); cutSelection(); } return; }
+  if((e.metaKey||e.ctrlKey) && (e.key==='v'||e.key==='V')){ e.preventDefault(); pasteClipboard(); return; }
   if((e.key==='Delete'||e.key==='Backspace') && (selection||selMask)){
     pushHistory();
     const {x0,y0,x1,y1}=normSel(selection);
@@ -2840,16 +3089,70 @@ $('#btnRedoTop').addEventListener('click', redo);
    it without reopening the import dialog. Purely a visual aid — never touches
    state.cells or gets exported. */
 let refImageSrc = null;
+/* ===================== Jiplakan di atas kanvas =====================
+   Panel referensi sebelumnya hanya memperlihatkan foto di jendela kecil yang
+   terpisah, jadi tidak bisa dipakai menjiplak. Sekarang foto yang sama bisa
+   ditampilkan samar TEPAT di atas grid, sehingga bisa diikuti dengan pensil. */
+const TRACE = {img:null, on:false, opacity:.45, scale:1, dx:0, dy:0, move:false, drag:null};
+
+function traceSetImage(dataUrl){
+  const im = new Image();
+  im.onload = ()=>{ TRACE.img = im; render(); };
+  im.src = dataUrl;
+}
+// Penempatan: mula-mula menutupi seluruh grid, lalu digeser dan diperbesar
+// sesuai kemauan pengguna. Dihitung dalam satuan kotak supaya ikut zoom grid.
+function tracePlacement(){
+  const im = TRACE.img; if(!im) return null;
+  const gw = state.width, gh = state.height;
+  const k = Math.max(gw/im.naturalWidth, gh/im.naturalHeight) * TRACE.scale;
+  const w = im.naturalWidth*k, h = im.naturalHeight*k;
+  return { x:(gw-w)/2 + TRACE.dx, y:(gh-h)/2 + TRACE.dy, w, h };
+}
+function traceSync(){
+  const on = TRACE.on && !!TRACE.img;
+  const b = $('#btnTraceMove'); if(b) b.classList.toggle('active', TRACE.move && on);
+  render();
+}
+
+const refPanelEl0 = document.getElementById('refPanel');
+if(refPanelEl0){
+  ['pointerdown','pointerup','click','wheel','dblclick'].forEach(ev=>
+    refPanelEl0.addEventListener(ev, e=> e.stopPropagation()));
+}
 const refPanelEl = $('#refPanel'), refPanelImg = $('#refPanelImg'), btnRefToggle = $('#btnRefToggle');
 function setReferenceImage(dataUrl){
   refImageSrc = dataUrl;
   refPanelImg.src = dataUrl;
+  refPanelImg.style.display = 'block';
+  traceSetImage(dataUrl);
   btnRefToggle.disabled = false;
   btnRefToggle.classList.add('has-ref');
   refPanelEl.classList.add('open');
 }
+// Toolbar ini anak dari #canvasWrap, dan handler gambar dipasang di elemen
+// itu juga. Tanpa penahan ini, klik pada tombol merambat ke kanvas, memicu
+// laso baru, dan seleksinya langsung terhapus.
+(function(){
+  const bar=$('#selBar');
+  ['pointerdown','pointerup','pointermove','click','wheel','dblclick'].forEach(ev=>
+    bar.addEventListener(ev, e=> e.stopPropagation()));
+})();
+
+// Copy menyalakan mode duplikat SEBELUM digeser. Paste meletakkan salinan.
+$('#selCopy').addEventListener('click', ()=>{
+  if(!currentMask() && !dupPending){ toast('Select something first.'); return; }
+  dupMode = !dupMode;
+  toast(dupMode ? 'Copy mode on — drag the selection, the original stays put.'
+                : 'Copy mode off — dragging will move the selection.');
+  updateSelBar();
+});
+$('#selPaste').addEventListener('click', ()=>{
+  if(!dupPending){ toast('Turn on Copy, drag the selection, then press Paste.'); return; }
+  commitDup();
+});
+
 btnRefToggle.addEventListener('click', ()=>{
-  if(!refImageSrc) return;
   refPanelEl.classList.toggle('open');
 });
 refPanelEl.querySelector('[data-ref-act="close"]').addEventListener('click', ()=> refPanelEl.classList.remove('open'));
@@ -2858,6 +3161,49 @@ refPanelEl.querySelector('[data-ref-act="collapse"]').addEventListener('click', 
   e.target.textContent = refPanelEl.classList.contains('collapsed') ? '+' : '–';
 });
 $('#refPanelSize').addEventListener('input', e=>{ refPanelEl.style.width = e.target.value+'px'; });
+$('#traceOn').addEventListener('change', e=>{
+  TRACE.on = e.target.checked;
+  if(TRACE.on && !TRACE.img) toast('Import a photo first — the trace uses that image.');
+  traceSync();
+});
+$('#traceOp').addEventListener('input', e=>{
+  TRACE.opacity = (+e.target.value)/100; $('#traceOpVal').textContent = e.target.value; render();
+});
+$('#traceZoom').addEventListener('input', e=>{
+  TRACE.scale = (+e.target.value)/100; $('#traceZoomVal').textContent = e.target.value; render();
+});
+$('#btnTraceFit').addEventListener('click', ()=>{
+  TRACE.scale=1; TRACE.dx=0; TRACE.dy=0;
+  $('#traceZoom').value=100; $('#traceZoomVal').textContent='100';
+  render(); toast('Trace image refitted.');
+});
+/* Memuat gambar HANYA untuk dijiplak. Sebelumnya gambar referensi hanya
+   terpasang kalau import foto ditekan Apply - dan Apply itu menimpa seluruh
+   grid, jadi tidak ada cara memuat gambar tanpa kehilangan desain. */
+$('#refOnlyInput').addEventListener('change', e=>{
+  const f = e.target.files && e.target.files[0];
+  e.target.value='';
+  if(!f) return;
+  if(!/^image\//.test(f.type)){ toast('That file is not an image.'); return; }
+  const r = new FileReader();
+  r.onload = ()=>{
+    setReferenceImage(r.result);      // panel + jiplakan, grid tidak disentuh
+    TRACE.on = true;
+    const cb = $('#traceOn'); if(cb) cb.checked = true;
+    TRACE.scale=1; TRACE.dx=0; TRACE.dy=0;
+    const z=$('#traceZoom'); if(z){ z.value=100; $('#traceZoomVal').textContent='100'; }
+    traceSync();
+    toast('Reference loaded. Your grid was not changed.');
+  };
+  r.onerror = ()=> toast('That image could not be read.');
+  r.readAsDataURL(f);
+});
+
+$('#btnTraceMove').addEventListener('click', ()=>{
+  TRACE.move = !TRACE.move;
+  toast(TRACE.move ? 'Move mode: drag to reposition the trace image.' : 'Back to drawing.');
+  traceSync();
+});
 // Drag the panel by its header, clamped to stay inside the canvas area.
 (function(){
   let dragging=false, sx=0, sy=0, startLeft=0, startTop=0;
@@ -4252,6 +4598,11 @@ async function generatePDF(){
       setText(MID_INK);
       const bLines = doc.splitTextToSize(sec.body, pw-margin*2-24);
       bLines.forEach(ln=>{
+        // Penanda paragraf berupa baris kosong. Dulu baris kosong itu tetap
+        // memakan tinggi baris penuh, jadi jarak antar paragraf jadi dua kali
+        // jarak antar baris dan bagian ini terlihat renggang tidak beraturan.
+        // Sekarang diberi jarak paragraf yang lebih pendek dan seragam.
+        if(!ln || !ln.trim()){ y += 5.5; return; }
         if(y > HOWTO_BOTTOM){
           howToNewPage();
           doc.setFont(BODY_FONT,'normal'); doc.setFontSize(9); setText(MID_INK);
@@ -5595,7 +5946,8 @@ window.addEventListener('load', boot);
 
 // keep stats live after any cell edit by hooking render()
 const _render = render;
-render = function(){ _render(); $('#statDims').textContent = `${state.width} × ${state.height} stitches`; };
+render = function(){ _render(); $('#statDims').textContent = `${state.width} × ${state.height} stitches`;
+  try{ updateSelBar(); }catch(e){} };
 
 })();
 

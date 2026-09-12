@@ -1153,6 +1153,23 @@ input[type=text], input[type=number], select, textarea{
 
           <div class="section-title">Included pages</div>
           <div class="checkbox-row"><input type="checkbox" id="exCover" checked><label for="exCover">Cover page (title, thumbnail, summary)</label></div>
+          <div class="field" style="margin:6px 0 10px 24px;">
+            <label>Finished photo on the cover</label>
+            <label class="small-btn file-btn-tab" style="display:block;text-align:center;cursor:pointer;margin-bottom:6px;">Choose a photo…
+              <input type="file" id="exPhotoInput" accept="image/*" style="display:none">
+            </label>
+            <div id="exPhotoRow" style="display:none;align-items:center;gap:8px;margin-bottom:6px;">
+              <img id="exPhotoThumb" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--panel-edge);">
+              <span id="exPhotoName" class="hint-text" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+              <button class="small-btn" id="btnExPhotoClear" type="button">Remove</button>
+            </div>
+            <select id="exPhotoMode">
+              <option value="photo">Show the photo instead of the chart</option>
+              <option value="both" selected>Show the photo and the chart side by side</option>
+              <option value="chart">Keep the chart only</option>
+            </select>
+            <div class="hint-text" style="margin-top:5px;">A real photo of the finished piece is the single strongest thing a pattern cover can show.</div>
+          </div>
           <div class="checkbox-row"><input type="checkbox" id="exAbout" checked><label for="exAbout">About this pattern (description, terms of use)</label></div>
           <div class="checkbox-row"><input type="checkbox" id="exHowTo" checked><label for="exHowTo">How to read this pattern</label></div>
           <div class="checkbox-row"><input type="checkbox" id="exOverview" checked><label for="exOverview">Full chart — one-page overview</label></div>
@@ -2552,12 +2569,54 @@ function wireTab(){
     $('#btnPngExportTab').addEventListener('click', exportPNG);
     $('#btnSaveProjectTab').addEventListener('click', saveProject);
     $('#openProjectInputTab').addEventListener('change', e=> handleOpenProject(e.target.files[0]));
+    $('#exPhotoInput') && $('#exPhotoInput').addEventListener('change', e=> loadCoverPhoto(e.target.files[0]));
+    $('#btnExPhotoClear') && $('#btnExPhotoClear').addEventListener('click', clearCoverPhoto);
     $('#btnProfSave').addEventListener('click', ()=>{ profileSave(); });
     $('#btnProfExport').addEventListener('click', profileExport);
     $('#profImportInput').addEventListener('change', e=> profileImport(e.target.files[0]));
     $('#btnProfClear').addEventListener('click', profileClear);
     profileStatus();
   }
+}
+
+/* ===================== Foto hasil jadi =====================
+   Foto disimpan sebagai dataURL supaya bisa langsung ditanam ke PDF tanpa
+   perlu membaca ulang filenya. Ukurannya diperkecil dulu - foto kamera bisa
+   4000 px dan itu membengkakkan PDF tanpa menambah ketajaman cetak. */
+let coverPhoto = null;   // {data, w, h, name}
+
+function loadCoverPhoto(file){
+  if(!file) return;
+  if(!/^image\//.test(file.type)){ toast('That file is not an image.'); return; }
+  const url = URL.createObjectURL(file);
+  const im = new Image();
+  im.onload = ()=>{
+    const MAX = 1400;
+    const k = Math.min(1, MAX/Math.max(im.naturalWidth, im.naturalHeight));
+    const w = Math.max(1,Math.round(im.naturalWidth*k)), h = Math.max(1,Math.round(im.naturalHeight*k));
+    const c = document.createElement('canvas'); c.width=w; c.height=h;
+    const x = c.getContext('2d');
+    x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+    x.drawImage(im, 0, 0, w, h);
+    coverPhoto = { data: c.toDataURL('image/jpeg', 0.86), w, h, name: file.name };
+    URL.revokeObjectURL(url);
+    const row = $('#exPhotoRow');
+    if(row){
+      row.style.display = 'flex';
+      $('#exPhotoThumb').src = coverPhoto.data;
+      $('#exPhotoName').textContent = file.name;
+    }
+    toast('Photo added to the cover.');
+  };
+  im.onerror = ()=>{ URL.revokeObjectURL(url); toast('That image could not be opened.'); };
+  im.src = url;
+}
+function clearCoverPhoto(){
+  coverPhoto = null;
+  const row = $('#exPhotoRow');
+  if(row){ row.style.display='none'; $('#exPhotoThumb').removeAttribute('src'); $('#exPhotoName').textContent=''; }
+  const inp = $('#exPhotoInput'); if(inp) inp.value='';
+  toast('Photo removed.');
 }
 
 /* ===================== Studio profile =====================
@@ -3825,19 +3884,55 @@ async function generatePDF(){
     // the real proportions instead.
     const cellAspect = (state.gauge.stPer10||16)/(state.gauge.rowPer10||18);
     const thumbDrawH = thumbCanvas.height*cellAspect;
-    const ts = Math.min(availW2/thumbCanvas.width, thumbAreaH/thumbDrawH);
-    const tw = thumbCanvas.width*ts, th = thumbDrawH*ts;
-    const tx = pw/2-tw/2, ty = thumbAreaY;
-    // Shadow (offset kept smaller than the border's 3pt extension so it never peeks out)
-    setFill([200,190,180]);
-    doc.rect(tx+2, ty+2, tw, th, 'F');
-    // Border frame
-    setFill([255,255,255]);
-    doc.rect(tx-3, ty-3, tw+6, th+6, 'F');
-    setDraw(ROSE); doc.setLineWidth(1.5);
-    doc.rect(tx-3, ty-3, tw+6, th+6);
-    // Chart image
-    doc.addImage(thumbData, 'PNG', tx, ty, tw, th);
+
+    // Bingkai berbayang, dipakai baik untuk chart maupun foto.
+    const framed = (data, fmt, x, y, w, h) => {
+      setFill([200,190,180]); doc.rect(x+2, y+2, w, h, 'F');
+      setFill([255,255,255]); doc.rect(x-3, y-3, w+6, h+6, 'F');
+      setDraw(ROSE); doc.setLineWidth(1.5); doc.rect(x-3, y-3, w+6, h+6);
+      doc.addImage(data, fmt, x, y, w, h);
+    };
+
+    const photoMode = coverPhoto ? (($('#exPhotoMode') && $('#exPhotoMode').value) || 'both') : 'chart';
+    // Batas bawah blok gambar. Dipakai lagi oleh strip warna di bawahnya,
+    // jadi harus diisi di ketiga cabang - kalau tidak, strip itu melayang.
+    let artBottom = thumbAreaY;
+
+    if(photoMode === 'photo'){
+      // Foto saja, seukuran mungkin tanpa keluar dari area.
+      const pk = Math.min(availW2/coverPhoto.w, thumbAreaH/coverPhoto.h);
+      const w = coverPhoto.w*pk, h = coverPhoto.h*pk;
+      framed(coverPhoto.data, 'JPEG', pw/2-w/2, thumbAreaY, w, h);
+      artBottom = thumbAreaY + h;
+    } else if(photoMode === 'both'){
+      // Foto di kiri, chart di kanan. Keduanya diskalakan ke TINGGI yang sama
+      // supaya sejajar, lalu dikecilkan bersama kalau lebarnya tidak muat.
+      const gapC = 18;
+      let h = thumbAreaH;
+      let wP = coverPhoto.w * (h/coverPhoto.h);
+      let wC = thumbCanvas.width * (h/thumbDrawH);
+      // Jarak antar gambar TIDAK ikut diperkecil, jadi penyusutan hanya boleh
+      // dihitung dari sisa lebar setelah jarak dipotong. Membagi ketiganya
+      // dengan angka yang sama membuat totalnya tetap melewati tepi.
+      if(wP + wC + gapC > availW2){
+        const k = (availW2 - gapC) / (wP + wC);
+        h *= k; wP *= k; wC *= k;
+      }
+      const totalW = wP + wC + gapC;
+      const x0 = pw/2 - totalW/2;
+      framed(coverPhoto.data, 'JPEG', x0, thumbAreaY, wP, h);
+      framed(thumbData, 'PNG', x0 + wP + gapC, thumbAreaY, wC, h);
+      doc.setFont(BODY_FONT,'normal'); doc.setFontSize(7.5); setText([140,140,140]);
+      doc.text('Finished piece', x0 + wP/2, thumbAreaY + h + 11, {align:'center'});
+      doc.text('Chart', x0 + wP + gapC + wC/2, thumbAreaY + h + 11, {align:'center'});
+      setText(DARK_INK);
+      artBottom = thumbAreaY + h + 14;
+    } else {
+      const ts = Math.min(availW2/thumbCanvas.width, thumbAreaH/thumbDrawH);
+      const tw = thumbCanvas.width*ts, th = thumbDrawH*ts;
+      framed(thumbData, 'PNG', pw/2-tw/2, thumbAreaY, tw, th);
+      artBottom = thumbAreaY + th;
+    }
 
     // Color palette strip below thumbnail
     const usedColors2 = state.palette.filter((c,i)=>countOf(i)>0);
@@ -3847,12 +3942,12 @@ async function generatePDF(){
       let cx2 = pw/2-Math.min(stripW,availW2)/2;
       const maxC = Math.floor((availW2+gap)/(chipW+gap));
       usedColors2.slice(0,maxC).forEach(c=>{
-        colorChip(cx2, ty+th+12, chipW, c.hex); cx2+=chipW+gap;
+        colorChip(cx2, artBottom+12, chipW, c.hex); cx2+=chipW+gap;
       });
     }
 
     // Info block at bottom — spec grid
-    let infoY = ty+th+32;
+    let infoY = artBottom+32;
     const infoData = [
       ['Designer', designer||'-'],
       ['Finished Size', `~${wCm.toFixed(0)} × ${hCm.toFixed(0)} cm  (${(wCm/2.54).toFixed(1)}" × ${(hCm/2.54).toFixed(1)}")`],

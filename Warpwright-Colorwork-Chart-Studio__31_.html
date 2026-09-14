@@ -724,6 +724,9 @@ input[type=text], input[type=number], select, textarea{
 #selBar button:hover{ background:var(--panel-alt, #f3efe8); }
 #selBar button.on{ background:var(--indigo); border-color:var(--indigo); color:#fff; }
 #selBar button:disabled{ opacity:.4; cursor:not-allowed; }
+
+#selBar .selSep{ width:1px; align-self:stretch; background:var(--panel-edge); margin:0 2px; }
+#selBar button svg{ display:block; }
 </style>
 </head>
 <body>
@@ -907,6 +910,9 @@ input[type=text], input[type=number], select, textarea{
         <div id="selBar">
           <button id="selCopy" title="Keep the original where it is and move a copy">Copy</button>
           <button id="selPaste" title="Drop the copy here">Paste</button>
+          <span class="selSep"></span>
+          <button id="selFlipH" title="Mirror the selection left to right"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18" stroke-dasharray="2.5 2.5"/><path d="M9 7 4 12l5 5V7Z"/><path d="M15 7l5 5-5 5V7Z"/></svg></button>
+          <button id="selFlipV" title="Mirror the selection top to bottom"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18" stroke-dasharray="2.5 2.5"/><path d="M7 9 12 4l5 5H7Z"/><path d="M7 15l5 5 5-5H7Z"/></svg></button>
         </div>
         <div id="refPanel">
           <div class="refHead">
@@ -1980,6 +1986,48 @@ function updateSelBar(){
   $('#selCopy').classList.toggle('on', dupMode);
   $('#selPaste').disabled = !dupPending;
 }
+/* Mencerminkan isi seleksi di tempatnya. Bentuk seleksinya ikut dicerminkan,
+   bukan cuma isinya - kalau tidak, hasil laso bebas akan meleset dari mask-nya.
+   Semuanya tetap di dalam kotak pembatas yang sama, jadi tidak ada yang
+   melompat keluar dan menimpa bagian lain. */
+function flipSelection(horizontal){
+  // Salinan yang masih melayang: cerminkan penyangganya saja.
+  if(dupPending && floatBuf){
+    let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+    for(const k of floatBuf.keys()){ const [x,y]=k.split(',').map(Number);
+      if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+    const nb=new Map();
+    for(const [k,v] of floatBuf){ const [x,y]=k.split(',').map(Number);
+      const nx = horizontal ? (x0+x1-x) : x;
+      const ny = horizontal ? y : (y0+y1-y);
+      nb.set(nx+','+ny, v); }
+    floatBuf=nb; render();
+    toast(horizontal ? 'Copy mirrored left to right.' : 'Copy mirrored top to bottom.');
+    return;
+  }
+  const m=currentMask();
+  if(!m || !m.size){ toast('Select something first.'); return; }
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const k of m){ const [x,y]=k.split(',').map(Number);
+    if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+  pushHistory();
+  // Nilai lama dibaca dulu seluruhnya, baru ditulis - kalau dibaca sambil
+  // ditulis, kotak yang sudah tertimpa akan terbaca sebagai sumber.
+  const vals=new Map();
+  for(const k of m){ const [x,y]=k.split(',').map(Number); vals.set(k, getCellRaw(x,y)); }
+  const bg=backgroundIndex();
+  for(const k of m){ const [x,y]=k.split(',').map(Number); setCellRaw(x,y,bg); }
+  const nm=new Set();
+  for(const [k,v] of vals){ const [x,y]=k.split(',').map(Number);
+    const nx = horizontal ? (x0+x1-x) : x;
+    const ny = horizontal ? y : (y0+y1-y);
+    if(nx<0||ny<0||nx>=state.width||ny>=state.height) continue;
+    setCellRaw(nx,ny,v); nm.add(nx+','+ny); }
+  selection=null; selMask=nm.size?nm:null;
+  render(); refreshStatsAllTabs&&refreshStatsAllTabs();
+  toast(horizontal ? 'Selection mirrored left to right.' : 'Selection mirrored top to bottom.');
+}
+
 function commitDup(){
   if(!dupPending || !floatBuf) return;
   pushHistory();
@@ -3147,6 +3195,8 @@ $('#selCopy').addEventListener('click', ()=>{
                 : 'Copy mode off — dragging will move the selection.');
   updateSelBar();
 });
+$('#selFlipH').addEventListener('click', ()=> flipSelection(true));
+$('#selFlipV').addEventListener('click', ()=> flipSelection(false));
 $('#selPaste').addEventListener('click', ()=>{
   if(!dupPending){ toast('Turn on Copy, drag the selection, then press Paste.'); return; }
   commitDup();

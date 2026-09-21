@@ -854,6 +854,8 @@ input[type=text], input[type=number], select, textarea{
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3 2"><rect x="4" y="4" width="16" height="16" rx="1"/></svg>
         </button><button class="tool-btn" data-tool="lasso" title="Lasso select">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4c4.6 0 8 2.5 8 5.6 0 3-3.4 5.5-8 5.5S4 12.6 4 9.6C4 6.5 7.4 4 12 4Z" stroke-dasharray="3 2"/><path d="M9.2 14.9c-.5 1.4-.2 2.6.7 3.3"/><circle cx="10.6" cy="19.4" r="1.6"/></svg>
+        </button><button class="tool-btn" data-tool="measure" title="Measure: click two squares to count them">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="19" height="8" rx="1.2"/><path d="M6 8v3M9.5 8v2M13 8v3M16.5 8v2M20 8v3"/></svg>
         </button>
         <button class="tool-btn" data-tool="pan" title="Pan / hand">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 11V6a1.5 1.5 0 013 0v4M11 10V4a1.5 1.5 0 013 0v6M14 10V6a1.5 1.5 0 013 0v6M17 12V9a1.5 1.5 0 013 0v6c0 4-2 7-7 7s-6-2-8-5l-2-4a1.4 1.4 0 012.3-1.6L8 14"/></svg>
@@ -1743,6 +1745,8 @@ function render(){
     }
   }
 
+  if(state.tool==='measure') drawMeasure();
+
   // Bayangan tempel: digambar separuh tembus supaya jelas bahwa ini belum
   // tertulis ke grid, dengan garis putus mengikuti bentuk aslinya.
   if(pasteFloat && clipBuf){
@@ -2112,6 +2116,83 @@ function cancelPaste(){
   pasteFloat=null; render(); toast('Paste cancelled. Nothing was changed.');
 }
 
+/* ===================== Alat ukur =====================
+   Klik kotak pertama, lalu kotak kedua. Garisnya dikunci lurus mendatar atau
+   tegak, mengikuti arah yang lebih dominan. Hanya MENGUKUR - tidak ada satu
+   kotak pun di grid yang diubah. */
+const MEASURE = {a:null, b:null, fixed:false};
+
+function measureSnap(cell){
+  const a = MEASURE.a;
+  const dx = cell.x - a.x, dy = cell.y - a.y;
+  const x = clamp(cell.x, 0, state.width-1), y = clamp(cell.y, 0, state.height-1);
+  return Math.abs(dx) >= Math.abs(dy) ? {x, y:a.y} : {x:a.x, y};
+}
+function measureCount(){
+  if(!MEASURE.a || !MEASURE.b) return 0;
+  return Math.max(Math.abs(MEASURE.b.x-MEASURE.a.x), Math.abs(MEASURE.b.y-MEASURE.a.y)) + 1;
+}
+function measureClear(){ MEASURE.a=null; MEASURE.b=null; MEASURE.fixed=false; }
+
+function drawMeasure(){
+  if(!MEASURE.a || !MEASURE.b) return;
+  const a=MEASURE.a, b=MEASURE.b, n=measureCount();
+  const horiz = a.y===b.y;
+  const x0=Math.min(a.x,b.x), x1=Math.max(a.x,b.x), y0=Math.min(a.y,b.y), y1=Math.max(a.y,b.y);
+  ctx.save();
+  // kotak yang terhitung diberi arsiran, supaya jelas mana saja yang masuk hitungan
+  ctx.fillStyle='rgba(178,58,72,.22)';
+  ctx.fillRect(viewX+x0*cellPx, viewY+y0*cellPx, (x1-x0+1)*cellPx, (y1-y0+1)*cellPx);
+  ctx.strokeStyle='#B23A48'; ctx.lineWidth=2;
+  ctx.strokeRect(viewX+x0*cellPx+1, viewY+y0*cellPx+1, (x1-x0+1)*cellPx-2, (y1-y0+1)*cellPx-2);
+  // titik di kedua ujung
+  for(const p of [a,b]){
+    ctx.beginPath();
+    ctx.arc(viewX+(p.x+.5)*cellPx, viewY+(p.y+.5)*cellPx, Math.max(3, cellPx*.22), 0, Math.PI*2);
+    ctx.fillStyle='#B23A48'; ctx.fill();
+  }
+  // label jumlah
+  const txt = n + (n===1?' square':' squares') + ' · ' + (n%2===0 ? 'even' : 'odd');
+  const fs = Math.round(clamp(cellPx*0.9, 15, 20));
+  ctx.font='700 '+fs+'px system-ui, sans-serif';
+  const tw = ctx.measureText(txt).width + 18, th = fs + 12;
+  let lx = viewX + (horiz ? ((x0+x1+1)/2)*cellPx - tw/2 : (x1+1)*cellPx + 10);
+  let ly = viewY + (horiz ? y0*cellPx - th - 8 : ((y0+y1+1)/2)*cellPx - th/2);
+  if(ly < 4) ly = viewY + (y1+1)*cellPx + 8;
+  // Label dijaga tetap di dalam kanvas yang terlihat.
+  const cw = canvas.clientWidth || canvas.width, ch = canvas.clientHeight || canvas.height;
+  lx = clamp(lx, 4, Math.max(4, cw - tw - 4));
+  ly = clamp(ly, 4, Math.max(4, ch - th - 4));
+
+  // Warna label dipilih dari warna desain TEPAT di bawahnya: di atas bidang
+  // gelap label jadi terang, di atas bidang terang label jadi gelap. Dengan
+  // satu warna tetap, label bisa tenggelam ke desain yang warnanya mirip.
+  const ucx = Math.floor((lx + tw/2 - viewX)/cellPx), ucy = Math.floor((ly + th/2 - viewY)/cellPx);
+  let under = '#ffffff';
+  if(ucx>=0 && ucy>=0 && ucx<state.width && ucy<state.height){
+    const v = getCellRaw(ucx, ucy);
+    if(v>=0 && state.palette[v]) under = state.palette[v].hex;
+  }
+  const rr=parseInt(under.slice(1,3),16)/255, gg=parseInt(under.slice(3,5),16)/255, bb=parseInt(under.slice(5,7),16)/255;
+  const lum = 0.2126*rr + 0.7152*gg + 0.0722*bb;
+  const darkLabel = lum > 0.45;
+  const boxFill  = darkLabel ? '#1B1B2F' : '#FFFFFF';
+  const txtFill  = darkLabel ? '#FFFFFF' : '#1B1B2F';
+  const ringFill = darkLabel ? '#FFFFFF' : '#1B1B2F';
+
+  const box = (x,y,w,h,r)=>{ ctx.beginPath();
+    if(ctx.roundRect) ctx.roundRect(x,y,w,h,r); else ctx.rect(x,y,w,h); };
+  // cincin kontras di luar kotak supaya tepinya tetap terlihat
+  ctx.fillStyle = ringFill; box(lx-2, ly-2, tw+4, th+4, 8); ctx.fill();
+  ctx.fillStyle = boxFill;  box(lx, ly, tw, th, 6); ctx.fill();
+  // Perataan teks ditetapkan eksplisit. Kanvas mewarisi setelan dari gambar
+  // sebelumnya - nomor baris digambar rata kanan dan tidak dikembalikan -
+  // sehingga tanpa ini teksnya berakhir di titik awal dan meluber keluar kotak.
+  ctx.fillStyle = txtFill; ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillText(txt, lx+9, ly+th/2+.5);
+  ctx.restore();
+}
+
 function clearSelection(){ selection=null; selMask=null; lassoPts=null;
   floatBuf=null; moveFrom=null; moveDelta=null;
   dupMode=false; dupPending=false; dupAnchor=null; dupBase=null; }
@@ -2244,6 +2325,17 @@ wrap.addEventListener('pointerdown', e=>{
   }
   if(!cell.inBounds && state.tool!=='select' && state.tool!=='lasso') return;
 
+  // Alat ukur: klik pertama titik awal, klik kedua mengunci hasilnya.
+  // Klik ketiga memulai pengukuran baru.
+  if(state.tool==='measure'){
+    if(!MEASURE.a || MEASURE.fixed){
+      MEASURE.a={x:cell.x,y:cell.y}; MEASURE.b={x:cell.x,y:cell.y}; MEASURE.fixed=false;
+    } else {
+      MEASURE.b=measureSnap(cell); MEASURE.fixed=true;
+    }
+    render(); return;
+  }
+
   if(state.tool==='pencil' || state.tool==='eraser'){
     pushHistory();
     drawing=true; lastCell=cell;
@@ -2314,6 +2406,10 @@ wrap.addEventListener('pointermove', e=>{
     const c = screenToCell(e.clientX,e.clientY);
     pasteMoveTo(c.x, c.y);
     return;
+  }
+  if(state.tool==='measure' && MEASURE.a && !MEASURE.fixed){
+    MEASURE.b = measureSnap(screenToCell(e.clientX,e.clientY));
+    render(); return;
   }
   if(TRACE.drag){
     TRACE.dx = TRACE.drag.dx + (e.clientX-TRACE.drag.mx)/cellPx;
@@ -2400,6 +2496,7 @@ window.addEventListener('resize', ()=>{ resizeCanvasToWrap(); });
 
 /* delete key removes selection contents */
 window.addEventListener('keydown', e=>{
+  if(e.key==='Escape' && state.tool==='measure' && MEASURE.a){ measureClear(); render(); return; }
   if(e.key==='Escape' && dupPending){ cancelDup(); return; }
   if(e.key==='Enter' && dupPending){ commitDup(); return; }
   if(e.key==='Escape' && pasteFloat){ cancelPaste(); return; }
@@ -3100,6 +3197,7 @@ $all('.tab-btn').forEach(b=> b.addEventListener('click', ()=>{
 /* ----------------------------- Toolbar wiring ------------------------------ */
 $all('.tool-btn[data-tool]').forEach(b=> b.addEventListener('click', ()=>{
   state.tool=b.dataset.tool;
+  measureClear();
   $all('.tool-btn[data-tool]').forEach(x=>x.classList.toggle('active',x===b));
   $('#statTool').textContent='TOOL: '+state.tool.toUpperCase();
   wrap.classList.toggle('tool-pan', state.tool==='pan');

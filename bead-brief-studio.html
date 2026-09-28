@@ -1,0 +1,1923 @@
+<title>Bead Brief Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#EEF0F4; --sheet:#FBFCFD; --ink:#1B2230; --ink-2:#4A5466; --ink-3:#7B8495;
+  --rule:#CAD1DC; --rule-2:#E0E5EC; --accent:#B0306E; --accent-ink:#FFFFFF; --accent-soft:#F6E0EA;
+  --peg:#D6DBE3;
+  --ok:#2F7A4F; --warn:#9A6A12; --bad:#B3261E; --focus:#2C6BB3;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#141821; --sheet:#1B202A; --ink:#E6EAF0; --ink-2:#B3BBC8; --ink-3:#868F9D;
+    --rule:#343C4A; --rule-2:#262D38; --accent:#E3689F; --accent-ink:#1C0B13; --accent-soft:#3B2130;
+    --peg:#2A313D;
+    --ok:#6CC08F; --warn:#D9A64A; --bad:#EF7B72; --focus:#7FB0EA; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#141821; --sheet:#1B202A; --ink:#E6EAF0; --ink-2:#B3BBC8; --ink-3:#868F9D;
+  --rule:#343C4A; --rule-2:#262D38; --accent:#E3689F; --accent-ink:#1C0B13; --accent-soft:#3B2130;
+  --peg:#2A313D;
+  --ok:#6CC08F; --warn:#D9A64A; --bad:#EF7B72; --focus:#7FB0EA; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--paper); color:var(--ink); font-family:var(--body); font-size:15px; line-height:1.5;
+  background-image:radial-gradient(circle at 12px 12px, var(--peg) 2.2px, transparent 2.6px);
+  background-size:24px 24px;
+}
+.wrap{max-width:1180px; margin:0 auto; padding-inline:16px; padding-block:28px 48px}
+header.top{display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:12px 24px; margin-bottom:22px}
+h1{font-family:var(--display); font-weight:700; font-size:clamp(28px,4.2vw,40px); line-height:1.05; margin:0; letter-spacing:-0.01em; text-wrap:balance}
+h1 .x{color:var(--accent)}
+.lede{margin:6px 0 0; color:var(--ink-2); max-width:62ch}
+.flow{display:flex; gap:6px; flex-wrap:wrap; font-family:var(--mono); font-size:12px; color:var(--ink-3)}
+.flow span{padding:3px 8px; border:1px solid var(--rule); border-radius:4px; background:var(--sheet)}
+.flow b{color:var(--ink); font-weight:500}
+.grid{display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); gap:20px; align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:1fr} .preview{position:static}}
+.panel{background:var(--sheet); border:1px solid var(--rule); border-radius:10px; padding:20px}
+.panel h2{font-family:var(--display); font-weight:500; font-size:19px; margin:0 0 14px}
+form{display:flex; flex-direction:column; gap:16px}
+.field{display:flex; flex-direction:column; gap:6px; min-width:0}
+label, .lab{font-size:12px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-2)}
+.opt{text-transform:none; letter-spacing:0; font-weight:400}
+.hint{font-size:13px; color:var(--ink-3); margin:0}
+input[type=text], input[type=number], textarea, select{
+  font:inherit; color:var(--ink); background:var(--paper); border:1px solid var(--rule); border-radius:6px;
+  padding:9px 11px; width:100%;
+}
+textarea{min-height:88px; resize:vertical}
+input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-visible{outline:2px solid var(--focus); outline-offset:2px}
+.row{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px}
+@media (max-width:480px){.row{grid-template-columns:1fr 1fr}}
+.num{font-family:var(--mono); font-variant-numeric:tabular-nums}
+.chips{display:flex; flex-wrap:wrap; gap:6px}
+.chip{font:500 13px var(--mono); padding:5px 10px; border-radius:999px; border:1px solid var(--rule); background:var(--paper); color:var(--ink-2); cursor:pointer}
+.chip small{font:400 11px var(--body); color:var(--ink-3); margin-left:4px}
+.chip[aria-pressed="true"]{border-color:var(--accent); color:var(--accent); background:var(--accent-soft)}
+.seg{display:flex; flex-wrap:wrap; border:1px solid var(--rule); border-radius:8px; overflow:hidden; align-self:flex-start; max-width:100%}
+.seg button{font:500 14px var(--body); padding:8px 14px; border:0; background:var(--paper); color:var(--ink-2); cursor:pointer; flex:1 1 auto}
+.seg button+button{border-left:1px solid var(--rule)}
+.seg button[aria-pressed="true"]{background:var(--ink); color:var(--sheet)}
+.check{display:flex; gap:10px; align-items:flex-start; font-size:14px; color:var(--ink); text-transform:none; letter-spacing:0; font-weight:500}
+.check input{margin-top:3px; width:16px; height:16px; accent-color:var(--accent)}
+.check span small{display:block; color:var(--ink-3); font-size:13px; font-weight:400}
+fieldset.fmt{border:1px solid var(--rule); border-radius:8px; padding:14px 14px 16px; margin:0; display:flex; flex-direction:column; gap:12px; min-width:0}
+fieldset.fmt legend{font:500 15px var(--display); padding:0 6px; color:var(--ink)}
+input[type=file]{font-size:13px; color:var(--ink-2); max-width:100%}
+.actions{display:flex; flex-wrap:wrap; gap:10px; align-items:center; padding-top:4px}
+.btn{font:600 15px var(--body); border-radius:8px; padding:11px 18px; cursor:pointer; border:1px solid var(--rule); background:var(--paper); color:var(--ink)}
+.btn.primary{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+.btn:disabled{opacity:.5; cursor:not-allowed}
+.btn.small{font-size:13px; padding:7px 12px}
+.files{display:flex; flex-wrap:wrap; gap:8px}
+.status{font-size:14px; color:var(--ink-2); min-height:1.5em; margin:0}
+.status.ok{color:var(--ok)} .status.bad{color:var(--bad)} .status.warn{color:var(--warn)}
+.preview{position:sticky; top:calc(env(safe-area-inset-top,0px) + 12px); display:flex; flex-direction:column; gap:14px}
+.canvasbox{background:var(--paper); border:1px solid var(--rule-2); border-radius:8px; padding:12px; display:flex; justify-content:center}
+#prev{max-width:100%; height:auto; display:block; box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.specs{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 16px; margin:0}
+.specs div{display:flex; justify-content:space-between; gap:8px; border-bottom:1px dashed var(--rule); padding-bottom:4px}
+.specs dt{font-size:13px; color:var(--ink-3)}
+.specs dd{margin:0; font:500 13px var(--mono); font-variant-numeric:tabular-nums; text-align:right}
+.note{font-size:13px; padding:8px 10px; border-radius:6px; margin:0; background:var(--accent-soft); color:var(--ink)}
+.howto h3{font:500 15px var(--display); margin:0 0 6px}
+.howto ol{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:4px; font-size:14px; color:var(--ink-2)}
+code{font:12.5px var(--mono); background:var(--paper); border:1px solid var(--rule-2); border-radius:4px; padding:0 4px; word-break:break-all}
+details{border-top:1px solid var(--rule); padding-top:10px}
+summary{cursor:pointer; font-weight:600; font-size:14px}
+pre{font:12px/1.5 var(--mono); background:var(--paper); border:1px solid var(--rule-2); border-radius:6px; padding:12px; max-height:340px; overflow:auto; white-space:pre-wrap; word-break:break-word; margin:10px 0 0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important; animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Bead Brief <span class="x">Studio</span></h1>
+      <p class="lede">Brief sekali untuk desain fuse bead berbentuk potongan. Unduh 3 file: template grid, skill untuk membuat gambar, dan skill untuk mengubah gambar jadi project JSON Pegwright dengan kode Artkal S dan latar kosong.</p>
+    </div>
+    <div class="flow" aria-label="Alur kerja">
+      <span><b>1</b> brief di sini</span><span><b>2</b> template + skill gambar → ChatGPT</span><span><b>3</b> gambar + skill JSON → AI dengan Python → Pegwright</span>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="panel" aria-labelledby="h-brief">
+      <h2 id="h-brief">Brief desain</h2>
+      <form id="f" novalidate>
+        <div class="field">
+          <label for="theme">Desain yang mau dibuat</label>
+          <textarea id="theme" placeholder="contoh: kucing oranye tidur melingkar di atas bantal biru">stroberi kawaii dengan wajah tersenyum, pipi merah muda, daun hijau di atas</textarea>
+          <p class="hint">Satu objek utama. Hindari tokoh bermerek (Disney, Pokémon, dan sejenisnya).</p>
+        </div>
+        <div class="field">
+          <label for="title">Judul desain</label>
+          <input type="text" id="title" value="Kawaii Strawberry" placeholder="dipakai di nama file dan kartu spesifikasi">
+        </div>
+
+        <div class="field">
+          <span class="lab" id="lab-size">Ukuran (manik: kolom × baris)</span>
+          <div class="chips" role="group" aria-labelledby="lab-size" id="presets">
+            <button type="button" class="chip" data-w="29" data-h="29">29 × 29<small>1 papan</small></button>
+            <button type="button" class="chip" data-w="40" data-h="40">40 × 40</button>
+            <button type="button" class="chip" data-w="29" data-h="58">29 × 58<small>1 × 2</small></button>
+            <button type="button" class="chip" data-w="58" data-h="58">58 × 58<small>2 × 2</small></button>
+            <button type="button" class="chip" data-w="20" data-h="20">20 × 20<small>gantungan</small></button>
+          </div>
+          <div class="row">
+            <div class="field"><label for="w">Kolom</label><input class="num" type="number" id="w" min="8" max="150" value="29"></div>
+            <div class="field"><label for="h">Baris</label><input class="num" type="number" id="h" min="8" max="150" value="29"></div>
+            <div class="field"><label for="n">Warna manik</label><input class="num" type="number" id="n" min="2" max="20" value="6"></div>
+          </div>
+          <p class="hint">Warna manik tidak termasuk latar (latar kosong, tanpa manik).</p>
+        </div>
+
+        <div class="field">
+          <span class="lab" id="lab-sym">Simetri</span>
+          <div class="seg" role="group" aria-labelledby="lab-sym">
+            <button type="button" id="sym-balanced" aria-pressed="true">Seimbang (boleh tidak simetris)</button>
+            <button type="button" id="sym-symmetric" aria-pressed="false">Simetris cermin</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="check" for="outline"><input type="checkbox" id="outline" checked>
+            <span>Garis tepi gelap mengelilingi bentuk <small>Disarankan: potongan lebih rapi, dan bagian putih di dalam desain tidak ikut terhapus saat latar dikosongkan.</small></span></label>
+          <div class="field"><label for="outlinecolor">Warna garis tepi</label><input type="text" id="outlinecolor" value="hitam"></div>
+        </div>
+
+        <div class="field">
+          <label for="colors">Keinginan warna <span class="opt">(opsional)</span></label>
+          <input type="text" id="colors" value="merah stroberi, pink pipi, hijau daun, kuning biji, putih kilau, hitam" placeholder="contoh: oranye, putih, biru muda, hitam">
+        </div>
+        <div class="field">
+          <label for="notes">Catatan tambahan <span class="opt">(opsional)</span></label>
+          <input type="text" id="notes" value="" placeholder="contoh: untuk gantungan kunci, beri lubang 1 manik di atas">
+        </div>
+
+        <fieldset class="fmt">
+          <legend>Format JSON (Pegwright)</legend>
+          <p class="hint">Dipakai skill JSON sebagai isi project. Tersimpan di browser ini. Bisa diambil dari project Pegwright lama.</p>
+          <div class="field">
+            <label for="importjson">Ambil dari project Pegwright <span class="opt">(opsional)</span></label>
+            <input type="file" id="importjson" accept=".json,application/json">
+          </div>
+          <div class="row">
+            <div class="field"><label for="designer">Designer</label><input type="text" id="designer" value="GradientSkyCo"></div>
+            <div class="field"><label for="board">Papan (pasak)</label><input class="num" type="number" id="board" min="5" max="120" value="29"></div>
+            <div class="field"><label for="extra">Cadangan %</label><input class="num" type="number" id="extra" min="0" max="100" value="10"></div>
+          </div>
+          <div class="row">
+            <div class="field"><label for="bag">Manik / kantong</label><input class="num" type="number" id="bag" min="1" max="100000" value="1000"></div>
+          </div>
+        </fieldset>
+
+        <div class="actions">
+          <button type="submit" class="btn primary" id="go">Generate &amp; unduh 3 file</button>
+          <div class="files">
+            <button type="button" class="btn small" id="dl-png">Template (.png)</button>
+            <button type="button" class="btn small" id="dl-md">Skill gambar (.md)</button>
+            <button type="button" class="btn small" id="dl-json">Skill JSON (.md)</button>
+          </div>
+        </div>
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <aside class="panel preview" aria-labelledby="h-prev">
+      <h2 id="h-prev">Template grid</h2>
+      <div class="canvasbox"><canvas id="prev" width="300" height="300" aria-label="Pratinjau template grid kosong"></canvas></div>
+      <dl class="specs" id="specs"></dl>
+      <p class="note" id="densewarn" hidden></p>
+      <div class="howto">
+        <h3>Cara pakai</h3>
+        <ol>
+          <li>Upload <code id="fn-png">grid.png</code> + <code id="fn-md">skill-gambar….md</code> ke ChatGPT, tulis “ikuti skill ini”.</li>
+          <li>Simpan gambar hasilnya (dan salin kartu <code>CHART SPEC</code> kalau ada).</li>
+          <li>Upload gambar + <code id="fn-json">skill-json….md</code> ke AI yang bisa menjalankan Python, tulis “ikuti skill ini”.</li>
+          <li>Buka JSON-nya di Pegwright: File → Open project (.json).</li>
+        </ol>
+      </div>
+      <details><summary>Isi skill gambar</summary><pre id="skillpre"></pre></details>
+      <details><summary>Isi skill JSON (tanpa script)</summary><pre id="jsonpre"></pre></details>
+    </aside>
+  </div>
+</div>
+
+<script type="text/plain" id="imgTpl">---
+name: fuse-bead-image-{{SLUG}}
+description: Color the attached blank grid template ({{FILE}}) into a fuse bead (Artkal/Perler 5 mm) design image of "{{TITLE}}" with an empty background. Use when the user uploads this file with the grid template and asks to follow it.
+---
+
+# {{TITLE}}: fuse bead design image (fill the grid template)
+
+The user attached this skill and a blank grid template `{{FILE}}`. Produce **one image of a
+fuse bead design** by painting the cells of that grid with your image tool, plus a spec card.
+Each cell is one bead. The image will be converted cell by cell into a Pegwright bead
+pattern with Artkal S color codes, and every **unpainted cell becomes "no bead"**. So flat
+colors, grid-aligned shapes and a clean empty background matter more than artistic detail.
+
+Reply in the language the user writes in. Everything below is already decided. Do not ask
+about it again. Only ask if the template image is missing.
+
+## Brief
+
+- **Design:** {{THEME}}
+- **Grid template:** `{{FILE}}`, {{W}} columns × {{H}} rows of square cells, with a thicker
+  line every 10 cells ({{BLOCKS}}), a dark frame and a white margin, canvas {{CANVAS}}.
+- **Bead colors:** exactly {{N}}. The empty background does not count.
+- **Color wishes:** {{COLORS}}
+- **Outline:** {{OUTLINE}}
+- **Symmetry:** {{SYM}}. {{SYMRULE}}
+- **Extra notes:** {{NOTES}}
+
+**Trademarks:** if the design names a trademarked character, brand or logo, do not draw it.
+The designs are sold on Etsy. Draw an original alternative and say so in one line.
+
+## 1. Plan (silently)
+
+**The piece:**
+- **One shaped piece.** Every bead touches the rest side to side, so the piece holds together
+  after ironing. No floating details, sparkles or separate letters around it; put details
+  inside the shape.
+- The piece fills most of the grid, with **at least 1 unpainted cell between it and the frame
+  on every side**.
+- **Background: leave every cell outside the piece unpainted**, in the template's light grey
+  `#F2F2F2`. No sky, scenery, ground, frame or background color.
+- {{OUTLINERULE}}
+
+**Colors, exactly {{N}} bead colors:**
+- Use real fuse bead colors: solid, clearly different from each other, in bright or classic
+  bead shades.
+- **No shading tones.** Each part is one flat color. Details use an existing palette color,
+  never an extra lighter or darker shade.
+- White and very light parts are fine inside the outline. Never use light grey `#F2F2F2`
+  in the design, because that means "no bead".
+- Give each color a short name and a hex code.
+
+**Shapes:**
+- Pixel art on the grid: every cell is one solid color, and shapes follow the cell edges.
+  Diagonals are clean stair steps.
+- Single-bead details (eyes, highlights, a nose) are fine for fuse beads, but keep them few
+  and deliberate.
+- Simple, bold, cute and readable at this small size. No text, letters or numbers.
+
+## 2. Prompt for the image tool (edit mode, template attached)
+
+```
+EDIT THIS IMAGE. It is a blank bead-pattern grid of {{W}} columns x {{H}} rows of square cells,
+divided by thicker lines into blocks of 10 x 10 cells ({{BLOCKS}}).
+
+KEEP AS IS: the canvas size, the white margin, the dark frame, and every grid line (thin and
+thick) in its position. Do not add, remove, move, bend, stretch, blur or redraw grid lines.
+Do not add rows or columns. Do not crop or zoom.
+
+YOUR ONLY TASK: paint the cells of ONE fuse bead design (perler / artkal bead pixel art).
+Each painted cell is exactly ONE solid flat color filling the whole cell. Shapes follow the
+cell edges: no half-painted cells, no anti-aliasing, no gradients, no shading, no texture,
+no round bead drawings, no outlines drawn on top of the grid.
+LEAVE THE BACKGROUND UNPAINTED: every cell outside the design keeps the template's light grey
+(#F2F2F2). Keep at least one unpainted cell between the design and the frame on every side.
+
+PALETTE (use only these {{N}} colors, no other shades):
+<one line per color: Name #HEX - what it is used for>
+
+DESIGN: {{THEME}}. <describe each part with its palette color>
+One single connected piece, no floating parts. {{OUTLINEPROMPT}}
+LAYOUT (10x10 blocks, counted from the top-left): <where the piece sits, roughly centered>
+{{SYMPROMPT}}
+
+STYLE: bold, simple, cute fuse bead pixel art, readable at small size, clean stair-step edges.
+
+DO NOT add: text, numbers, legend, color key, watermark, background color, scenery, pegboard,
+beads drawn as circles, mockup, perspective, shadows.
+```
+
+## 3. Check the result
+
+The grid size is a **target, not a pass/fail test.** Image models often redraw the grid with
+a few more or fewer rows or columns. That is fine: the conversion step reads the real size.
+**Never regenerate only because the cell or block count differs.**
+
+Regenerate (at most 3 attempts in total) only for these real failures:
+1. Grid lines are missing, wavy, blurred or uneven, so cells are not clean squares.
+2. There is text, a legend, a color key, a watermark, a mockup, drawn round beads, or
+   perspective.
+3. There is shading, gradients or texture inside cells, or clearly more than {{N}} + 1 colors.
+4. The background got a scene or a gradient. A single flat light background color is
+   acceptable; the converter still removes it.
+5. The piece touches the frame, falls apart into separate parts, or has a broken outline.
+6. The design ignores the brief (wrong subject, wrong symmetry choice).
+
+When retrying, keep the prompt and add one sentence at the top naming the failure. After 3
+attempts, deliver the best one and say what is still wrong.
+
+## 4. Deliver
+
+1. The finished image.
+2. The spec card, exactly in this format:
+
+```
+CHART SPEC
+Title: {{TITLE}}
+Theme: {{THEME}}
+Size: {{W}} x {{H}} (target; real size is read during conversion)
+Colors: {{N}} bead colors (background empty)
+Palette: #HEX=Name,#HEX=Name,...
+Background: empty (no beads)
+Outline: {{OUTLINESHORT}}
+Symmetry: {{SYM}}
+Method: template fill (fuse beads)
+```
+
+3. One line on anything that did not come out right.
+</script>
+<script type="text/plain" id="jsonTpl">---
+name: pegwright-json-{{SLUG}}
+description: Convert the finished fuse bead design image of "{{TITLE}}" into a Pegwright project JSON with Artkal S codes and an empty background ({{W}} x {{H}} target, {{N}} bead colors). Use when the user uploads this file together with the design image made from the matching grid template.
+---
+
+# {{TITLE}}: bead design image → Pegwright JSON
+
+The user attached this skill and a **finished bead design image**: a grid of colored cells,
+made by coloring the template `grid_{{W}}x{{H}}.png`, with the background left unpainted. They
+may also paste a `CHART SPEC` card. Your deliverable is **one Pegwright project JSON**, which
+opens in Pegwright Fuse Bead Pattern Studio via *File → Open project*. Also include the
+numbered chart PNG for checking and a short report.
+
+Reply in the language the user writes in. Everything below is already decided. Do not ask
+about it again. Only ask if the design image is missing.
+
+## Brief
+
+- **Title:** {{TITLE}}
+- **Target size:** {{W}} × {{H}} beads. This is a target, not a hard rule (see step 3).
+- **Bead colors:** {{N}}, matched to real **Artkal S** (5 mm) codes.
+- **Background:** empty. Cells outside the piece are `-1` (no bead).
+- **Symmetry:** {{SYM}}
+- **Pegwright settings:** designer {{DESIGNER}}, pegboard {{BOARD}} × {{BOARD}},
+  {{EXTRA}} % spare beads, {{BAG}} beads per bag.
+
+## Golden rules
+
+- **Never read the cells by eye and type them out.** Every cell must come from the script.
+  Your eyes are for reviewing and for small, exact `edit` operations.
+- **Code execution is required** (Python 3 with numpy + Pillow). If you cannot run code, say
+  so in one sentence and stop. Never produce a guessed JSON. Suggest a chat with code
+  execution enabled, or running the script locally (`pip install numpy pillow`).
+- Coordinates are **1-based: row 1 = top, column 1 = left**, everywhere.
+
+## Step 1: Extract the script and the format template
+
+Both are embedded at the end of this file between marker lines. Extract them with code (do
+not retype), for example:
+
+```python
+import glob
+cands = glob.glob('**/*.md', recursive=True) + glob.glob('/mnt/data/*.md') + glob.glob('/mnt/user-data/uploads/*.md')
+skill = [p for p in cands if 'BEGIN-' + 'IMG2PATTERN' in open(p, encoding='utf-8', errors='ignore').read()][0]
+src = open(skill, encoding='utf-8').read()
+cut = lambda a, b: src.split('#### ' + a)[-1].split('#### ' + b)[0]
+open('img2pattern.py', 'w', encoding='utf-8').write(cut('BEGIN-' + 'IMG2PATTERN', 'END-' + 'IMG2PATTERN'))
+open('example.json', 'w', encoding='utf-8').write(cut('BEGIN-' + 'EXAMPLEJSON', 'END-' + 'EXAMPLEJSON').strip())
+print('ok')
+```
+
+Adjust the search paths to wherever uploaded files live. Only if code cannot read the
+uploaded .md file, write both parts out verbatim from the text and check them with
+`python -c "import ast,json;ast.parse(open('img2pattern.py').read());json.load(open('example.json'))"`.
+
+## Step 2: Convert
+
+Run this (replace `IMAGE` with the uploaded design image path):
+
+```bash
+python img2pattern.py convert IMAGE --example example.json --format pegwright --cols {{W}} --rows {{H}} --colors {{N}} {{SYMFLAG}} --title "{{TITLE}}" --out "{{OUTNAME}}"
+```
+
+`--colors` counts **bead** colors; the empty background is handled separately. If the user
+pasted a `CHART SPEC` card with a `Palette:` line, you may replace `--colors {{N}}` with
+`--palette "<that line after 'Palette: '>"`. The colors are matched to Artkal S either way.
+
+What the script does, so you can read its report:
+- **Grid:** finds the real grid lines and the drawn frame, then reads the centre of each
+  cell.
+- **Colors:** merges shading tones into the color they sit against and drops blend colors.
+  - `ARTKAL` lines show each color matched to the nearest Artkal S bead, with its code,
+    name and difference.
+  - Two colors that match the same bead are merged.
+- **Background:** `EMPTY` means the color on the grid edges, wherever it touches the edge, was
+  turned into no bead (`-1`). Same-colored areas enclosed by the piece stay beads.
+- **Background slot:** `BGSLOT` means the background color was placed as the **last** palette
+  slot, with 0 beads when it only surrounded the piece. Pegwright treats the last slot as
+  the background color and leaves 0-bead colors out of the shopping list.
+- **Cleanup:** removes uncertain stray cells and unifies look-alike repeated motifs.
+  {{SYMNOTE}}
+- **Output:** writes the JSON plus `_preview.png` (source | chart | doubtful and auto-fixed
+  cells) and `_chart.png` (numbered; dots mark empty cells).
+
+## Step 3: Size
+
+- **Extra empty or partial edge lines:** trimmed automatically.
+- **Fewer cells than {{W}} × {{H}}:** empty rows/columns are added evenly (`PAD`), so the file
+  is exactly {{W}} × {{H}}.
+- **More rows/columns that contain the design:** nothing is cut (`TRIM … STOPPED … kept N`).
+  Keep that real size and tell the user. They can resize in Pegwright.
+
+## Step 4: Review
+
+Look at `_preview.png` and `_chart.png` next to the source image. Run
+`python img2pattern.py check "{{OUTNAME}}"`. To zoom in:
+`python img2pattern.py render "{{OUTNAME}}" --region r0,c0,r1,c1`.
+
+1. **Empty background.** Everything outside the piece is empty, and nothing inside the piece
+   was lost. If a light part of the design touching the edge was removed, restore it with
+   `set`.
+2. **One piece.** `PIECES` should be 1. A loose part will fall off after ironing. Join it
+   (fill the gap with the outline color) or remove it if it is a stray cell. Keep it only if
+   the design clearly has separate pieces.
+3. **Outline.** The outline is continuous: no gaps and no stray outline cells outside it.
+4. **Colors.** {{N}} bead colors, each with an Artkal code, plus possibly the 0-bead
+   background slot at the end.
+   - Keep the Artkal names and codes; they are what buyers purchase.
+   - If a match looks clearly wrong next to the source (e.g. a pink that became red), swap it
+     with `{"op":"artkal","color":"<name or code>","code":"S.."}`.
+   - Merge near-duplicates with `merge`.
+5. **Clean shapes.** No leftover blend cells along outlines and no one-bead holes in solid
+   areas. Keep intended single beads (eyes, highlights).
+
+Rules: never invent or remove design elements. Edit only to make the source cleaner and more
+consistent, with exact coordinates from the numbered images. Re-check after each batch. If
+you are unsure about an area, list it for the user instead of guessing.
+
+Edit operations (`python img2pattern.py edit "{{OUTNAME}}" ops.json` or inline JSON):
+
+```json
+[
+  {"op":"set","cells":[[12,9],[12,21]],"color":"S13"},
+  {"op":"set","cells":[[1,1],[1,2]],"color":"empty"},
+  {"op":"rect","from":[20,10],"to":[21,14],"color":"Black"},
+  {"op":"mirror","axis_col":15,"keep":"left","rows":[1,29],"cols":[2,28]},
+  {"op":"merge","old":"S02","new":"S05"},
+  {"op":"artkal","color":"S05","code":"S25"}
+]
+```
+
+Colors can be given by Artkal code, name or index. `"empty"` means no bead. `axis_col` may be
+x.5.
+
+## Step 5: Deliver
+
+- `{{OUTNAME}}`, a Pegwright project with `v, title, designer, notes, width, height, cells,
+  palette, paletteName, app:"pegwright", boardSize, extraPct, bagSize`. The `cells` are
+  row-major from the top-left, with `-1` = no bead. Each palette entry is
+  `{id, name, hex, brand:"Artkal S", yardage:0, code, hidden:false}`.
+- Validate:
+  - `len(cells) == width*height`;
+  - every cell is `-1` or less than the palette length;
+  - every palette color except the last background slot is used.
+- Send the JSON and the final `_chart.png`. The user opens the JSON in Pegwright via
+  *File → Open project (.json)*.
+- Report in a few lines:
+  - final size and the number of pegboards;
+  - bead count per Artkal code;
+  - what was auto-fixed and your edits;
+  - areas to check by eye (row/column ranges).
+
+---
+
+Format template (Pegwright). The script copies designer, notes and the board settings.
+
+```json
+#### BEGIN-EXAMPLEJSON
+{{EXAMPLEJSON}}
+#### END-EXAMPLEJSON
+```
+
+Converter script (Python 3, needs numpy and Pillow):
+
+```python
+</script>
+<script type="text/plain" id="convCode">#!/usr/bin/env python3
+"""
+img2pattern.py - turn an AI-generated grid image (tapestry / colorwork chart) into a
+Warpwright pattern JSON, precisely and symmetrically. Needs only Pillow + numpy.
+
+  convert  python img2pattern.py convert IMAGE --example EX.json --cols 60 --rows 70 --out OUT.json
+           [--colors K | --palette "#HEX=Name,..." | --use-example-palette]
+           [--title T] [--soft-mirror | --no-symmetry] [--no-motif] [--no-despeckle]
+           -> OUT.json, OUT_preview.png (source | chart | doubtful+fixed), OUT_chart.png (numbered)
+  check    python img2pattern.py check OUT.json        (size, symmetry, asymmetric pairs, lone cells, colors)
+  render   python img2pattern.py render OUT.json [--region r0,c0,r1,c1]   (numbered chart / zoom)
+  edit     python img2pattern.py edit OUT.json OPS.json|'[...]' [--out NEW.json]  (see edit_main doc)
+
+Coordinates everywhere: 1-based, row 1 = top, column 1 = left.
+"""
+import argparse, json, random, string, sys, os
+import numpy as np
+from PIL import Image
+
+# ---------------------------------------------------------------- color utils
+def srgb_to_lab(rgb):
+    rgb = np.asarray(rgb, dtype=np.float64) / 255.0
+    lin = np.where(rgb <= 0.04045, rgb / 12.92, ((rgb + 0.055) / 1.055) ** 2.4)
+    M = np.array([[0.4124564, 0.3575761, 0.1804375],
+                  [0.2126729, 0.7151522, 0.0721750],
+                  [0.0193339, 0.1191920, 0.9503041]])
+    xyz = lin @ M.T / np.array([0.95047, 1.0, 1.08883])
+    f = np.where(xyz > 216 / 24389, np.cbrt(xyz), (24389 / 27 * xyz + 16) / 116)
+    L = 116 * f[..., 1] - 16
+    a = 500 * (f[..., 0] - f[..., 1])
+    b = 200 * (f[..., 1] - f[..., 2])
+    return np.stack([L, a, b], -1)
+
+def hexs(rgb):
+    return "#%02X%02X%02X" % tuple(int(round(v)) for v in rgb)
+
+def hex2rgb(h):
+    h = h.lstrip("#"); return [int(h[i:i + 2], 16) for i in (0, 2, 4)]
+
+def color_name(rgb):
+    lab = srgb_to_lab(np.array(rgb)); L, a, b = lab
+    r, g, bl = [v / 255 for v in rgb]
+    mx, mn = max(r, g, bl), min(r, g, bl); C = np.hypot(a, b)
+    if C < 8:
+        if L > 92: return "White"
+        if L > 80: return "Light Gray"
+        if L > 45: return "Gray"
+        if L > 20: return "Charcoal"
+        return "Black"
+    d = mx - mn
+    if mx == r: h = ((g - bl) / d) % 6
+    elif mx == g: h = (bl - r) / d + 2
+    else: h = (r - g) / d + 4
+    h *= 60
+    if C < 22 and L > 70:
+        base = "Cream" if 20 <= h < 75 else ("Blush" if h < 20 or h >= 330 else "Pale")
+        return base
+    names = [(12, "Red"), (35, "Orange"), (48, "Gold"), (66, "Yellow"), (95, "Lime"),
+             (160, "Green"), (190, "Teal"), (215, "Sky Blue"), (250, "Blue"),
+             (280, "Purple"), (320, "Magenta"), (355, "Pink"), (361, "Red")]
+    n = next(nm for lim, nm in names if h < lim)
+    if n in ("Pink", "Magenta") and L < 55: n = "Red" if n == "Pink" else "Plum"
+    if n == "Blue" and L < 35: n = "Navy"
+    if n in ("Orange", "Gold") and L < 45: n = "Brown"
+    if n in ("Orange", "Red", "Pink") and L > 75 and C < 45: n = "Peach" if n == "Orange" else "Light Pink"
+    if L < 35 and n not in ("Navy", "Brown"): n = "Dark " + n
+    elif L > 80 and not n.startswith(("Light", "Peach", "Cream")): n = "Light " + n
+    return n
+
+def rid(n=12):
+    return "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(n))
+
+# ---------------------------------------------------------------- grid detection
+def line_score(gray, axis):
+    """Fraction of pixels along each column (axis=0) / row (axis=1) that sit on a
+    dark line 1-4 px wide (darker than the pixels on both sides of the run)."""
+    g = gray if axis == 0 else gray.T
+    n = g.shape[1]; s = np.zeros(n)
+    for w in (1, 2, 3, 4):
+        if n <= w + 2: break
+        run = np.max(np.stack([g[:, 1 + k:n - w + k] for k in range(w)]), 0)   # brightest px of the run
+        left, right = g[:, :n - w - 1], g[:, w + 1:]
+        dark = ((run < left - 12) & (run < right - 12)).mean(0)
+        c = 1 + (w - 1) // 2
+        s[c:c + len(dark)] = np.maximum(s[c:c + len(dark)], dark)
+    return s
+
+def estimate_period(s, lo=6, hi=80):
+    """Typical grid spacing: median distance between strong line peaks (robust to the
+    irregular spacing of AI-drawn grids); autocorrelation as a fallback."""
+    idx = [i for i in range(1, len(s) - 1) if s[i] >= s[i - 1] and s[i] >= s[i + 1] and s[i] > 0.05]
+    if len(idx) >= 6:
+        top = np.sort(s[idx])[::-1]
+        thr = 0.5 * np.median(top[:max(5, len(idx) // 3)])
+        pk = []
+        for i in idx:
+            if s[i] < thr: continue
+            if pk and i - pk[-1] < lo:
+                if s[i] > s[pk[-1]]: pk[-1] = i
+            else: pk.append(i)
+        d = np.diff(pk); d = d[(d >= lo) & (d <= hi)]
+        if len(d) >= 5: return float(np.median(d))
+    x = s - s.mean()
+    ac = np.array([np.dot(x[:-k], x[k:]) / (len(x) - k) for k in range(lo, min(hi, len(x) // 3))])
+    return lo + int(np.argmax(ac))
+
+def find_lines(s, n_cells=None):
+    L = len(s)
+    period = estimate_period(s) if n_cells is None else L / n_cells
+    # candidate peaks (relative to the typical strength of real grid lines)
+    raw = [i for i in range(1, L - 1) if s[i] > 0.05 and s[i] >= s[i - 1] and s[i] >= s[i + 1]]
+    if not raw:
+        return None, period
+    strong = np.sort(s[raw])[::-1][:max(3, int(L / period * 0.5))]
+    thr = max(0.08, 0.45 * np.median(strong))
+    edge = max(3, int(period * 0.25))           # faint marks at the image border are not lines
+    peaks = [i for i in raw if s[i] >= thr and edge <= i <= L - 1 - edge]
+    merged = []
+    for p in peaks:
+        if merged and p - merged[-1] < period * 0.45:
+            if s[p] > s[merged[-1]]: merged[-1] = p
+        else:
+            merged.append(p)
+    if len(merged) < 3:
+        return None, period
+    # walk: keep peaks spaced ~period, fill gaps where a line is missing
+    lines = [merged[0]]
+    for p in merged[1:]:
+        gap = p - lines[-1]
+        if gap < period * 0.6:
+            continue
+        k = max(1, round(gap / period))
+        base = lines[-1]
+        for j in range(1, k):                      # a grid line is missing -> interpolate
+            lines.append(int(round(base + gap * j / k)))
+        lines.append(p)
+    return lines, period
+
+def extend_to_border(lines, period, L, strip_has_cells):
+    """Add the cells between the outermost line and the image border - but only when the
+    grid really continues there. A plain margin outside a drawn frame is not cells."""
+    if lines[0] > period * 0.6 and strip_has_cells("start"):
+        while lines[0] > period * 1.6:
+            lines.insert(0, int(round(lines[0] - period)))
+        if lines[0] > period * 0.6:
+            lines.insert(0, 0)
+    if (L - 1 - lines[-1]) > period * 0.6 and strip_has_cells("end"):
+        while (L - 1 - lines[-1]) > period * 1.6:
+            lines.append(int(round(lines[-1] + period)))
+        if (L - 1 - lines[-1]) > period * 0.6:
+            lines.append(L - 1)
+    return lines
+
+def find_frame(gray, axis, lines, period, o_lo, o_hi):
+    """A drawn frame is a dark band (>= 3 px) running along the whole grid at one end.
+    Returns {side: boundary} where boundary is the frame's inner edge - or, when design
+    cells touch the frame (band wider than a cell), the outermost grid line inside it."""
+    prof = (gray[o_lo:o_hi, :] < 90).mean(0) if axis == 0 else (gray[:, o_lo:o_hi] < 90).mean(1)
+    dark = prof > 0.85
+    L = len(prof); out = {}
+    def runs(a, b):
+        r, i = [], a
+        while i < b:
+            if dark[i]:
+                j = i
+                while j < b and dark[j]: j += 1
+                r.append((i, j - 1)); i = j
+            else: i += 1
+        return r
+    lo_reg = (0, min(L, int(lines[0] + 1.5 * period)))
+    hi_reg = (max(0, int(lines[-1] - 1.5 * period)), L)
+    for side, (a, b) in (("start", lo_reg), ("end", hi_reg)):
+        cand = [r for r in runs(a, b) if r[1] - r[0] + 1 >= 3]
+        if not cand: continue
+        r0, r1 = cand[0] if side == "start" else cand[-1]
+        # the band must be at the outside: nothing but bright margin beyond it
+        beyond = prof[:r0] if side == "start" else prof[r1 + 1:]
+        if len(beyond) and beyond.max() > 0.5: continue
+        inner = [p for p in lines if r0 <= p <= r1]
+        if (r1 - r0 + 1) > 1.2 * period and inner:
+            if side == "start": inner = [p for p in inner if p - r0 >= 3]; bnd = max(inner) if inner else r1 + 1
+            else:               inner = [p for p in inner if r1 - p >= 3]; bnd = min(inner) if inner else r0 - 1
+        else:
+            bnd = r1 + 1 if side == "start" else r0 - 1
+        out[side] = bnd
+    return out
+
+def apply_frame(lines, period, frame):
+    if "start" in frame:
+        b = frame["start"]; lines = [b] + [p for p in lines if p > b + 0.4 * period]
+    if "end" in frame:
+        b = frame["end"]; lines = [p for p in lines if p < b - 0.4 * period] + [b]
+    return lines
+
+def detect_grid(img, cols=None, rows=None):
+    a = np.asarray(img.convert("RGB")).astype(np.float64)
+    gray = a.mean(2)
+    note = []
+    xs, px = find_lines(line_score(gray, 0))
+    ys, py = find_lines(line_score(gray, 1))
+    if xs is not None and ys is not None:
+        def cont(lines_other, axis):
+            # do the perpendicular grid lines carry on into the strip beyond the outer line?
+            def test(side, lines_self):
+                lo, hi = (0, lines_self[0]) if side == "start" else (lines_self[-1] + 1, (gray.shape[1] if axis == 0 else gray.shape[0]))
+                if hi - lo < 4: return False
+                hits = []
+                for p in lines_other[1:-1]:
+                    if axis == 0: band, up, dn = gray[p - 1:p + 2, lo:hi].min(0), gray[max(0, p - 5), lo:hi], gray[min(gray.shape[0] - 1, p + 5), lo:hi]
+                    else:         band, up, dn = gray[lo:hi, p - 1:p + 2].min(1), gray[lo:hi, max(0, p - 5)], gray[lo:hi, min(gray.shape[1] - 1, p + 5)]
+                    hits.append(((band < up - 12) & (band < dn - 12)).mean())
+                return bool(hits) and np.median(hits) > 0.4
+            return test
+        tx, ty = cont(ys, 0), cont(xs, 1)
+        W0, H0 = gray.shape[1], gray.shape[0]
+        fx = find_frame(gray, 0, xs, px, ys[0], ys[-1])
+        fy = find_frame(gray, 1, ys, py, xs[0], xs[-1])
+        xs = apply_frame(xs, px, fx); ys = apply_frame(ys, py, fy)
+        if fx or fy: note.append("frame found: " + ", ".join(
+            [f"{'left' if k == 'start' else 'right'}" for k in fx] + [f"{'top' if k == 'start' else 'bottom'}" for k in fy]))
+        xs = extend_to_border(xs, px, W0, lambda side: (side not in fx) and tx(side, xs))
+        ys = extend_to_border(ys, py, H0, lambda side: (side not in fy) and ty(side, ys))
+        # a thick drawn frame can look like one extra row/column of dark cells: drop an
+        # outermost band that is uniformly dark and sits right against a bright margin
+        def strip_frame(lines, other, axis):
+            for side in ("start", "end"):
+                if len(lines) < 4: break
+                a0, a1 = (lines[0], lines[1]) if side == "start" else (lines[-2], lines[-1])
+                o0, o1 = other[0], other[-1]
+                band = gray[o0:o1, a0 + 1:a1] if axis == 0 else gray[a0 + 1:a1, o0:o1]
+                if axis == 0: out = gray[o0:o1, max(0, a0 - 8):max(1, a0 - 2)] if side == "start" else gray[o0:o1, a1 + 3:a1 + 9]
+                else:         out = gray[max(0, a0 - 8):max(1, a0 - 2), o0:o1] if side == "start" else gray[a1 + 3:a1 + 9, o0:o1]
+                if band.size and out.size and band.mean() < 70 and np.percentile(band, 90) < 110 and out.mean() > 200:
+                    lines = lines[1:] if side == "start" else lines[:-1]
+                    note.append(f"{'columns' if axis == 0 else 'rows'}: thick frame at the {side} ignored")
+            return lines
+        xs = strip_frame(xs, ys, 0); ys = strip_frame(ys, xs, 1)
+    H, W = gray.shape
+    # lines too irregular or fewer cells than asked -> the image has no usable grid lines
+    def bad(b, n):
+        if b is None: return True
+        w = np.diff(b)
+        return w.std() / w.mean() > 0.25
+    if bad(xs, cols):
+        c = cols or round(W / px)
+        note.append(f"columns: no reliable grid lines -> uniform split into {c}")
+        xs = [int(round(i * W / c)) for i in range(c + 1)]
+    if bad(ys, rows):
+        r = rows or round(H / py)
+        note.append(f"rows: no reliable grid lines -> uniform split into {r}")
+        ys = [int(round(i * H / r)) for i in range(r + 1)]
+    return a, xs, ys, note
+
+# ---------------------------------------------------------------- sampling / palette
+def cell_cores(a, xs, ys, margin=0.22):
+    cores = []
+    for r in range(len(ys) - 1):
+        row = []
+        for c in range(len(xs) - 1):
+            x0, x1, y0, y1 = xs[c], xs[c + 1], ys[r], ys[r + 1]
+            mx, my = max(2, int((x1 - x0) * margin)), max(2, int((y1 - y0) * margin))
+            blk = a[y0 + my:y1 - my + 1, x0 + mx:x1 - mx + 1].reshape(-1, 3)
+            if len(blk) == 0: blk = a[(y0 + y1) // 2, (x0 + x1) // 2].reshape(1, 3)
+            row.append(blk)
+        cores.append(row)
+    return cores
+
+def kmeans(X, k, iters=40, seed=0):
+    rng = np.random.default_rng(seed)
+    C = [X[rng.integers(len(X))]]
+    for _ in range(1, k):
+        d = np.min(((X[:, None] - np.array(C)[None]) ** 2).sum(2), 1)
+        if d.sum() == 0: break
+        C.append(X[rng.choice(len(X), p=d / d.sum())])
+    C = np.array(C)
+    for _ in range(iters):
+        lab = ((X[:, None] - C[None]) ** 2).sum(2).argmin(1)
+        newC = np.array([X[lab == j].mean(0) if (lab == j).any() else C[j] for j in range(len(C))])
+        if np.allclose(newC, C): break
+        C = newC
+    return C, lab
+
+def merge_limit(c1, c2):
+    """Two swatches closer than this are the same yarn. Dark colors need a bigger
+    difference to be told apart, light ones (cream vs white) a smaller one."""
+    L = min(c1[0], c2[0])
+    return 10.0 if L < 30 else (3.5 if L > 85 else (5.5 if L > 70 else 7.0))
+
+def build_palette(reps_lab, k=None, merge_de=None, min_cells=None, shape=None):
+    """Natural palette first (same-yarn shades merged, tiny noise clusters dropped). With
+    k (forced color count): remove anti-aliasing blends, then keep merging the pair that is
+    closest in color AND touches the most, until k colors remain."""
+    n = len(reps_lab)
+    min_cells = min_cells or max(4, int(n * 0.0012))
+    C, lab = kmeans(reps_lab, max(18, (k or 0) + 6))
+    assign = lambda C: ((reps_lab[:, None] - C[None]) ** 2).sum(2).argmin(1)
+    changed = True
+    while changed:
+        changed = False
+        cnt = np.bincount(lab, minlength=len(C))
+        C = C[cnt > 0]; lab = assign(C); cnt = np.bincount(lab, minlength=len(C))
+        D = np.sqrt(((C[:, None] - C[None]) ** 2).sum(2)); np.fill_diagonal(D, 1e9)
+        R = D / np.array([[merge_limit(a_, b_) for b_ in C] for a_ in C])   # <1 means "same yarn"
+        i, j = np.unravel_index(R.argmin(), R.shape)
+        if R[i, j] < 1:
+            C[i] = (C[i] * cnt[i] + C[j] * cnt[j]) / (cnt[i] + cnt[j])
+            C = np.delete(C, j, 0); lab = assign(C); changed = True; continue
+        if cnt.min() < min_cells and len(C) > 2:
+            C = np.delete(C, cnt.argmin(), 0); lab = assign(C); changed = True
+    return C
+
+def reduce_palette(C, g, k):
+    """Forced color count: keep merging the pair of colors that is closest AND touches the
+    most (a shading tone sits against its base color; a separate motif color does not).
+    g = current label grid. The color covering the bigger area survives."""
+    C = C.copy(); g = g.copy()
+    while len(C) > k:
+        n_ = len(C); cnt = np.bincount(g.ravel(), minlength=n_)
+        D = np.sqrt(((C[:, None] - C[None]) ** 2).sum(2))
+        touch = np.zeros((n_, n_))
+        for A_, B_ in ((g[:, :-1], g[:, 1:]), (g[:-1], g[1:])):
+            np.add.at(touch, (A_.ravel(), B_.ravel()), 1)
+        touch = touch + touch.T; np.fill_diagonal(touch, 0)
+        per = touch.sum(1) + 1e-9
+        share = np.maximum(touch / per[:, None], touch / per[None, :])
+        cost = D / (0.25 + share); np.fill_diagonal(cost, 1e9)
+        i, j = np.unravel_index(cost.argmin(), cost.shape)
+        keep, drop = (i, j) if cnt[i] >= cnt[j] else (j, i)
+        g[g == drop] = keep
+        g[g > drop] -= 1
+        C = np.delete(C, drop, 0)
+    return C
+
+def drop_blend_colors(C_lab, labels_grid, cnt):
+    """A small color that sits on the line between two bigger colors and only
+    appears on their borders is an anti-aliasing blend -> remove it."""
+    removed = []
+    total = cnt.sum()
+    for j in np.argsort(cnt):
+        if cnt[j] > total * 0.03 or len(C_lab) - len(removed) <= 2: continue
+        others = [i for i in range(len(C_lab)) if i != j and i not in removed and cnt[i] > cnt[j]]
+        best = None
+        for p in range(len(others)):
+            for q in range(p + 1, len(others)):
+                A, B = C_lab[others[p]], C_lab[others[q]]
+                t = np.clip(np.dot(C_lab[j] - A, B - A) / max(np.dot(B - A, B - A), 1e-9), 0, 1)
+                if 0.15 < t < 0.85:
+                    d = np.linalg.norm(A + t * (B - A) - C_lab[j])
+                    if d < 5 and (best is None or d < best[0]): best = (d, others[p], others[q])
+        if best is None: continue
+        _, A, B = best
+        ys, xs = np.nonzero(labels_grid == j); border = 0
+        for y, x in zip(ys, xs):
+            nb = labels_grid[max(0, y - 1):y + 2, max(0, x - 1):x + 2]
+            if (nb == A).any() and (nb == B).any(): border += 1
+        if border >= 0.6 * len(ys): removed.append(j)
+    return removed
+
+def votes_for(cores, pal_lab):
+    R, Cc = len(cores), len(cores[0])
+    V = np.zeros((R, Cc, len(pal_lab)))
+    for r in range(R):
+        for c in range(Cc):
+            px = srgb_to_lab(cores[r][c])
+            d = ((px[:, None] - pal_lab[None]) ** 2).sum(2)
+            V[r, c] = np.bincount(d.argmin(1), minlength=len(pal_lab)) / len(px)
+    return V
+
+def trim_to_target(xs, ys, cores, cols, rows):
+    """The AI image often shows a few extra (partial or empty) cells at the edges. Remove
+    edge rows/columns until the target size is reached: partial lines first, then the edge
+    line with the least design. Never cut through a shape: if both edge lines carry cells
+    that continue into the design, stop and keep the larger size (reported)."""
+    reps = np.array([[np.median(srgb_to_lab(cores[r][c]), 0) for c in range(len(xs) - 1)]
+                     for r in range(len(ys) - 1)])
+    log = []
+    def edge_info(line, inner, perp=None, from_start=True):
+        """(fraction of cells differing from the line's own main color,
+            number of such cells that touch a same-kind cell in the next inner line)"""
+        med = np.median(line, 0)
+        odd = np.linalg.norm(line - med, axis=1) > 8
+        odd_in = np.linalg.norm(inner - med, axis=1) > 8
+        linked = 0
+        for i in np.nonzero(odd)[0]:
+            if perp is not None:   # the end of a long band (floor, border stripe) is safe to cut
+                full = perp(i) if from_start else perp(i)[::-1]
+                same = np.linalg.norm(full - line[i], axis=1) < 12
+                run = len(same) if same.all() else int(np.argmin(same))
+                if run >= 0.2 * len(full): continue
+            for j in (i - 1, i, i + 1):
+                if 0 <= j < len(inner) and odd_in[j] and np.linalg.norm(inner[j] - line[i]) < 12:
+                    linked += 1; break
+        return odd.mean(), linked
+
+    def trim(bounds, n_target, axis):
+        nonlocal reps
+        while n_target and len(bounds) - 1 > n_target:
+            w = np.diff(bounds); med = np.median(w)
+            if axis == 1: first, in1, last, in2 = reps[:, 0], reps[:, 1], reps[:, -1], reps[:, -2]
+            else:         first, in1, last, in2 = reps[0], reps[1], reps[-1], reps[-2]
+            p_first, p_last = w[0] < 0.8 * med, w[-1] < 0.8 * med
+            perp = (lambda i: reps[i, :]) if axis == 1 else (lambda i: reps[:, i])
+            (i1, l1), (i2, l2) = edge_info(first, in1, perp, True), edge_info(last, in2, perp, False)
+            if p_first != p_last: cut_first = p_first
+            elif (l1 == 0) != (l2 == 0): cut_first = l1 == 0
+            else: cut_first = i1 < i2 if abs(i1 - i2) > 0.02 else (w[0] <= w[-1])
+            if not (p_first or p_last) and l1 > 0 and l2 > 0:
+                log.append(f"STOPPED - both edge {'columns' if axis == 1 else 'rows'} are part of the design; "
+                           f"kept {len(bounds) - 1} instead of {n_target} (nothing cut through shapes)")
+                break
+            if cut_first:
+                bounds = bounds[1:]; reps = reps[:, 1:] if axis == 1 else reps[1:]
+                log.append(("first col" if axis == 1 else "top row"))
+            else:
+                bounds = bounds[:-1]; reps = reps[:, :-1] if axis == 1 else reps[:-1]
+                log.append(("last col" if axis == 1 else "bottom row"))
+        return bounds
+    xs2 = trim(list(xs), cols, 1); ys2 = trim(list(ys), rows, 0)
+    ci = xs.index(xs2[0]); ri = ys.index(ys2[0])
+    cores = [row[ci:ci + len(xs2) - 1] for row in cores[ri:ri + len(ys2) - 1]]
+    return xs2, ys2, cores, log
+
+# ---------------------------------------------------------------- cleanup
+def find_mirror_axis(g, bg):
+    """Best vertical mirror axis for the non-background content (in half-cells)."""
+    H, W = g.shape
+    best = (0, W - 1)
+    for a2 in range(W // 2, 3 * W // 2 + 1):   # axis = a2/2
+        match = tot = 0
+        for c in range(W):
+            m = a2 - c
+            if m <= c or m >= W: continue
+            A, B = g[:, c], g[:, m]
+            fg = (A != bg) | (B != bg)
+            tot += fg.sum(); match += ((A == B) & fg).sum()
+        if tot > H * 2 and match / tot > best[0]: best = (match / tot, a2)
+    return best[1], best[0]
+
+def symmetrize_pairs(g, V, pairs, tol_mismatch):
+    """pairs: list of ((r,c),(r2,c2)). If a region is mostly symmetric, resolve the
+    disagreeing pairs by combined pixel votes. Returns number of changed cells."""
+    if not pairs: return 0
+    mism = [p for p in pairs if g[p[0]] != g[p[1]]]
+    if len(mism) > tol_mismatch * len(pairs): return 0
+    changed = 0
+    for p, q in mism:
+        s = V[p] + V[q]
+        s[g[p]] += 0.15; s[g[q]] += 0.15          # prefer one of the two observed colors
+        k = int(s.argmax())
+        changed += (g[p] != k) + (g[q] != k)
+        g[p] = k; g[q] = k
+    return changed
+
+def main_figure(g, bg):
+    """Largest connected non-background shape = the main figure. Rows where it spans
+    almost the full width (a floor / border band) are clipped to the rows above."""
+    comps = components(g, bg)
+    if not comps: return None
+    big = max(comps, key=len)
+    if len(big) < g.size * 0.05: return None
+    return set(big)
+
+def global_mirror(g, V, bg, strict=True, min_row_match=0.8):
+    """Mirror the main figure left/right. strict: every disagreeing pair inside the
+    figure is resolved by the combined pixel votes of both sides."""
+    H, W = g.shape
+    a2, score = find_mirror_axis(g, bg)
+    if score < 0.65: return 0, a2 / 2, score, 0
+    fig = main_figure(g, bg)
+    if not fig: return 0, a2 / 2, score, 0
+    changed = 0; rows = 0; prev_h = None
+    for r in range(H):
+        cols = [c for (y, c) in fig if y == r]
+        if not cols: prev_h = None; continue
+        h = max(a2 / 2 - min(cols), max(cols) - a2 / 2)
+        if (max(cols) - min(cols)) >= W * 0.9 and prev_h is not None:
+            h = prev_h                              # floor band: keep the width of the rows above
+        prev_h = h
+        pairs = [((r, c), (r, a2 - c)) for c in range(W)
+                 if c < a2 - c < W and (a2 / 2 - c) <= h + 0.5
+                 and ((r, c) in fig or (r, a2 - c) in fig)]
+        if not pairs: continue
+        if not strict:
+            fg = [p for p in pairs if g[p[0]] != bg or g[p[1]] != bg]
+            mm = sum(1 for p in pairs if g[p[0]] != g[p[1]])
+            if not fg or mm / len(fg) > 1 - min_row_match: continue
+            pairs = [p for p in pairs if not (V[p[0]].max() > 0.9 and V[p[1]].max() > 0.9)]
+        c = symmetrize_pairs(g, V, pairs, 1.0)
+        changed += c; rows += c > 0
+    return changed, a2 / 2, score, rows
+
+def components(g, bg):
+    H, W = g.shape; seen = np.zeros_like(g, bool); comps = []
+    for r in range(H):
+        for c in range(W):
+            if g[r, c] == bg or seen[r, c]: continue
+            st = [(r, c)]; seen[r, c] = True; cells = []
+            while st:
+                y, x = st.pop(); cells.append((y, x))
+                for dy in (-1, 0, 1):
+                    for dx in (-1, 0, 1):
+                        yy, xx = y + dy, x + dx
+                        if 0 <= yy < H and 0 <= xx < W and not seen[yy, xx] and g[yy, xx] != bg:
+                            seen[yy, xx] = True; st.append((yy, xx))
+            comps.append(cells)
+    return comps
+
+def motif_symmetry(g, V, bg, fig_box):
+    """Make small separate motifs (stars, snowflakes, hearts...) symmetric on their own
+    vertical and horizontal axes when they are already nearly symmetric."""
+    changed = 0; n = 0
+    for cells in components(g, bg):
+        if len(cells) < 6: continue
+        ys = [p[0] for p in cells]; xs = [p[1] for p in cells]
+        y0, y1, x0, x1 = min(ys), max(ys), min(xs), max(xs)
+        if fig_box and not (x1 < fig_box[0] or x0 > fig_box[1]) and (y1 - y0) > g.shape[0] * 0.4:
+            continue  # the main figure is handled by the global mirror
+        if (y1 - y0) > g.shape[0] * 0.5: continue
+        for axis in ("v", "h"):
+            best = None
+            for shift in (-1, 0, 1):
+                s2 = (x0 + x1 + shift) if axis == "v" else (y0 + y1 + shift)
+                pairs = []
+                for y in range(max(0, y0 - 1), min(g.shape[0], y1 + 2)):
+                    for x in range(max(0, x0 - 1), min(g.shape[1], x1 + 2)):
+                        if axis == "v":
+                            m = s2 - x
+                            if x < m < g.shape[1]: pairs.append(((y, x), (y, m)))
+                        else:
+                            m = s2 - y
+                            if y < m < g.shape[0]: pairs.append(((y, x), (m, x)))
+                fg = [p for p in pairs if g[p[0]] != bg or g[p[1]] != bg]
+                if not fg: continue
+                mm = sum(1 for p in fg if g[p[0]] != g[p[1]])
+                if best is None or mm / len(fg) < best[0]: best = (mm / len(fg), fg)
+            if best and 0 < best[0] <= 0.2:
+                changed += symmetrize_pairs(g, V, best[1], 1.0); n += 1
+    return changed, n
+
+def motif_unify(g, V, bg, fig, sim_min=0.7):
+    """Stars, snowflakes, hearts... that appear several times are usually meant to be
+    identical. Group look-alike motifs, build one canonical shape from the pixel votes
+    of every copy (and of its own mirror images when it is nearly symmetric), then
+    stamp that shape back onto every copy."""
+    H, W = g.shape
+    comps = [c for c in components(g, bg) if len(c) >= 5 and not (fig and set(c) & fig)
+             and (max(p[0] for p in c) - min(p[0] for p in c)) < H * 0.4
+             and (max(p[1] for p in c) - min(p[1] for p in c)) < W * 0.4]
+    if not comps: return 0, 0
+    info = []
+    for c in comps:
+        ys = [p[0] for p in c]; xs = [p[1] for p in c]
+        cy, cx = int(round(np.mean(ys))), int(round(np.mean(xs)))
+        cols = np.bincount([g[p] for p in c], minlength=V.shape[2])
+        info.append(dict(cells=c, cy=cy, cx=cx, main=int(cols.argmax()),
+                         hh=max(cy - min(ys), max(ys) - cy) + 1, hw=max(cx - min(xs), max(xs) - cx) + 1))
+    def mask(i, dy=0, dx=0, R=None):
+        R = R or (max(info[i]["hh"], 1), max(info[i]["hw"], 1))
+        m = {}
+        for y in range(-R[0] - 1, R[0] + 2):
+            for x in range(-R[1] - 1, R[1] + 2):
+                yy, xx = info[i]["cy"] + y + dy, info[i]["cx"] + x + dx
+                m[(y, x)] = g[yy, xx] if 0 <= yy < H and 0 <= xx < W else bg
+        return m
+    def sim(i, j):
+        R = (max(info[i]["hh"], info[j]["hh"]), max(info[i]["hw"], info[j]["hw"]))
+        a = mask(i, R=R); best = (0, 0, 0)
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1):
+                b = mask(j, dy, dx, R)
+                fg = [k for k in a if a[k] != bg or b[k] != bg]
+                if not fg: continue
+                s_ = sum(1 for k in fg if a[k] == b[k]) / len(fg)
+                if s_ > best[0]: best = (s_, dy, dx)
+        return best
+    # group
+    group = list(range(len(info)))
+    def root(i):
+        while group[i] != i: i = group[i]
+        return i
+    offs = {}
+    for i in range(len(info)):
+        for j in range(i + 1, len(info)):
+            if info[i]["main"] != info[j]["main"]: continue
+            if abs(info[i]["hh"] - info[j]["hh"]) > 2 or abs(info[i]["hw"] - info[j]["hw"]) > 2: continue
+            s_, dy, dx = sim(i, j)
+            if s_ >= sim_min:
+                offs[(i, j)] = (dy, dx); group[root(j)] = root(i)
+    groups = {}
+    for i in range(len(info)): groups.setdefault(root(i), []).append(i)
+    changed = 0; ng = 0
+    for members in groups.values():
+        ref = members[0]
+        R = (max(info[m]["hh"] for m in members), max(info[m]["hw"] for m in members))
+        # alignment of each member to the reference
+        al = {ref: (0, 0)}
+        for m in members[1:]:
+            al[m] = offs.get((ref, m)) or sim(ref, m)[1:]
+        K = V.shape[2]
+        acc = {}
+        own = set()
+        for m in members:
+            own |= set(info[m]["cells"])
+        for m in members:
+            dy, dx = al[m]
+            for y in range(-R[0] - 1, R[0] + 2):
+                for x in range(-R[1] - 1, R[1] + 2):
+                    yy, xx = info[m]["cy"] + y + dy, info[m]["cx"] + x + dx
+                    if 0 <= yy < H and 0 <= xx < W and (g[yy, xx] == bg or (yy, xx) in own):
+                        acc.setdefault((y, x), np.zeros(K))
+                        acc[(y, x)] += V[yy, xx]
+                        acc[(y, x)][g[yy, xx]] += 0.3
+        canon = {k: int(v.argmax()) for k, v in acc.items()}
+        # make the canonical shape symmetric if it nearly is (try axis on / between cells)
+        axes = ["v", "h"]
+        if abs(R[0] - R[1]) <= 1: axes += ["d", "a"]          # square motif: diagonals too
+        for axis in axes:
+            best = None
+            for sh in ((-1, 0, 1) if axis in "vh" else (0,)):
+                pairs = []
+                for (y, x) in canon:
+                    q = {"v": (y, sh - x), "h": (sh - y, x), "d": (x, y), "a": (-x, -y)}[axis]
+                    if q in canon and (y, x) < q: pairs.append(((y, x), q))
+                fgp = [p for p in pairs if canon[p[0]] != bg or canon[p[1]] != bg]
+                if not fgp: continue
+                mm = sum(1 for p in fgp if canon[p[0]] != canon[p[1]]) / len(fgp)
+                if best is None or mm < best[0]: best = (mm, pairs)
+            if best and best[0] <= 0.3:
+                for p, q in best[1]:
+                    if canon[p] != canon[q]:
+                        k = int((acc[p] + acc[q]).argmax()); canon[p] = canon[q] = k
+        # stamp back
+        for m in members:
+            dy, dx = al[m]
+            for (y, x), k in canon.items():
+                yy, xx = info[m]["cy"] + y + dy, info[m]["cx"] + x + dx
+                if 0 <= yy < H and 0 <= xx < W and (g[yy, xx] == bg or (yy, xx) in own) and g[yy, xx] != k:
+                    g[yy, xx] = k; changed += 1
+        ng += 1
+    return changed, ng
+
+def despeckle(g, V, conf_max=0.75, avoid=None):
+    """Isolated single cells that are uncertain (mixed pixels) take the neighbour majority.
+    Confident isolated cells (intentional dots) are kept."""
+    H, W = g.shape; out = g.copy(); n = 0
+    for r in range(H):
+        for c in range(W):
+            nb4 = [g[y, x] for y, x in ((r - 1, c), (r + 1, c), (r, c - 1), (r, c + 1)) if 0 <= y < H and 0 <= x < W]
+            if any(k == g[r, c] for k in nb4): continue
+            if V[r, c].max() >= conf_max: continue
+            nb8 = [g[y, x] for y in range(r - 1, r + 2) for x in range(c - 1, c + 2)
+                   if 0 <= y < H and 0 <= x < W and (y, x) != (r, c)]
+            if avoid is not None:               # beads: never turn a design cell into background
+                nb8 = [k for k in nb8 if k != avoid]
+                if not nb8: continue
+            vals, cnts = np.unique(nb8, return_counts=True)
+            out[r, c] = vals[cnts.argmax()]; n += 1
+    g[:] = out
+    return n
+
+# ---------------------------------------------------------------- main
+def convert_main(argv):
+    ap = argparse.ArgumentParser(prog="img2pattern.py convert")
+    ap.add_argument("image"); ap.add_argument("--example"); ap.add_argument("--out")
+    ap.add_argument("--cols", type=int); ap.add_argument("--rows", type=int)
+    ap.add_argument("--colors", type=int, help="force number of colors")
+    ap.add_argument("--palette", help='fixed palette: "#FCF5DB=Cream,#052654=Navy,..."')
+    ap.add_argument("--use-example-palette", action="store_true",
+                    help="map to the example JSON's palette instead of extracting one")
+    ap.add_argument("--title"); ap.add_argument("--no-symmetry", action="store_true")
+    ap.add_argument("--no-despeckle", action="store_true")
+    ap.add_argument("--soft-mirror", action="store_true", help="only fix rows that are already ~80%% symmetric")
+    ap.add_argument("--no-motif", action="store_true", help="do not unify repeated motifs")
+    ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--format", choices=["warpwright", "pegwright"],
+                    help="output format (default: taken from the example JSON, else warpwright)")
+    ap.add_argument("--keep-background", action="store_true", help="pegwright: fill the background with beads too")
+    ap.add_argument("--no-artkal", action="store_true", help="pegwright: keep the image colors instead of Artkal S beads")
+    ap.add_argument("--board", type=int, help="pegwright: pegs per board side (default 29)")
+    ap.add_argument("--extra", type=int, help="pegwright: spare beads %% for the shopping list (default 10)")
+    ap.add_argument("--bag", type=int, help="pegwright: beads per bag (default 1000)")
+    A = ap.parse_args(argv); random.seed(A.seed); np.random.seed(A.seed)
+
+    ex = json.load(open(A.example)) if A.example else {}
+    fmt = A.format or ("pegwright" if ex.get("app") == "pegwright" else "warpwright")
+    if fmt == "pegwright" and A.colors and not A.keep_background:
+        A.colors += 1        # --colors = bead colors; the background that becomes empty is one more
+    img = Image.open(A.image)
+    a, xs, ys, notes = detect_grid(img, A.cols, A.rows)
+    print(f"GRID  detected {len(xs) - 1} cols x {len(ys) - 1} rows   (image {img.size[0]}x{img.size[1]}px)")
+    for n_ in notes: print("NOTE ", n_)
+    cores = cell_cores(a, xs, ys)
+    if A.cols or A.rows:
+        xs, ys, cores, log = trim_to_target(xs, ys, cores, A.cols, A.rows)
+        if log: print("TRIM  removed edge lines:", ", ".join(log))
+    W, H = len(xs) - 1, len(ys) - 1
+    print(f"SIZE  final {W} cols x {H} rows")
+
+    # palette
+    if A.palette:
+        items = [p.strip() for p in A.palette.split(",") if p.strip()]
+        pal_rgb = np.array([hex2rgb(p.split("=")[0]) for p in items], float)
+        pal_names = [(p.split("=")[1] if "=" in p else color_name(hex2rgb(p.split("=")[0]))) for p in items]
+    elif A.use_example_palette and ex.get("palette"):
+        pal_rgb = np.array([hex2rgb(p["hex"]) for p in ex["palette"]], float)
+        pal_names = [p["name"] for p in ex["palette"]]
+    else:
+        reps = np.array([[np.median(srgb_to_lab(cores[r][c]), 0) for c in range(W)] for r in range(H)])
+        C = build_palette(reps.reshape(-1, 3))
+        lab0 = ((reps.reshape(-1, 3)[:, None] - C[None]) ** 2).sum(2).argmin(1).reshape(H, W)
+        if True:
+            rm = drop_blend_colors(C, lab0, np.bincount(lab0.ravel(), minlength=len(C)))
+            if rm:
+                print("DROP  blend colors:", len(rm)); C = np.delete(C, rm, 0)
+        pal_rgb = None; pal_names = None
+        pal_lab = C
+    if pal_rgb is not None: pal_lab = srgb_to_lab(pal_rgb)
+
+    V = votes_for(cores, pal_lab)
+    g = V.argmax(2)
+    if pal_rgb is None:
+        # prune colors that ended up on only a handful of cells (unless clearly distinct)
+        min_cells = max(4, int(W * H * 0.0012))
+        while len(pal_lab) > 2:
+            cnt = np.bincount(g.ravel(), minlength=len(pal_lab))
+            j = int(cnt.argmin())
+            D = np.linalg.norm(pal_lab - pal_lab[j], axis=1); D[j] = 1e9
+            if cnt[j] >= min_cells or (cnt[j] > 0 and D.min() > 25): break
+            pal_lab = np.delete(pal_lab, j, 0)
+            V = votes_for(cores, pal_lab); g = V.argmax(2)
+        if A.colors and len(pal_lab) > A.colors:
+            print(f"MERGE {len(pal_lab)} colors found -> reduced to {A.colors}")
+            pal_lab = reduce_palette(pal_lab, g, A.colors)
+            V = votes_for(cores, pal_lab); g = V.argmax(2)
+        elif A.colors and len(pal_lab) < A.colors:
+            print(f"NOTE  only {len(pal_lab)} distinct colors in the image (asked {A.colors})")
+        # final swatch = median of the pixels of confident cells of that color
+        pal_rgb = []
+        for k in range(len(pal_lab)):
+            m = (g == k) & (V.max(2) > 0.8)
+            if not m.any(): m = g == k
+            px = np.concatenate([cores[r][c] for r, c in zip(*np.nonzero(m))]) if m.any() else np.zeros((1, 3))
+            pal_rgb.append(np.median(px, 0))
+        pal_rgb = np.array(pal_rgb)
+        # order by frequency, name them
+        order = np.argsort(-np.bincount(g.ravel(), minlength=len(pal_rgb)))
+        inv = np.empty_like(order); inv[order] = np.arange(len(order))
+        pal_rgb = pal_rgb[order]; V = V[:, :, order]; g = inv[g]
+        pal_names = []
+        for rgb in pal_rgb:
+            nm = color_name(rgb); base = nm; i = 2
+            while nm in pal_names: nm = f"{base} {i}"; i += 1
+            pal_names.append(nm)
+        empty = np.bincount(g.ravel(), minlength=len(pal_rgb)) == 0
+        if empty.any():
+            keep = np.nonzero(~empty)[0]; remap = -np.ones(len(pal_rgb), int); remap[keep] = np.arange(len(keep))
+            pal_rgb = pal_rgb[keep]; V = V[:, :, keep]; g = remap[g]; pal_names = [pal_names[i] for i in keep]
+
+    early_codes = None
+    if fmt == "pegwright" and not A.no_artkal:
+        # Merge colors that are the same Artkal bead BEFORE cleanup, by adding their pixel votes,
+        # so a color split into two near-identical clusters is not treated as uncertain.
+        # The background (edge majority) stays its own color so light design parts are safe.
+        pal_rgb = np.array(pal_rgb, float)
+        ring = np.concatenate([g[0], g[-1], g[:, 0], g[:, -1]])
+        bgl = None if A.keep_background else int(np.bincount(ring).argmax())
+        snaps = [nearest_artkal(rgb) for rgb in pal_rgb]
+        keys = ["BG" if k == bgl else snaps[k][0]["code"] for k in range(len(pal_rgb))]
+        uk = []
+        for k_ in keys:
+            if k_ not in uk: uk.append(k_)
+        if len(uk) < len(keys):
+            byc = {c["code"]: c for c in ARTKAL_S}
+            V2 = np.zeros(V.shape[:2] + (len(uk),))
+            for k, k_ in enumerate(keys): V2[:, :, uk.index(k_)] += V[:, :, k]
+            V = V2; g = V.argmax(2)
+            new_rgb, new_names = [], []
+            for k_ in uk:
+                if k_ == "BG": j = keys.index("BG"); new_rgb.append(pal_rgb[j]); new_names.append(pal_names[j])
+                else: new_rgb.append(np.array(hex2rgb(byc[k_]["hex"]), float)); new_names.append(byc[k_]["name"])
+            print(f"ARTKAL {len(keys)} colors are {len(uk) - (1 if 'BG' in uk else 0)} different beads"
+                  f"{' + background' if 'BG' in uk else ''}: merged before cleanup")
+            pal_rgb = np.array(new_rgb); pal_names = new_names
+        early_codes = [None if k_ == "BG" else k_ for k_ in uk]
+    raw = g.copy()
+    bg = int(np.bincount(g.ravel()).argmax())
+    avoid = None
+    if fmt == "pegwright" and not A.keep_background:
+        ring_ = np.concatenate([g[0], g[-1], g[:, 0], g[:, -1]]); avoid = int(np.bincount(ring_).argmax())
+    fix = {}
+    if not A.no_despeckle: fix["despeckle"] = despeckle(g, V, avoid=avoid)
+    fig_box = None
+    if not A.no_symmetry:
+        ch, axis, score, rows_done = global_mirror(g, V, bg, strict=not A.soft_mirror)
+        fix["mirror"] = int(ch)
+        print(f"AXIS  main figure mirror axis at column {axis + 1:.1f} (1-based), symmetry score {score:.0%}, rows fixed {rows_done}")
+        fig = main_figure(g, bg)
+        if not A.no_motif:
+            ch2, ng = motif_unify(g, V, bg, fig); fix["motif_unify"] = int(ch2)
+            print(f"MOTIF {ng} motif groups unified")
+        if not A.no_despeckle: fix["despeckle2"] = despeckle(g, V, avoid=avoid)
+        fix["mirror2"] = int(global_mirror(g, V, bg, strict=not A.soft_mirror)[0])  # re-lock symmetry
+    print("FIXES", fix, " total cells changed:", int((g != raw).sum()))
+
+    # grid smaller than the target: add background rows/columns evenly around the design
+    padr = max(0, (A.rows or 0) - H); padc = max(0, (A.cols or 0) - W)
+    if padr or padc:
+        t, l = padr // 2, padc // 2
+        ring = np.concatenate([g[0], g[-1], g[:, 0], g[:, -1]])
+        bg = int(np.bincount(ring).argmax())            # the color that already touches the edges
+        g = np.pad(g, ((t, padr - t), (l, padc - l)), constant_values=bg)
+        onehot = np.zeros(V.shape[2]); onehot[bg] = 1.0
+        V2 = np.tile(onehot, (g.shape[0], g.shape[1], 1)); V2[t:t + H, l:l + W] = V; V = V2
+        raw = np.pad(raw, ((t, padr - t), (l, padc - l)), constant_values=bg)
+        print(f"PAD   image grid was {W} x {H}; added background to reach {g.shape[1]} x {g.shape[0]} "
+              f"(top {t}, bottom {padr - t}, left {l}, right {padc - l}) using color index {bg}")
+        H, W = g.shape
+    codes = None
+    if fmt == "pegwright":
+        pal_rgb = np.array(pal_rgb, float)
+        fixed_mask = g != raw                    # auto-fixed cells, for the preview
+        bgk = None
+        if not A.keep_background:
+            g, bgk, n_empty = empty_background(g)
+            print(f"EMPTY {n_empty} background cells connected to the edge -> no bead (-1); background color was index {bgk}")
+        if not A.no_artkal:
+            snapped = [nearest_artkal(rgb) for rgb in pal_rgb]
+            if early_codes is not None:          # keep the codes decided before cleanup
+                byc0 = {c["code"]: c for c in ARTKAL_S}
+                snapped = [(byc0[c_], 0.0) if c_ else sn for c_, sn in zip(early_codes, snapped)]
+            code_of = [s_[0]["code"] for s_ in snapped]
+            uniq = []
+            for c_ in code_of:
+                if c_ not in uniq: uniq.append(c_)
+            remap = np.array([uniq.index(c_) for c_ in code_of] + [-1])
+            g = np.where(g >= 0, remap[np.clip(g, 0, None)], -1)
+            byc = {c["code"]: c for c in ARTKAL_S}
+            pal_rgb = np.array([hex2rgb(byc[c_]["hex"]) for c_ in uniq], float)
+            pal_names = [byc[c_]["name"] for c_ in uniq]; codes = list(uniq)
+            for k, (s_, de) in enumerate(snapped):
+                print(f"ARTKAL color {k}: -> {s_['code']} {s_['name']} (difference {de:.0f})")
+            if len(uniq) < len(code_of): print(f"ARTKAL {len(code_of)} colors -> {len(uniq)} beads (some matched the same code)")
+        bg_code = bg_rgb = bg_name = None
+        if bgk is not None:                      # remember what the removed background was
+            if codes: bg_code = code_of[bgk]; bg_rgb = pal_rgb[uniq.index(bg_code)]; bg_name = pal_names[uniq.index(bg_code)]
+            else:     bg_rgb = pal_rgb[bgk]; bg_name = pal_names[bgk]
+        g, pal_rgb, pal_names, codes = compact_palette(g, pal_rgb, pal_names, codes)
+        # Pegwright treats the LAST palette slot as the background color: put the real background
+        # there (0 beads when it only surrounded the piece; the shopping list skips 0-count colors)
+        if bg_rgb is not None:
+            if codes and bg_code in codes: j = codes.index(bg_code)
+            elif not codes and bg_name in pal_names: j = pal_names.index(bg_name)
+            else: j = None
+            n_ = len(pal_rgb)
+            if j is None:
+                pal_rgb = np.vstack([pal_rgb, [bg_rgb]]); pal_names = pal_names + [bg_name]
+                if codes is not None: codes = codes + [bg_code]
+                print(f"BGSLOT background color {bg_code or ''} {bg_name} added as the last palette slot (0 beads)")
+            elif j != n_ - 1:
+                order = [k for k in range(n_) if k != j] + [j]
+                inv = np.empty(n_, int); inv[order] = np.arange(n_)
+                g = np.where(g >= 0, inv[np.clip(g, 0, None)], -1)
+                pal_rgb = pal_rgb[order]; pal_names = [pal_names[k] for k in order]
+                if codes is not None: codes = [codes[k] for k in order]
+                print(f"BGSLOT background color {bg_code or ''} {bg_name} moved to the last palette slot")
+        raw = np.where(fixed_mask, -2, g)
+    conf = V.max(2)
+    doubt = [(r, c) for r in range(H) for c in range(W) if conf[r, c] < 0.6 and g[r, c] >= 0]
+    print("PALETTE")
+    counts = np.bincount(g[g >= 0].ravel(), minlength=len(pal_rgb))
+    for i, (rgb, nm) in enumerate(zip(pal_rgb, pal_names)):
+        print(f"  [{i}] {hexs(rgb)}  {(codes[i] + ' ') if codes else ''}{nm:<16} {counts[i]} cells")
+    if (g < 0).any(): print(f"  [-1] empty (no bead)     {int((g < 0).sum())} cells")
+    print(f"DOUBT {len(doubt)} low-confidence cells (row,col 1-based, top-left origin):")
+    print("  " + " ".join(f"({r + 1},{c + 1})" for r, c in doubt[:120]) + (" ..." if len(doubt) > 120 else ""))
+
+    # output JSON in the example's format
+    if fmt == "pegwright":
+        title = A.title or ex.get("title") or os.path.splitext(os.path.basename(A.image))[0]
+        out = {"v": 1, "title": title, "designer": ex.get("designer", ""), "notes": ex.get("notes", ""),
+               "width": W, "height": H, "cells": [int(v) for v in g.ravel()], "palette": [],
+               "paletteName": title, "app": "pegwright",
+               "boardSize": A.board or ex.get("boardSize", 29),
+               "extraPct": A.extra if A.extra is not None else ex.get("extraPct", 10),
+               "bagSize": A.bag or ex.get("bagSize", 1000)}
+        for i, (rgb, nm) in enumerate(zip(pal_rgb, pal_names)):
+            out["palette"].append({"id": rid_peg(), "name": nm, "hex": hexs(rgb),
+                                   "brand": "Artkal S" if codes else "", "yardage": 0,
+                                   "code": codes[i] if codes else "", "hidden": False})
+        outp = A.out or os.path.splitext(A.image)[0] + "_pegwright.json"
+        json.dump(out, open(outp, "w"), separators=(",", ":"))
+        print("SAVED", outp, f"(pegwright, {W} x {H}, {len(out['palette'])} bead colors, board {out['boardSize']})")
+    else:
+        out = {k: v for k, v in ex.items()} if ex else {"v": 1}
+        out.update({"title": A.title or ex.get("title") or os.path.splitext(os.path.basename(A.image))[0],
+                    "width": W, "height": H, "cells": [int(v) for v in g.ravel()]})
+        old = ex.get("palette") or []
+        tmpl = old[0] if old else {"brand": "", "yardage": 400, "hidden": False}
+        out["palette"] = []
+        for rgb, nm in zip(pal_rgb, pal_names):
+            p = {k: v for k, v in tmpl.items()}
+            p.update({"id": rid(), "name": nm, "hex": hexs(rgb)})
+            out["palette"].append(p)
+        if "paletteName" in out or not ex: out["paletteName"] = out["title"]
+        outp = A.out or os.path.splitext(A.image)[0] + "_pattern.json"
+        json.dump(out, open(outp, "w"), separators=(",", ":"))
+        print("SAVED", outp)
+
+    # preview
+    S = max(6, min(14, 900 // max(W, H)))
+    palx = np.vstack([np.array(pal_rgb, float), [[250, 250, 250]]])
+    chart = palx[np.where(g < 0, len(pal_rgb), g)].astype(np.uint8).repeat(S, 0).repeat(S, 1)
+    for x in range(0, chart.shape[1], S): chart[:, x] = (chart[:, x] * 0.75).astype(np.uint8)
+    for y in range(0, chart.shape[0], S): chart[y] = (chart[y] * 0.75).astype(np.uint8)
+    dmap = chart.copy()
+    for r, c in doubt: dmap[r * S:(r + 1) * S, c * S:(c + 1) * S] = [255, 0, 255]
+    for r, c in zip(*np.nonzero(g != raw)): dmap[r * S + S // 3:(r + 1) * S - S // 3, c * S + S // 3:(c + 1) * S - S // 3] = [0, 200, 255]
+    src = np.asarray(img.convert("RGB").resize((chart.shape[1], chart.shape[0])))
+    sep = np.full((chart.shape[0], 12, 3), 255, np.uint8)
+    Image.fromarray(np.concatenate([src, sep, chart, sep, dmap], 1)).save(os.path.splitext(outp)[0] + "_preview.png")
+    print("PREVIEW", os.path.splitext(outp)[0] + "_preview.png",
+          "(left: source | middle: chart | right: magenta = doubtful, cyan dot = auto-fixed)")
+    lab = os.path.splitext(outp)[0] + "_chart.png"
+    render_chart(out, lab, doubt=doubt); print("CHART", lab, "(numbered rows/cols, 1-based)")
+
+# ---------------------------------------------------------------- fuse beads (Pegwright)
+# Artkal S-5mm (Midi) colors: code|name|hex. Same list as the Pegwright studio.
+ARTKAL_S_RAW = "S01|White|EAEEF3;S02|Burning Sand|EE927C;S03|Tangerine|FFA630;S04|Orange|EB6027;S05|Tall Poppy|CB3531;S06|Raspberry Pink|EF67B2;S07|Gray|959698;S08|Emerald|1FC467;S09|Dark Green|00685E;S10|Baby Blue|2EABD8;S11|Dark Blue|004FA4;S12|Pastel Lavender|9165B2;S13|Black|292A2B;S14|Sandstorm|E1C835;S15|Redwood|9A4541;S16|Brown|65463D;S17|Light Brown|895D49;S18|Sand|DCA384;S19|Bubble Gum|F2BFB8;S20|Green|009053;S21|Pastel Green|8BB23A;S22|Purple|48337E;S23|Royal Purple|644FA4;S24|True Blue|0078BF;S25|Hot Pink|DC519A;S26|Magenta|DA4383;S27|Yellow|EAC125;S28|Lily Pink|DDA1CC;S29|Pastel Yellow|E1D367;S30|Shadow Green|9EC9CD;S31|Sea Mist|B2D7CE;S32|Beeswax|EED39E;S33|Maverick|C0B7D7;S34|Red|B61927;S35|Mona Lisa|E1CCD2;S36|Old Pink|CE6D83;S37|Blue-Green|60BFCB;S38|Burgundy|A3134A;S39|Yellow Orange|E68739;S40|Carnation Pink|E182B0;S41|Copper|9D5B2E;S42|Silver|676B73;S43|Dark Gray|70757B;S44|Sky Blue|A7CDDE;S45|Medium Turquoise|00A5A1;S46|Bright Green|8EC324;S47|Marigold|B27938;S48|Corn|ECC03D;S49|Mulberry Wood|921E5D;S50|Mandys Pink|E2A488;S51|Spring Sun|DFDABD;S52|Picasso|EADE7F;S53|Turquoise|55A4D9;S54|Light Blue|0084CE;S55|Pistachio|97CF87;S56|Bright Carrot|F96F40;S57|Buccaneer|B35540;S58|Paprika|B11836;S59|Butterfly Bush|4F3989;S60|Lavender|8A7EC2;S61|Key Lime Pie|CDC03F;S62|Green Tea|00765F;S63|Metallic Gold|696046;S64|Black Rock|36384D;S65|Canary|E2E65D;S66|Blaze Orange|E5533C;S67|Vanilla|E9C1A6;S68|Tan|CC9B74;S69|Mine Shaft|383E44;S70|Dark Algae|ADAD29;S71|Jade Green|007D2B;S72|Light Sea Blue|68C4D2;S73|Steel Blue|5AB0BF;S74|Azure|009EC2;S75|Dark Steel Blue|0084B2;S76|Sea Blue|0093A9;S77|Ghost White|D4D8D3;S78|Ash Grey|C2C4C2;S79|Light Gray|A7ACAD;S80|Dark Olive|8F8E3C;S81|Deer|BF9168;S82|Clay|AA744E;S83|Sienna|BB6833;S84|Deep Chestnut|BE5D65;S85|Red Wine|99323A;S86|Goldenrod|E8AE00;S87|Coral Red|EC625E;S88|Dark Pink|D62779;S89|Charcoal Gray|565A5E;S90|Pastel Orange|D9B35E;S91|Brunswick Green|153838;S92|Dandelion|CEA433;S93|Pale Skin|DCB794;S94|Warm Blush|DD9285;S95|Salmon|E07B69;S96|Apricot|EF7F61;S97|Papaya|DC772B;S98|Himalaya Blue|6AAEDB;S99|Waterfall|61BBD3;S100|Lagoon|279BBE;S101|Electric Blue|00A7E3;S102|Pool Blue|0077CA;S103|Caribbean Blue|005AA9;S104|Deep Water|007F9E;S105|Petrol Blue|007D91;S106|Wedgewood Blue|00649A;S107|Pond Blue|006C9F;S108|Seashell Beige|CFC179;S109|Beige|C4AE64;S110|Beach Beige|AB9745;S111|Caffe Latte|978138;S112|Oaktree Brown|907C41;S113|Khaki|B6AE84;S114|Light Greengray|A59F65;S115|Mossy Green|938D54;S116|Earth Green|8D8B51;S117|Sage Green|7F7E49;S118|Pinetree Green|5B6E35;S119|Frosty Blue|8AD5C9;S120|Polar Mint|7CD2A5;S121|Celadon Green|72AC9A;S122|Eucalyptus|00B26F;S123|Clover Field|3EB724;S124|Pooltable Felt|0D7535;S125|Snake Green|007D6E;S126|Dark Eucalyptus|006E69;S127|Marshmallow Rose|DFC3E1;S128|Light Grape|D38ED4;S129|Rosebud Pink|D5A6BA;S130|Fuchsia|D6668E;S131|Candy Violet|B8AAD9;S132|Flamingo|DF486D;S133|Pink Plum|BC3CA6;S134|Amethyst|803897;S135|Moonlight Blue|A7BAE1;S136|Summer Rain|AFB8DF;S137|Azur Blue|6B9AD4;S138|Cornflower Blue|5A89CE;S139|Forget Me Not|658AD0;S140|Indigo|566CBD;S141|Horizon Blue|4D74C6;S142|Cobalt|416DBE;S143|Royal Blue|30429E;S144|Marine|024288;S145|Pale Yellow Moss|D6CA6A;S146|Bloodrose Red|9D1A38;S147|Spearmint|80B7A1;S148|Mocha|7A594F;S149|Creme|EFDBA1;S150|Iris Violet|8884D0;S151|Forest Green|345621;S152|Lilac|AEADDC;S153|Pale Lilac|BCC3E1;S154|Sahara Sand|E3C09A;S155|Sunkissed Teint|C58B60;S156|Steel Grey|5A5F65;S157|Iron Grey|4C5156;S158|Pepper|3A3E42;S159|Oslo Gray|82878B;SE1|Moon|F1F4FA;SE2|Raincloud|A2B2D3;SE3|Winter|83A6DC;SE4|Tide|70D8ED;SE5|Aquamarine|69E3D5;SE6|Neptune|2A63C8;SE7|Rose Quartz|D5AEC9;SE8|Mauve|AF739A;SE9|Dark Mauve|704B6D;SE10|Wild Berry|D977CD;SE11|Sugar Plum|B643AC;SE12|Desert|DEB181;SE13|Peanut|BC9D77;SE14|Toffee|AC7F5D;SE15|Bark|A37E66;SG1|Glow Yellow|C6C0B4;SG2|Glow Pink|DFABBC;SG3|Glow Blue|6FADC1;SL1|Glitter Blue|3687B2;SL2|Glitter Green|117C52;SL3|Glitter Red|C22933;SL4|Glitter Yellow|CDBD00;SN1|Neon Orange|FF7405;SN2|Neon Green|01C63E;SN3|Neon Yellow|F2F33C;SN4|Neon Rose|FF477A;SP1|Pearlescent Green|93CA87;SP2|Pearlescent Tangerine|FE7F54;SP3|Pearlescent Orange|F0A149;SP4|Pearlescent Pink|DC9EA9;SP5|Pearlescent Red|D63C53;SP6|Pearlescent Blue|2C4E97;SP7|Pearlescent Purple|64427E;SP8|Pearlescent White|E0DBCA;ST1|Transparent|C7BCB8;ST2|Transparent Pink|F95498;ST3|Transparent Tangerine|FF7C45;ST4|Transparent Yellow|DADF3D;ST5|Transparent Green|0FAE58;ST6|Transparent Purple|8477B3"
+ARTKAL_S = [dict(zip(("code", "name", "hex"), x.split("|"))) for x in ARTKAL_S_RAW.split(";")]
+ARTKAL_SOLID = [c for c in ARTKAL_S if c["code"][1:].isdigit()]
+
+def nearest_artkal(rgb, pool=None):
+    pool = pool or ARTKAL_SOLID
+    labs = srgb_to_lab(np.array([hex2rgb(c["hex"]) for c in pool], float))
+    d = ((labs - srgb_to_lab(np.array(rgb, float))) ** 2).sum(1)
+    return pool[int(d.argmin())], float(np.sqrt(d.min()))
+
+def empty_background(g):
+    """Background = the color on most edge cells. Every cell of that color that is connected
+    to the grid edge (4-neighbour flood fill) becomes empty (-1): no bead there. Areas of the
+    same color enclosed by the design stay beads."""
+    H, W = g.shape
+    ring = np.concatenate([g[0], g[-1], g[:, 0], g[:, -1]])
+    bg = int(np.bincount(ring[ring >= 0]).argmax())
+    seen = np.zeros((H, W), bool); st = []
+    for r in range(H):
+        for c in (0, W - 1):
+            if g[r, c] == bg and not seen[r, c]: seen[r, c] = True; st.append((r, c))
+    for c in range(W):
+        for r in (0, H - 1):
+            if g[r, c] == bg and not seen[r, c]: seen[r, c] = True; st.append((r, c))
+    while st:
+        y, x = st.pop()
+        for yy, xx in ((y - 1, x), (y + 1, x), (y, x - 1), (y, x + 1)):
+            if 0 <= yy < H and 0 <= xx < W and not seen[yy, xx] and g[yy, xx] == bg:
+                seen[yy, xx] = True; st.append((yy, xx))
+    out = g.copy(); out[seen] = -1
+    return out, bg, int(seen.sum())
+
+def compact_palette(g, pal_rgb, names, extra=None):
+    """Drop unused colors and renumber (empty cells stay -1)."""
+    used = sorted(set(int(v) for v in np.unique(g) if v >= 0))
+    remap = -np.ones(len(pal_rgb) + 1, int)
+    for i, k in enumerate(used): remap[k] = i
+    g2 = np.where(g >= 0, remap[np.clip(g, 0, None)], -1)
+    return g2, pal_rgb[used], [names[k] for k in used], ([extra[k] for k in used] if extra else None)
+
+def rid_peg():
+    return "c" + "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(7))
+
+def _bg_of(g):
+    if (g < 0).any(): return -1
+    return int(np.bincount(g.ravel()).argmax())
+
+# ---------------------------------------------------------------- render / edit / check
+def _load(path):
+    P = json.load(open(path)); W, H = P["width"], P["height"]
+    return P, np.array(P["cells"], int).reshape(H, W)
+
+def _font(size):
+    from PIL import ImageFont
+    for f in ("DejaVuSans.ttf", "Arial.ttf", "/System/Library/Fonts/Supplemental/Arial.ttf",
+              "C:/Windows/Fonts/arial.ttf"):
+        try: return ImageFont.truetype(f, size)
+        except Exception: pass
+    return ImageFont.load_default()
+
+def render_chart(P, path, region=None, doubt=None, S=None):
+    """Chart with numbered rows/cols (1-based, row 1 = top, col 1 = left), bold line
+    every 5 and 10 cells, red line on the centre axis. region = (r0,c0,r1,c1) 1-based."""
+    from PIL import ImageDraw
+    W, H = P["width"], P["height"]; g = np.array(P["cells"]).reshape(H, W)
+    pal = np.array([hex2rgb(p["hex"]) for p in P["palette"]] + [[252, 252, 252]], np.uint8)   # last = empty
+    r0, c0, r1, c1 = region or (1, 1, H, W)
+    sub = g[r0 - 1:r1, c0 - 1:c1]; h, w = sub.shape
+    sub = np.where(sub < 0, len(pal) - 1, sub)
+    S = S or max(14, min(40, 1400 // max(h, w)))
+    M = 3 * S if S < 24 else 2 * S
+    img = Image.new("RGB", (w * S + 2 * M, h * S + 2 * M), (255, 255, 255))
+    img.paste(Image.fromarray(pal[sub].repeat(S, 0).repeat(S, 1)), (M, M))
+    d = ImageDraw.Draw(img); f = _font(max(9, int(S * 0.55)))
+    for (yy, xx) in zip(*np.nonzero(g[r0 - 1:r1, c0 - 1:c1] < 0)):          # empty = no bead: small dot
+        cx, cy = M + xx * S + S / 2, M + yy * S + S / 2
+        d.ellipse([cx - 1.5, cy - 1.5, cx + 1.5, cy + 1.5], fill=(205, 205, 205))
+    for i in range(w + 1):
+        col = c0 + i - 1
+        lw, cl = (2, (0, 0, 0)) if col % 10 == 0 else ((1, (60, 60, 60)) if col % 5 == 0 else (1, (170, 170, 170)))
+        d.line([(M + i * S, M), (M + i * S, M + h * S)], fill=cl, width=lw)
+    for j in range(h + 1):
+        row = r0 + j - 1
+        lw, cl = (2, (0, 0, 0)) if row % 10 == 0 else ((1, (60, 60, 60)) if row % 5 == 0 else (1, (170, 170, 170)))
+        d.line([(M, M + j * S), (M + w * S, M + j * S)], fill=cl, width=lw)
+    every = 1 if S >= 24 else 5
+    for i in range(w):
+        col = c0 + i
+        if col % every == 0 or col == c0 or every == 1:
+            for y in (M - S * 0.9, M + h * S + S * 0.15):
+                d.text((M + i * S + S * 0.1, y), str(col), fill=(0, 0, 0), font=f)
+    for j in range(h):
+        row = r0 + j
+        if row % every == 0 or row == r0 or every == 1:
+            d.text((M * 0.1, M + j * S + S * 0.15), str(row), fill=(0, 0, 0), font=f)
+            d.text((M + w * S + S * 0.2, M + j * S + S * 0.15), str(row), fill=(0, 0, 0), font=f)
+    if not region:
+        a2, sc = find_mirror_axis(g, _bg_of(g))
+        ax = M + (a2 / 2 + 0.5) * S if sc >= 0.65 else M + W / 2 * S
+        d.line([(ax, M - 4), (ax, M + h * S + 4)], fill=(255, 0, 0), width=1)
+    if doubt:
+        for r, c in doubt:
+            if r0 - 1 <= r < r1 and c0 - 1 <= c < c1:
+                x, y = M + (c - c0 + 1) * S, M + (r - r0 + 1) * S
+                d.rectangle([x + 2, y + 2, x + S - 3, y + S - 3], outline=(255, 0, 255), width=2)
+    img.save(path)
+
+def check(P, g):
+    H, W = g.shape; names = [p["name"] for p in P["palette"]]
+    cnt = np.bincount(g[g >= 0].ravel(), minlength=len(names))
+    bg = _bg_of(g)
+    a2, score = find_mirror_axis(g, bg)
+    print(f"SIZE  {W} x {H}   colors {len(names)}" + (f"   empty cells {int((g < 0).sum())}" if (g < 0).any() else ""))
+    print(f"AXIS  best mirror axis column {a2 / 2 + 1:.1f} (1-based), symmetry {score:.1%}")
+    fig = main_figure(g, bg); asym = []
+    if fig:
+        for (r, c) in sorted(fig):
+            m = a2 - c
+            if 0 <= m < W and c < m and g[r, c] != g[r, m]: asym.append((r + 1, c + 1, m + 1))
+    print(f"ASYM  {len(asym)} mirrored pairs in the main figure differ (row, col, mirror col):")
+    print("  " + " ".join(f"({r},{c}|{m})" for r, c, m in asym[:80]))
+    iso = []
+    for r in range(H):
+        for c in range(W):
+            nb = [g[y, x] for y, x in ((r - 1, c), (r + 1, c), (r, c - 1), (r, c + 1)) if 0 <= y < H and 0 <= x < W]
+            if g[r, c] >= 0 and all(k != g[r, c] for k in nb): iso.append((r + 1, c + 1, names[g[r, c]]))
+    print(f"ALONE {len(iso)} single cells with no same-color neighbour (fine for dots, suspicious elsewhere)")
+    if (g < 0).any():                       # fuse beads: parts that are not joined side-to-side fall apart
+        seen = np.zeros_like(g, bool); parts = []
+        for r in range(H):
+            for c in range(W):
+                if g[r, c] < 0 or seen[r, c]: continue
+                st = [(r, c)]; seen[r, c] = True; cells = []
+                while st:
+                    y, x = st.pop(); cells.append((y, x))
+                    for yy, xx in ((y - 1, x), (y + 1, x), (y, x - 1), (y, x + 1)):
+                        if 0 <= yy < H and 0 <= xx < W and not seen[yy, xx] and g[yy, xx] >= 0:
+                            seen[yy, xx] = True; st.append((yy, xx))
+                parts.append(cells)
+        parts.sort(key=len, reverse=True)
+        small = [p for p in parts[1:]]
+        print(f"PIECES {len(parts)} separate part(s) after fusing (beads joined side to side); main part {len(parts[0]) if parts else 0} beads")
+        for p in small[:30]:
+            ys_, xs_ = [q[0] for q in p], [q[1] for q in p]
+            print(f"  loose part: {len(p)} bead(s) at rows {min(ys_) + 1}-{max(ys_) + 1}, cols {min(xs_) + 1}-{max(xs_) + 1}")
+    for i, n in enumerate(names):
+        code = P["palette"][i].get("code") or ""
+        print(f"  [{i}] {P['palette'][i]['hex']} {(code + ' ') if code else ''}{n:<18} {cnt[i]}")
+
+def edit_main(argv):
+    """ops file: JSON list. Coordinates are 1-based [row, col]; colors by name or index.
+      {"op":"set","cells":[[r,c],...],"color":"Navy"}
+      {"op":"rect","from":[r0,c0],"to":[r1,c1],"color":"Gold"}
+      {"op":"replace","old":"Cream 2","new":"Cream","from":[r0,c0],"to":[r1,c1]}   (area optional)
+      {"op":"mirror","axis_col":30,"keep":"left","rows":[r0,r1],"cols":[c0,c1]}     (axis may be x.5)
+      {"op":"mirror_v","axis_row":35,"keep":"top","rows":[r0,r1],"cols":[c0,c1]}
+      {"op":"copy","from":[r0,c0],"to":[r1,c1],"dest":[r,c],"flip":"h|v|hv","skip":"Cream"}
+      {"op":"merge","old":"Pink 3","new":"Pink"}          (remove a palette color)
+      {"op":"palette","color":"Pink 2","name":"Nutcracker Red","hex":"#AD0318"}
+      {"op":"shift","dr":1,"dc":0,"fill":"Cream"}          (move whole design)
+      {"op":"artkal","color":"Red","code":"S05"}           (pegwright: use a specific Artkal bead)
+      color "empty" = no bead (pegwright)
+    """
+    ap = argparse.ArgumentParser(prog="img2pattern.py edit")
+    ap.add_argument("pattern"); ap.add_argument("ops"); ap.add_argument("--out")
+    A = ap.parse_args(argv)
+    P, g = _load(A.pattern); H, W = g.shape
+    ops = json.load(open(A.ops)) if os.path.exists(A.ops) else json.loads(A.ops)
+    def ci(x):
+        names = [p["name"].lower() for p in P["palette"]]
+        codes = [str(p.get("code") or "").lower() for p in P["palette"]]
+        if isinstance(x, int): return x
+        if str(x).lower() in ("empty", "none", "-1"): return -1          # pegwright: no bead
+        if str(x).lower() in names: return names.index(str(x).lower())
+        if str(x).lower() in codes and str(x): return codes.index(str(x).lower())
+        raise SystemExit(f"unknown color {x!r}; palette: {[p['name'] for p in P['palette']]}")
+    def area(o):
+        r0, c0 = o.get("from", [1, 1]); r1, c1 = o.get("to", [H, W])
+        if "rows" in o: r0, r1 = o["rows"]
+        if "cols" in o: c0, c1 = o["cols"]
+        return r0 - 1, c0 - 1, r1, c1
+    for o in ops:
+        op = o["op"]; before = g.copy()
+        if op == "set":
+            for r, c in o["cells"]: g[r - 1, c - 1] = ci(o["color"])
+        elif op == "rect":
+            r0, c0, r1, c1 = area(o); g[r0:r1, c0:c1] = ci(o["color"])
+        elif op == "replace":
+            r0, c0, r1, c1 = area(o); sub = g[r0:r1, c0:c1]; sub[sub == ci(o["old"])] = ci(o["new"])
+        elif op == "mirror":
+            r0, c0, r1, c1 = area(o); a2 = int(round((o["axis_col"] - 1) * 2)); keep = o.get("keep", "left")
+            for r in range(r0, r1):
+                for c in range(c0, c1):
+                    m = a2 - c
+                    if 0 <= m < W and ((keep == "left" and c < m) or (keep == "right" and c > m)):
+                        g[r, m] = g[r, c]
+        elif op == "mirror_v":
+            r0, c0, r1, c1 = area(o); a2 = int(round((o["axis_row"] - 1) * 2)); keep = o.get("keep", "top")
+            for r in range(r0, r1):
+                m = a2 - r
+                if 0 <= m < H and ((keep == "top" and r < m) or (keep == "bottom" and r > m)):
+                    g[m, c0:c1] = g[r, c0:c1]
+        elif op == "copy":
+            r0, c0, r1, c1 = area(o); blk = g[r0:r1, c0:c1].copy(); fl = o.get("flip") or ""
+            if "h" in fl: blk = blk[:, ::-1]
+            if "v" in fl: blk = blk[::-1]
+            dr, dc = o["dest"][0] - 1, o["dest"][1] - 1; skip = ci(o["skip"]) if "skip" in o else None
+            for y in range(blk.shape[0]):
+                for x in range(blk.shape[1]):
+                    if 0 <= dr + y < H and 0 <= dc + x < W and blk[y, x] != skip: g[dr + y, dc + x] = blk[y, x]
+        elif op == "merge":
+            k, n = ci(o["old"]), ci(o["new"]); g[g == k] = n
+            del P["palette"][k]; g[g > k] -= 1
+        elif op == "palette":
+            k = ci(o["color"]); P["palette"][k].update({x: o[x] for x in ("name", "hex", "code") if x in o})
+        elif op == "artkal":                                   # swap a color for a specific Artkal S bead
+            k = ci(o["color"]); a_ = {c["code"].lower(): c for c in ARTKAL_S}.get(str(o["code"]).lower())
+            if not a_: raise SystemExit(f"unknown Artkal code {o['code']!r}")
+            P["palette"][k].update({"name": a_["name"], "hex": "#" + a_["hex"].lstrip("#").upper(),
+                                    "code": a_["code"], "brand": "Artkal S"})
+        elif op == "shift":
+            dr, dc = o.get("dr", 0), o.get("dc", 0); f_ = ci(o["fill"]); n_ = np.full_like(g, f_)
+            ys, ye = max(0, dr), min(H, H + dr); xs_, xe = max(0, dc), min(W, W + dc)
+            n_[ys:ye, xs_:xe] = g[ys - dr:ye - dr, xs_ - dc:xe - dc]; g = n_
+        else:
+            raise SystemExit(f"unknown op {op}")
+        print(f"EDIT  {op:<9} changed {int((g != before).sum()) if g.shape == before.shape else '?'} cells")
+    P["cells"] = [int(v) for v in g.ravel()]
+    outp = A.out or A.pattern
+    json.dump(P, open(outp, "w"), separators=(",", ":")); print("SAVED", outp)
+    render_chart(P, os.path.splitext(outp)[0] + "_chart.png"); print("CHART", os.path.splitext(outp)[0] + "_chart.png")
+
+def render_main(argv):
+    ap = argparse.ArgumentParser(prog="img2pattern.py render")
+    ap.add_argument("pattern"); ap.add_argument("--out"); ap.add_argument("--region", help="r0,c0,r1,c1 (1-based)")
+    A = ap.parse_args(argv); P, g = _load(A.pattern)
+    reg = tuple(int(v) for v in A.region.split(",")) if A.region else None
+    outp = A.out or os.path.splitext(A.pattern)[0] + ("_zoom.png" if reg else "_chart.png")
+    render_chart(P, outp, region=reg); print("CHART", outp)
+
+def main():
+    cmds = {"convert": convert_main, "edit": edit_main, "render": render_main,
+            "check": lambda a: check(*_load(a[0]))}
+    if len(sys.argv) > 1 and sys.argv[1] in cmds:
+        cmds[sys.argv[1]](sys.argv[2:])
+    else:
+        convert_main(sys.argv[1:])
+
+if __name__ == "__main__":
+    main()
+</script>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const els = {theme:$('theme'), title:$('title'), w:$('w'), h:$('h'), n:$('n'), colors:$('colors'), notes:$('notes'),
+               outlinecolor:$('outlinecolor'), designer:$('designer'), board:$('board'), extra:$('extra'), bag:$('bag')};
+  let sym = 'balanced';
+  const status = $('status');
+
+  const KEY = 'bead-brief-studio-v1';
+  try{
+    const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if(saved){ for(const k in els){ if(saved[k] != null && els[k]) els[k].value = saved[k]; }
+      if(saved.sym) sym = saved.sym; if(saved.outline != null) $('outline').checked = !!saved.outline; }
+  }catch(e){}
+  function remember(){
+    try{ const o = {sym, outline: $('outline').checked}; for(const k in els) o[k] = els[k].value; localStorage.setItem(KEY, JSON.stringify(o)); }catch(e){}
+  }
+
+  const clampInt = (v, lo, hi, d) => { v = parseInt(v, 10); return isNaN(v) ? d : Math.max(lo, Math.min(hi, v)); };
+  const slugify = s => (s || 'design').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'')
+                        .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40) || 'design';
+  function vals(){
+    const W = clampInt(els.w.value, 8, 150, 29), H = clampInt(els.h.value, 8, 150, 29), N = clampInt(els.n.value, 2, 20, 6);
+    const theme = els.theme.value.trim().replace(/\s+/g,' ');
+    const title = els.title.value.trim() || (theme ? theme.split(/[,.]/)[0].slice(0,40) : 'Bead design');
+    return {W, H, N, theme, title, colors: els.colors.value.trim(), notes: els.notes.value.trim(),
+            outline: $('outline').checked, outlineColor: els.outlinecolor.value.trim() || 'black',
+            designer: els.designer.value.trim(), board: clampInt(els.board.value, 5, 120, 29),
+            extra: clampInt(els.extra.value, 0, 100, 10), bag: clampInt(els.bag.value, 1, 100000, 1000)};
+  }
+
+  // ---------- template geometry (same rules as make_grid_template.py)
+  function geometry(W, H){
+    let CW, CH;
+    if (H > W * 1.15){ CW = 1024; CH = 1536; }
+    else if (W > H * 1.15){ CW = 1536; CH = 1024; }
+    else { CW = 1024; CH = 1024; }
+    const margin = 48;
+    const cell = Math.floor(Math.min((CW - 2*margin)/W, (CH - 2*margin)/H));
+    const gw = cell*W, gh = cell*H;
+    return {CW, CH, cell, gw, gh, x0: Math.floor((CW - gw)/2), y0: Math.floor((CH - gh)/2)};
+  }
+  function drawTemplate(canvas, W, H){
+    const g = geometry(W, H);
+    canvas.width = g.CW; canvas.height = g.CH;
+    const c = canvas.getContext('2d'); c.imageSmoothingEnabled = false;
+    c.fillStyle = '#FFFFFF'; c.fillRect(0, 0, g.CW, g.CH);
+    c.fillStyle = '#F2F2F2'; c.fillRect(g.x0, g.y0, g.gw, g.gh);
+    for (let i = 0; i <= W; i++){ const x = g.x0 + i*g.cell, major = i % 10 === 0;
+      c.fillStyle = major ? '#464646' : '#969696'; c.fillRect(major ? x - 1 : x, g.y0, major ? 2 : 1, g.gh + 1); }
+    for (let j = 0; j <= H; j++){ const y = g.y0 + j*g.cell, major = j % 10 === 0;
+      c.fillStyle = major ? '#464646' : '#969696'; c.fillRect(g.x0, major ? y - 1 : y, g.gw + 1, major ? 2 : 1); }
+    const f = 4; c.fillStyle = '#1E1E1E';
+    c.fillRect(g.x0 - f, g.y0 - f, g.gw + 2*f + 1, f);
+    c.fillRect(g.x0 - f, g.y0 + g.gh + 1, g.gw + 2*f + 1, f);
+    c.fillRect(g.x0 - f, g.y0 - f, f, g.gh + 2*f + 1);
+    c.fillRect(g.x0 + g.gw + 1, g.y0 - f, f, g.gh + 2*f + 1);
+    return g;
+  }
+  function drawPreview(canvas, W, H){
+    const g = geometry(W, H);
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const box = Math.min(canvas.parentElement.clientWidth - 24, 420);
+    const s = Math.min(box / g.CW, 460 / g.CH);
+    const cw = Math.round(g.CW * s), ch = Math.round(g.CH * s);
+    canvas.width = Math.round(cw * dpr); canvas.height = Math.round(ch * dpr);
+    canvas.style.width = cw + 'px'; canvas.style.height = ch + 'px';
+    const c = canvas.getContext('2d'); const k = s * dpr;
+    c.fillStyle = '#FFFFFF'; c.fillRect(0, 0, canvas.width, canvas.height);
+    const X = x => Math.round(x * k) + 0.5;
+    c.fillStyle = '#F2F2F2'; c.fillRect(g.x0 * k, g.y0 * k, g.gw * k, g.gh * k);
+    if (g.cell * k >= 4){
+      c.strokeStyle = '#B4B4B4'; c.lineWidth = 1; c.beginPath();
+      for (let i = 0; i <= W; i++){ if (i % 10){ const x = X(g.x0 + i*g.cell); c.moveTo(x, g.y0*k); c.lineTo(x, (g.y0+g.gh)*k); } }
+      for (let j = 0; j <= H; j++){ if (j % 10){ const y = X(g.y0 + j*g.cell); c.moveTo(g.x0*k, y); c.lineTo((g.x0+g.gw)*k, y); } }
+      c.stroke();
+    }
+    c.strokeStyle = '#464646'; c.lineWidth = Math.max(1, Math.round(1.5 * dpr)); c.beginPath();
+    for (let i = 0; i <= W; i += 10){ const x = X(g.x0 + i*g.cell); c.moveTo(x, g.y0*k); c.lineTo(x, (g.y0+g.gh)*k); }
+    for (let j = 0; j <= H; j += 10){ const y = X(g.y0 + j*g.cell); c.moveTo(g.x0*k, y); c.lineTo((g.x0+g.gw)*k, y); }
+    c.stroke();
+    c.strokeStyle = '#1E1E1E'; c.lineWidth = Math.max(2, Math.round(3 * dpr));
+    c.strokeRect((g.x0 - 2) * k, (g.y0 - 2) * k, (g.gw + 4) * k, (g.gh + 4) * k);
+    return g;
+  }
+  function blocksText(W, H){
+    const f = v => Number.isInteger(v) ? String(v) : (Math.floor(v) + ' full + 1 partial');
+    return `${f(W/10)} x ${f(H/10)} blocks`;
+  }
+  const fill = (tpl, map) => tpl.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in map ? String(map[k]) : m));
+
+  function buildImgSkill(v){
+    const g = geometry(v.W, v.H);
+    const oc = v.outlineColor;
+    return fill($('imgTpl').textContent, {
+      SLUG: slugify(v.title), TITLE: v.title, THEME: v.theme || '(no design given - ask the user)',
+      FILE: `grid_${v.W}x${v.H}.png`, W: v.W, H: v.H, BLOCKS: blocksText(v.W, v.H), CANVAS: `${g.CW} x ${g.CH} px`,
+      N: v.N, COLORS: v.colors || 'none - choose bead colors that fit the design',
+      OUTLINE: v.outline ? `yes - a 1-cell ${oc} outline around the whole piece` : 'no outline',
+      OUTLINESHORT: v.outline ? `1-cell ${oc}` : 'none',
+      OUTLINERULE: v.outline
+        ? `**Outline:** a continuous 1-cell ${oc} outline runs around the whole piece. It is one of the ${v.N} colors, and it keeps light parts of the design separate from the empty background.`
+        : '**No outline.** Make sure the outermost cells of the piece are clearly different from the light grey background (no white or very light grey on the outer edge).',
+      OUTLINEPROMPT: v.outline ? `A continuous 1-cell ${oc} outline surrounds the whole piece.` : 'No outline around the piece.',
+      SYM: sym,
+      SYMRULE: sym === 'symmetric' ? 'The piece is perfectly mirror-symmetric around the vertical center line of the grid.'
+                                   : 'Asymmetry is allowed, but keep the piece balanced and roughly centered.',
+      SYMPROMPT: sym === 'symmetric' ? 'The piece is perfectly mirror-symmetric around the vertical center line of the grid.'
+                                     : 'The piece is balanced and centered; it does not need to be symmetric.',
+      NOTES: v.notes || 'none'
+    });
+  }
+  function exampleJson(v){
+    return JSON.stringify({v:1, title:'', designer:v.designer, notes:'', width:0, height:0, cells:[], palette:[],
+      paletteName:'', app:'pegwright', boardSize:v.board, extraPct:v.extra, bagSize:v.bag}, null, 2);
+  }
+  function buildJsonSkill(v, withCode){
+    let out = fill($('jsonTpl').textContent, {
+      SLUG: slugify(v.title), TITLE: v.title, W: v.W, H: v.H, N: v.N, SYM: sym,
+      SYMFLAG: sym === 'balanced' ? '--no-symmetry' : '',
+      SYMNOTE: sym === 'balanced' ? 'The piece is not forced into a mirror image (balanced design).'
+                                  : 'The piece is mirrored left/right on its detected axis; each disagreeing pair is decided by the pixel evidence of both sides.',
+      OUTNAME: `${v.title.replace(/[\\/:*?"<>|]+/g, '').trim() || 'pattern'}.json`,
+      DESIGNER: v.designer || '(empty)', BOARD: v.board, EXTRA: v.extra, BAG: v.bag, EXAMPLEJSON: exampleJson(v)
+    });
+    const code = $('convCode').textContent.replace(/^\n/, '');
+    if (withCode) out += '#### BEGIN-IMG2PATTERN\n' + code + '#### END-IMG2PATTERN\n```\n';
+    else out += '… (converter script, ' + code.split('\n').length + ' lines, is added to the downloaded file)\n';
+    return out;
+  }
+  function names(v){ const b = `${slugify(v.title)}-${v.W}x${v.H}`;
+    return {png: `grid_${v.W}x${v.H}.png`, md: `skill-gambar-bead-${b}.md`, json: `skill-json-bead-${b}.md`}; }
+
+  const prev = $('prev');
+  function render(){
+    const v = vals();
+    const g = drawPreview(prev, v.W, v.H);
+    const bx = Math.ceil(v.W / v.board), by = Math.ceil(v.H / v.board);
+    const rows = [
+      ['Manik', `${v.W} × ${v.H}`], ['Papan ' + v.board, `${bx} × ${by} = ${bx*by}`],
+      ['Ukuran jadi', `${(v.W*0.5).toFixed(1)} × ${(v.H*0.5).toFixed(1)} cm`], ['Blok 10×10', [v.W, v.H].map(n => Number.isInteger(n/10) ? String(n/10) : Math.floor(n/10) + '+').join(' × ')],
+      ['Kanvas', `${g.CW} × ${g.CH}`], ['Ukuran kotak', `${g.cell} px`],
+      ['Warna manik', `${v.N} + latar kosong`], ['Simetri', sym === 'symmetric' ? 'cermin' : 'seimbang']
+    ];
+    $('specs').innerHTML = '';
+    for (const [k, val] of rows){
+      const d = document.createElement('div'), dt = document.createElement('dt'), dd = document.createElement('dd');
+      dt.textContent = k; dd.textContent = val; d.append(dt, dd); $('specs').append(d);
+    }
+    const warn = $('densewarn');
+    if (g.cell < 10){ warn.hidden = false; warn.textContent = `Kotak hanya ${g.cell} px. Grid serapat ini sulit dipertahankan model gambar; ukuran lebih kecil lebih aman.`; }
+    else warn.hidden = true;
+    $('skillpre').textContent = buildImgSkill(v);
+    $('jsonpre').textContent = buildJsonSkill(v, false);
+    const nm = names(v); $('fn-png').textContent = nm.png; $('fn-md').textContent = nm.md; $('fn-json').textContent = nm.json;
+    for (const b of document.querySelectorAll('#presets .chip'))
+      b.setAttribute('aria-pressed', String(+b.dataset.w === v.W && +b.dataset.h === v.H));
+    $('sym-balanced').setAttribute('aria-pressed', String(sym === 'balanced'));
+    $('sym-symmetric').setAttribute('aria-pressed', String(sym === 'symmetric'));
+    els.outlinecolor.disabled = !v.outline;
+    remember();
+  }
+
+  // ---------- downloads: viewer capability inside Claude, plain download elsewhere
+  let dl = null;
+  (async () => { try { if (window.claude && window.claude.use) dl = await window.claude.use('downloads'); } catch(e) { dl = null; } })();
+  const inClaude = () => !!(window.claude && window.claude.use);
+  function plainDownload(name, blob){
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }
+  async function saveFile(name, blob){
+    if (inClaude()){ if (!dl) throw {code: 'unavailable'}; return dl.save({filename: name, data: blob}); }
+    plainDownload(name, blob); return {status: 'saved'};
+  }
+  function setStatus(msg, cls){ status.textContent = msg; status.className = 'status' + (cls ? ' ' + cls : ''); }
+  function errMsg(e){
+    const c = e && e.code;
+    if (c === 'declined') return 'Unduhan dibatalkan.';
+    if (c === 'rate_limited') return 'Masih ada konfirmasi unduhan yang terbuka. Selesaikan dulu, lalu coba lagi.';
+    if (['unavailable','not_granted','capability_disabled','capability_removed'].includes(c))
+      return 'Unduhan tidak tersedia di tampilan ini. Buka file HTML ini langsung di browser untuk mengunduh.';
+    return 'Unduhan gagal: ' + ((e && e.message) || 'kesalahan tidak dikenal') + '.';
+  }
+  function check(v){
+    if (!v.theme){ setStatus('Isi dulu desain yang mau dibuat.', 'bad'); els.theme.focus(); return false; }
+    return true;
+  }
+  const pngBlob = () => { const v = vals(); const c = document.createElement('canvas'); drawTemplate(c, v.W, v.H);
+                          return new Promise(res => c.toBlob(res, 'image/png')); };
+  async function downloadPng(){ const v = vals(); await saveFile(names(v).png, await pngBlob()); return true; }
+  async function downloadMd(){ const v = vals(); if (!check(v)) return false;
+    await saveFile(names(v).md, new Blob([buildImgSkill(v)], {type: 'text/markdown'})); return true; }
+  async function downloadJsonSkill(){ const v = vals(); if (!check(v)) return false;
+    await saveFile(names(v).json, new Blob([buildJsonSkill(v, true)], {type: 'text/markdown'})); return true; }
+
+  $('f').addEventListener('submit', async e => {
+    e.preventDefault();
+    const v = vals(); if (!check(v)) return;
+    const go = $('go'); go.disabled = true;
+    const pause = () => inClaude() ? null : new Promise(r => setTimeout(r, 350));
+    try{
+      setStatus(inClaude() ? 'Konfirmasi unduhan 1 dari 3: template grid…' : 'Mengunduh 3 file…');
+      await downloadPng(); await pause();
+      setStatus(inClaude() ? 'Konfirmasi unduhan 2 dari 3: skill gambar…' : 'Mengunduh 3 file…');
+      await downloadMd(); await pause();
+      setStatus(inClaude() ? 'Konfirmasi unduhan 3 dari 3: skill JSON…' : 'Mengunduh 3 file…');
+      await downloadJsonSkill();
+      const n = names(v); setStatus(`Selesai: ${n.png}, ${n.md}, ${n.json}.`, 'ok');
+    }catch(err){ setStatus(errMsg(err), err && err.code === 'declined' ? 'warn' : 'bad'); }
+    finally{ go.disabled = false; }
+  });
+  $('dl-png').addEventListener('click', async () => { try{ await downloadPng(); setStatus('Template diunduh: ' + names(vals()).png, 'ok'); }catch(err){ setStatus(errMsg(err), 'bad'); } });
+  $('dl-md').addEventListener('click', async () => { try{ if (await downloadMd()) setStatus('Skill gambar diunduh: ' + names(vals()).md, 'ok'); }catch(err){ setStatus(errMsg(err), 'bad'); } });
+  $('dl-json').addEventListener('click', async () => { try{ if (await downloadJsonSkill()) setStatus('Skill JSON diunduh: ' + names(vals()).json, 'ok'); }catch(err){ setStatus(errMsg(err), 'bad'); } });
+
+  $('importjson').addEventListener('change', async e => {
+    const file = e.target.files && e.target.files[0]; if (!file) return;
+    try{
+      const P = JSON.parse(await file.text());
+      const set = (el, val) => { if (val !== undefined && val !== null && val !== '') el.value = val; };
+      set(els.designer, P.designer); set(els.board, P.boardSize); set(els.extra, P.extraPct); set(els.bag, P.bagSize);
+      render(); setStatus(`Pengaturan diambil dari ${file.name}.`, 'ok');
+    }catch(err){ setStatus('File itu bukan project Pegwright yang bisa dibaca.', 'bad'); }
+    e.target.value = '';
+  });
+
+  for (const k in els) els[k].addEventListener('input', render);
+  $('outline').addEventListener('change', render);
+  for (const b of document.querySelectorAll('#presets .chip'))
+    b.addEventListener('click', () => { els.w.value = b.dataset.w; els.h.value = b.dataset.h; render(); });
+  $('sym-balanced').addEventListener('click', () => { sym = 'balanced'; render(); });
+  $('sym-symmetric').addEventListener('click', () => { sym = 'symmetric'; render(); });
+  window.addEventListener('resize', () => drawPreview(prev, vals().W, vals().H));
+  render();
+})();
+</script>

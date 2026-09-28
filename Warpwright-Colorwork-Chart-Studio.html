@@ -1282,6 +1282,28 @@ input[type=text], input[type=number], select, textarea{
             <div class="field"><label>Instagram</label><input type="text" id="exLinkInstagram" placeholder="@yourshop"></div>
             <div class="field"><label>Pinterest / Facebook</label><input type="text" id="exLinkOther" placeholder="@yourshop"></div>
           </div>
+          <div class="section-title">Etsy thumbnails</div>
+          <div class="field"><label><input type="checkbox" id="exThumbs" checked> Download Etsy listing thumbnails with the PDF (2000 × 2000 JPG)</label>
+            <div class="hint">Made from this PDF: real page count, chart size, technique, row direction and the sections switched on above. The cover photo is used as the mockup. Leave a text field empty to fill it in automatically.</div></div>
+          <div class="field" style="display:flex;flex-wrap:wrap;gap:4px 14px;">
+            <label><input type="checkbox" id="exThumbMain" checked> Main (photo + title)</label>
+            <label><input type="checkbox" id="exThumbIncluded" checked> What's included</label>
+            <label><input type="checkbox" id="exThumbHowTo" checked> How to read the chart</label>
+            <label><input type="checkbox" id="exThumbDigital" checked> Digital pattern notice</label>
+            <label><input type="checkbox" id="exThumbSteps" checked> 3 simple steps</label>
+            <label><input type="checkbox" id="exThumbPhoto" checked> Photo only (square)</label>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Tagline</label><input type="text" id="exThumbTagline" placeholder="Stitch. Hang. Cherish."></div>
+            <div class="field"><label>Finished item</label><input type="text" id="exThumbItem" placeholder="wall hanging"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Skill level</label><select id="exThumbLevel"><option value="auto" selected>Automatic (from colors &amp; color changes)</option><option value="Beginner">Beginner</option><option value="Intermediate">Intermediate</option><option value="Advanced">Advanced</option></select></div>
+            <div class="field"><label>Level note</label><input type="text" id="exThumbLevelNote" placeholder="automatic"></div>
+          </div>
+          <div class="field"><label>Main image title</label><input type="text" id="exThumbMainTitle" placeholder="automatic: [title] [technique] Crochet Pattern"></div>
+          <div class="field"><label>Main image subtitle</label><input type="text" id="exThumbSubtitle" placeholder="automatic: Single Crochet Only | Chart + Written Rows | Instant PDF Download"></div>
+          <div class="field"><label>"What's included" text under the page count</label><input type="text" id="exThumbBlurb" placeholder="Complete pattern file with chart, instructions & extras."></div>
         </div>
       </div>
     </div>
@@ -1299,7 +1321,8 @@ input[type=text], input[type=number], select, textarea{
     <div class="modal-head"><h2>Preview pattern PDF</h2><button class="modal-close" data-close="veilPdfPreview">×</button></div>
     <div class="modal-body" style="padding:0;">
       <p class="hint-text" style="margin:12px 16px 8px;">Check every page below. If something's off, go back and adjust the options — nothing is saved to your computer until you click Download.</p>
-      <iframe id="pdfPreviewFrame" title="PDF preview" style="width:100%; height:65vh; border:1px solid var(--line, #ddd); display:block; margin:0 16px 12px; width:calc(100% - 32px);"></iframe>
+      <iframe id="pdfPreviewFrame" title="PDF preview" style="width:100%; height:56vh; border:1px solid var(--line, #ddd); display:block; margin:0 16px 12px; width:calc(100% - 32px);"></iframe>
+      <div id="thumbStrip" style="display:none; flex-wrap:wrap; gap:8px; margin:0 16px 14px;"></div>
     </div>
     <div class="modal-foot">
       <span id="pdfPreviewStatus" class="hint-text" style="margin-right:auto;"></span>
@@ -2993,6 +3016,14 @@ function loadCoverPhoto(file){
     x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
     x.drawImage(im, 0, 0, w, h);
     coverPhoto = { data: c.toDataURL('image/jpeg', 0.86), w, h, name: file.name };
+    // A larger copy for the 2000 px Etsy thumbnails (the PDF keeps the small one).
+    try{
+      const K = Math.min(1, 2400/Math.max(im.naturalWidth, im.naturalHeight));
+      const c2 = document.createElement('canvas'); c2.width=Math.round(im.naturalWidth*K); c2.height=Math.round(im.naturalHeight*K);
+      const x2 = c2.getContext('2d'); x2.imageSmoothingEnabled=true; x2.imageSmoothingQuality='high';
+      x2.drawImage(im, 0, 0, c2.width, c2.height);
+      coverPhotoHi = c2.toDataURL('image/jpeg', 0.92);
+    }catch(e){ coverPhotoHi = null; }
     URL.revokeObjectURL(url);
     const row = $('#exPhotoRow');
     if(row){
@@ -3019,7 +3050,7 @@ function wireCoverPhoto(){
 window.addEventListener('load', wireCoverPhoto);
 
 function clearCoverPhoto(){
-  coverPhoto = null;
+  coverPhoto = null; coverPhotoHi = null;
   const row = $('#exPhotoRow');
   if(row){ row.style.display='none'; $('#exPhotoThumb').removeAttribute('src'); $('#exPhotoName').textContent=''; }
   const inp = $('#exPhotoInput'); if(inp) inp.value='';
@@ -3042,7 +3073,9 @@ const PROFILE_FIELDS = [
   'exBgColor','exGridColor','exBoldEvery','exGridLines','exShowNumbers',
   'exCover','exCoverTrueShape','exAbout','exHowTo','exOverview','exTiled','exTileKey','exWritten',
   'exYarn','exChecklist','exResources','exResourceLinks','exLegendMode',
-  'exLegendSymbols','exSize','exDraw','exFileType','exTechnique','exConstruction'
+  'exLegendSymbols','exSize','exDraw','exFileType','exTechnique','exConstruction',
+  'exThumbs','exThumbMain','exThumbIncluded','exThumbHowTo','exThumbDigital','exThumbSteps','exThumbPhoto',
+  'exThumbTagline','exThumbItem'
 ];
 
 function profileCollect(){
@@ -6037,6 +6070,9 @@ function openPdfPreview(doc, filename){
   $('#pdfPreviewFrame').src = url;
   closeModal('veilExport');
   openModal('veilPdfPreview');
+  // Etsy thumbnails use the page count of THIS pdf
+  window._pdfPreview.pages = doc.internal.getNumberOfPages();
+  renderThumbStrip(window._pdfPreview.pages).catch(e=>console.error(e));
 }
 $('#btnPreviewBack')?.addEventListener('click', ()=>{
   closeModal('veilPdfPreview');
@@ -6049,8 +6085,462 @@ $('#btnPreviewDownload')?.addEventListener('click', ()=>{
   a.href = p.url; a.download = p.filename;
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   $('#pdfPreviewStatus').textContent = 'Downloaded — check your downloads folder.';
-  setTimeout(()=> $('#pdfPreviewStatus').textContent='', 3000);
+  const th = window._etsyThumbs || [];
+  if(thumbOn('exThumbs') && th.length){
+    $('#pdfPreviewStatus').textContent = `PDF downloaded. Saving ${th.length} Etsy thumbnails…`;
+    setTimeout(()=> downloadEtsyThumbs(th).then(()=>{
+      $('#pdfPreviewStatus').textContent = `PDF + ${th.length} Etsy thumbnails downloaded — check your downloads folder.`;
+      setTimeout(()=> $('#pdfPreviewStatus').textContent='', 5000);
+    }), 500);
+  } else setTimeout(()=> $('#pdfPreviewStatus').textContent='', 3000);
 });
+
+
+
+
+
+
+/* ============================ Etsy listing thumbnails ============================
+   Built from the SAME data as the PDF that was just generated: real page count,
+   chart size, the sections that are switched on, technique, row direction, cover
+   photo and shop logo. So a thumbnail can never promise "100 x 100" or "Row 100"
+   when the pattern is 60 x 70. Every text can still be overridden in the export
+   dialog (Etsy thumbnails section); an empty field means "automatic". */
+const THUMB = { W: 2000,
+  navy:'#081A3B', navy2:'#0E2450', cream:'#F7EFDF', peach:'#F2E2C4', sky:'#9DBBD3',
+  line:'rgba(157,187,211,.45)', orange:'#E8A06A',
+  serif:'Georgia, "Times New Roman", Times, serif',
+  sans:'"Helvetica Neue", Helvetica, Arial, sans-serif',
+  mono:'"SFMono-Regular", Menlo, Consolas, "Courier New", monospace',
+  digits:'"Times New Roman", Times, "Liberation Serif", serif' };
+let coverPhotoHi = null;   // larger copy of the cover photo, only for thumbnails
+
+function thumbVal(id){ const el=document.getElementById(id); return el ? (el.type==='checkbox' ? el.checked : (el.value||'').trim()) : ''; }
+function thumbOn(id){ const el=document.getElementById(id); return el ? !!el.checked : false; }
+
+/* ---- facts about THIS pattern, read from the design and the export options ---- */
+function thumbFacts(pageCount){
+  const W=state.width, H=state.height;
+  const tech = ($('#exTechnique') && $('#exTechnique').value) || state.technique || 'graphgan';
+  const techName = {graphgan:'Graphgan', tapestry:'Tapestry', c2c:'C2C', filet:'Filet', knit:'Knit'}[tech] || 'Crochet';
+  const craft = tech==='knit' ? 'Knitting' : 'Crochet';
+  // colors actually used + average color changes per row (for the skill level)
+  const used = new Set(); let changes = 0;
+  for(let y=0;y<H;y++){ let prev=null;
+    for(let x=0;x<W;x++){ const p = (typeof effectiveCellAt==='function') ? effectiveCellAt(x,y) : state.cells[idx(x,y)];
+      if(p<0) continue; used.add(p); if(prev!==null && p!==prev) changes++; prev=p; } }
+  const perRow = changes/Math.max(1,H), nColors = used.size;
+  let level = 'Intermediate';
+  if(nColors<=3 && perRow<=4 && W*H<=3600) level='Beginner';
+  else if(nColors>=12 || perRow>=22 || W*H>=16000) level='Advanced';
+  const levelPick = thumbVal('exThumbLevel');
+  if(levelPick && levelPick!=='auto') level = levelPick;
+  const levelNotes = {
+    Beginner:'A friendly first colorwork project with few colors and calm rows.',
+    Intermediate:'Great for crocheters comfortable reading colorwork charts.',
+    Advanced:'For confident makers who enjoy frequent color changes.' };
+  const knitNotes = { Intermediate:'Great for knitters comfortable reading colorwork charts.' };
+  const dirRtl = (($('#exDirection') && $('#exDirection').value) || state.rowDirection || 'rtl') === 'rtl';
+  const has = id => thumbOn(id);
+  return {
+    W, H, tech, techName, craft, nColors, perRow, level,
+    levelNote: thumbVal('exThumbLevelNote') || (tech==='knit' && knitNotes[level]) || levelNotes[level],
+    pages: pageCount || 0,
+    title: (state.title||'Pattern').trim(),
+    shop: thumbVal('exDesigner') || (typeof BRAND_NAME!=='undefined' ? BRAND_NAME : ''),
+    tagline: thumbVal('exThumbTagline') || 'Stitch. Hang. Cherish.',
+    item: thumbVal('exThumbItem') || 'wall hanging',
+    written: has('exWritten'), yarn: has('exYarn'), checklist: has('exChecklist'), howto: has('exHowTo'),
+    tiled: has('exTiled'), overview: has('exOverview'), legend: (($('#exLegendMode')||{}).value||'full')!=='none',
+    dirRtl
+  };
+}
+
+/* ---------------------------------- drawing helpers ---------------------------------- */
+function thumbCanvas(){ const c=document.createElement('canvas'); c.width=c.height=THUMB.W; return c; }
+function tSpaced(ctx, text, x, y, spacing, align){
+  // manual letter spacing (works in every browser)
+  const chars=[...text]; const widths=chars.map(ch=>ctx.measureText(ch).width);
+  const total=widths.reduce((a,b)=>a+b,0)+spacing*(chars.length-1);
+  let cx = align==='center' ? x-total/2 : align==='right' ? x-total : x;
+  const old=ctx.textAlign; ctx.textAlign='left';
+  chars.forEach((ch,i)=>{ ctx.fillText(ch,cx,y); cx+=widths[i]+spacing; });
+  ctx.textAlign=old; return total;
+}
+function tFit(ctx, text, weight, family, size, maxW, spacing){
+  let s=size;
+  while(s>20){ ctx.font=`${weight} ${s}px ${family}`;
+    const w=[...text].reduce((a,ch)=>a+ctx.measureText(ch).width,0)+(spacing||0)*(text.length-1)*(s/size);
+    if(w<=maxW) break; s-=2; }
+  ctx.font=`${weight} ${s}px ${family}`; return s;
+}
+function tWrap(ctx, text, x, y, maxW, lineH, align){
+  const words=String(text).split(/\s+/); const lines=[]; let line='';
+  for(const w of words){ const t=line?line+' '+w:w; if(ctx.measureText(t).width>maxW && line){ lines.push(line); line=w; } else line=t; }
+  if(line) lines.push(line);
+  ctx.textAlign=align||'left';
+  lines.forEach((l,i)=>ctx.fillText(l,x,y+i*lineH)); return lines.length;
+}
+function tNavyBase(ctx){
+  ctx.fillStyle=THUMB.navy; ctx.fillRect(0,0,THUMB.W,THUMB.W);
+  const g=ctx.createRadialGradient(1000,700,100,1000,1000,1500);
+  g.addColorStop(0,'rgba(255,255,255,0.035)'); g.addColorStop(1,'rgba(0,0,0,0.18)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,THUMB.W,THUMB.W);
+  ctx.strokeStyle='rgba(157,187,211,.38)'; ctx.lineWidth=3; ctx.strokeRect(56,56,THUMB.W-112,THUMB.W-112);
+}
+function tDiamonds(ctx, y){
+  const x0=140, x1=THUMB.W-140, step=72;
+  ctx.fillStyle=THUMB.cream;
+  const tri=(x,dir)=>{ ctx.beginPath(); ctx.moveTo(x,y-14); ctx.lineTo(x+14*dir,y); ctx.lineTo(x,y+14); ctx.closePath(); ctx.fill(); };
+  tri(x0-6,1); tri(x1+6,-1);
+  for(let x=x0+30, i=0; x<x1-10; x+=step/2, i++){
+    const big=i%2===1, r=big?15:8;
+    ctx.fillStyle= big ? '#E6D7BD' : '#3E6C95';
+    ctx.beginPath(); ctx.moveTo(x,y-r); ctx.lineTo(x+r,y); ctx.lineTo(x,y+r); ctx.lineTo(x-r,y); ctx.closePath(); ctx.fill();
+  }
+}
+/* Serif title that fits maxW. Georgia draws old-style numbers (a "3" hangs below the line),
+   so every run of digits is drawn in a lining-figure serif and sits on the same baseline. */
+function tSerifTitle(ctx, text, x, y, size, maxW, align){
+  const runs = String(text).match(/\d+|\D+/g) || [''];
+  const font = (s, dig) => `bold ${s}px ${dig ? THUMB.digits : THUMB.serif}`;
+  const widthAt = s => runs.reduce((w,r)=>{ ctx.font=font(s,/^\d/.test(r)); return w+ctx.measureText(r).width; },0);
+  let s=size; while(s>30 && widthAt(s)>maxW) s-=2;
+  const total=widthAt(s);
+  let cx = align==='center' ? x-total/2 : align==='right' ? x-total : x;
+  const old=ctx.textAlign; ctx.textAlign='left';
+  for(const r of runs){ const dig=/^\d/.test(r); ctx.font=font(dig ? Math.round(s*1.02) : s, dig);
+    ctx.fillText(r, cx, y); ctx.font=font(s,dig); cx+=ctx.measureText(r).width; }
+  ctx.textAlign=old; return s;
+}
+/* One ornament for every navy thumbnail: a two-row pixel zig-zag, like a tapestry border. */
+function tOrnament(ctx, y){
+  // pixel zig-zag (like a tapestry border) with a small bead in every valley
+  const cell=13, x0=150, x1=THUMB.W-150;
+  const n=Math.floor((x1-x0)/cell/4)*4+1, start=THUMB.W/2 - n*cell/2;
+  const rowOf=[2,1,0,1];
+  for(let i=0;i<n;i++){
+    const r=rowOf[i%4];
+    ctx.fillStyle='#E6D7BD'; ctx.fillRect(start+i*cell, y-cell*1.5+r*cell, cell-2, cell-2);
+    if(r===0 && i>0 && i<n-1){ ctx.fillStyle='#7FA6C8'; ctx.fillRect(start+i*cell, y-cell*1.5+2*cell, cell-2, cell-2); }
+  }
+}
+function tTagline(ctx, text, y){
+  ctx.fillStyle=THUMB.cream; ctx.textAlign='center';
+  tFit(ctx, text, 'italic bold', THUMB.serif, 92, 1500);
+  ctx.fillText(text, THUMB.W/2, y);
+}
+function tLoadImg(src){ return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=src; }); }
+async function tLogo(ctx, cx, top, size, shop){
+  try{ const im=await tLoadImg(BRAND_LOGO_DATAURL); ctx.drawImage(im, cx-size/2, top, size, size); }catch(e){}
+  if(shop){ ctx.fillStyle='#D9C79E'; ctx.textAlign='center'; tFit(ctx, shop, 'bold', THUMB.serif, 36, size*2.4); ctx.fillText(shop, cx, top+size+44); }
+}
+/* The finished photo when there is one; otherwise the chart itself, drawn flat. */
+async function tHeroImage(){
+  const src = coverPhotoHi || (coverPhoto && coverPhoto.data);
+  if(src){ try{ return await tLoadImg(src); }catch(e){} }
+  const W=state.width, H=state.height, s=Math.max(4, Math.floor(1600/Math.max(W,H)));
+  const c=document.createElement('canvas'); c.width=W*s+s*6; c.height=H*s+s*6;
+  const x=c.getContext('2d'); x.fillStyle='#EDE7DC'; x.fillRect(0,0,c.width,c.height);
+  for(let y=0;y<H;y++) for(let q=0;q<W;q++){
+    const p = (typeof effectiveCellAt==='function') ? effectiveCellAt(q,y) : state.cells[idx(q,y)];
+    if(p<0) continue; x.fillStyle=state.palette[p].hex; x.fillRect(s*3+q*s, s*3+y*s, s, s); }
+  x.strokeStyle='rgba(0,0,0,.08)'; x.lineWidth=1;
+  for(let q=0;q<=W;q++){ x.beginPath(); x.moveTo(s*3+q*s,s*3); x.lineTo(s*3+q*s,s*3+H*s); x.stroke(); }
+  for(let y=0;y<=H;y++){ x.beginPath(); x.moveTo(s*3,s*3+y*s); x.lineTo(s*3+W*s,s*3+y*s); x.stroke(); }
+  return c;
+}
+function tCover(ctx, img, x, y, w, h){          // draw img to fill (x,y,w,h), cropping the overflow
+  const iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height;
+  const k=Math.max(w/iw, h/ih), sw=w/k, sh=h/k;
+  ctx.drawImage(img, (iw-sw)/2, (ih-sh)/2, sw, sh, x, y, w, h);
+}
+function tContain(ctx, img, x, y, w, h){
+  const iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height, k=Math.min(w/iw,h/ih);
+  const dw=iw*k, dh=ih*k; ctx.drawImage(img, x+(w-dw)/2, y+(h-dh)/2, dw, dh); return {x:x+(w-dw)/2, y:y+(h-dh)/2, w:dw, h:dh};
+}
+function tShadow(ctx, on){ if(on){ ctx.shadowColor='rgba(0,0,0,.35)'; ctx.shadowBlur=40; ctx.shadowOffsetY=14; } else { ctx.shadowColor='transparent'; ctx.shadowBlur=0; ctx.shadowOffsetY=0; } }
+function tIcon(ctx, kind, cx, cy, r){
+  ctx.save(); ctx.fillStyle=THUMB.peach; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle=THUMB.navy; ctx.fillStyle=THUMB.navy; ctx.lineWidth=4; ctx.lineJoin='round'; ctx.lineCap='round';
+  const u=r/44;
+  if(kind==='chart'){
+    const cols=['#B23A48','#3B5BA5','#2E7D5B','#3B5BA5','#B23A48','#C9A227','#2E7D5B','#C9A227','#B23A48'];
+    for(let i=0;i<3;i++) for(let j=0;j<3;j++){ ctx.fillStyle=cols[i*3+j]; ctx.fillRect(cx-19*u+j*13*u, cy-19*u+i*13*u, 11*u, 11*u); }
+  } else if(kind==='book'){
+    ctx.beginPath(); ctx.moveTo(cx,cy-12*u); ctx.lineTo(cx,cy+18*u);
+    ctx.moveTo(cx,cy-12*u); ctx.quadraticCurveTo(cx-12*u,cy-19*u,cx-24*u,cy-15*u); ctx.lineTo(cx-24*u,cy+14*u); ctx.quadraticCurveTo(cx-12*u,cy+11*u,cx,cy+18*u);
+    ctx.moveTo(cx,cy-12*u); ctx.quadraticCurveTo(cx+12*u,cy-19*u,cx+24*u,cy-15*u); ctx.lineTo(cx+24*u,cy+14*u); ctx.quadraticCurveTo(cx+12*u,cy+11*u,cx,cy+18*u); ctx.stroke();
+    for(let k=0;k<3;k++){ ctx.beginPath(); ctx.moveTo(cx-18*u,cy-6*u+k*8*u); ctx.lineTo(cx-6*u,cy-5*u+k*8*u); ctx.moveTo(cx+6*u,cy-5*u+k*8*u); ctx.lineTo(cx+18*u,cy-6*u+k*8*u); ctx.stroke(); }
+  } else if(kind==='yarn'){
+    ctx.beginPath(); ctx.arc(cx-3*u,cy+3*u,17*u,0,Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx-15*u,cy-9*u); ctx.lineTo(cx+9*u,cy+15*u); ctx.moveTo(cx-17*u,cy+9*u); ctx.lineTo(cx+5*u,cy-13*u); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx+8*u,cy-10*u); ctx.lineTo(cx+24*u,cy-26*u); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx+24*u,cy-22*u,4*u,Math.PI*1.2,Math.PI*0.2); ctx.stroke();
+  } else if(kind==='check'){
+    ctx.strokeRect(cx-17*u,cy-15*u,34*u,32*u);
+    ctx.beginPath(); ctx.moveTo(cx-9*u,cy+1*u); ctx.lineTo(cx-2*u,cy+8*u); ctx.lineTo(cx+11*u,cy-7*u); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx-8*u,cy-21*u); ctx.lineTo(cx+8*u,cy-21*u); ctx.stroke();
+  } else if(kind==='arrows'){
+    ctx.beginPath(); ctx.moveTo(cx+18*u,cy+8*u); ctx.lineTo(cx-18*u,cy+8*u); ctx.moveTo(cx-10*u,cy+1*u); ctx.lineTo(cx-18*u,cy+8*u); ctx.lineTo(cx-10*u,cy+15*u); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx-18*u,cy-8*u); ctx.lineTo(cx+18*u,cy-8*u); ctx.moveTo(cx+10*u,cy-15*u); ctx.lineTo(cx+18*u,cy-8*u); ctx.lineTo(cx+10*u,cy-1*u); ctx.stroke();
+  } else if(kind==='legend'){
+    for(let k=0;k<3;k++){ ctx.fillStyle=['#B23A48','#3B5BA5','#C9A227'][k]; ctx.fillRect(cx-18*u,cy-18*u+k*13*u,10*u,10*u);
+      ctx.fillStyle=THUMB.navy; ctx.fillRect(cx-3*u,cy-15*u+k*13*u,21*u,4*u); }
+  }
+  ctx.restore();
+}
+
+/* ------------------------------------ 1. main --------------------------------------- */
+async function thumbMain(F){
+  const c=thumbCanvas(), ctx=c.getContext('2d');
+  const bg=ctx.createLinearGradient(0,0,0,THUMB.W); bg.addColorStop(0,'#F2E6DA'); bg.addColorStop(1,'#EBDDCF');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,THUMB.W,THUMB.W);
+  const img=await tHeroImage();
+  const fx=236, fy=236, fw=1450, fh=1450;                       // white frame
+  tShadow(ctx,true); ctx.fillStyle='#FFFFFF'; ctx.fillRect(fx,fy,fw,fh); tShadow(ctx,false);
+  tCover(ctx, img, fx+14, fy+14, fw-28, fh-28);
+  // banner
+  const by=1680, bh=250;
+  tShadow(ctx,true); ctx.fillStyle='#FFFFFF'; ctx.fillRect(176,by,THUMB.W-176,bh); tShadow(ctx,false);
+  ctx.fillStyle='#1D3557'; ctx.fillRect(0,by,176,bh);
+  await tLogo(ctx, 88, by+58, 74, '');
+  ctx.fillStyle='#E9E2D2'; ctx.textAlign='center'; tFit(ctx, F.shop, '', THUMB.serif, 22, 150); ctx.fillText(F.shop, 88, by+178);
+  const titleTxt = thumbVal('exThumbMainTitle') || `${F.title} ${F.techName} ${F.craft} Pattern`;
+  ctx.fillStyle='#D8577A';
+  const tx=(176+THUMB.W)/2, maxW=THUMB.W-176-140;
+  tFit(ctx, titleTxt, 'bold', THUMB.serif, 84, maxW, 10); tSpaced(ctx, titleTxt, tx, by+118, 8, 'center');
+  const stitch = {graphgan:'Single Crochet Only', tapestry:'Single Crochet Only', c2c:'Corner-to-Corner', filet:'Filet Crochet', knit:'Knit Colorwork'}[F.tech] || 'Colorwork';
+  const sub = thumbVal('exThumbSubtitle') || [stitch, F.written ? 'Chart + Written Rows' : 'Color Chart', 'Instant PDF Download'].join(' | ');
+  ctx.fillStyle='#D8577A'; tFit(ctx, sub, '', THUMB.mono, 44, maxW); ctx.textAlign='center'; ctx.fillText(sub, tx, by+196);
+  return c;
+}
+
+/* -------------------------------- 2. what's included --------------------------------- */
+async function thumbIncluded(F){
+  const c=thumbCanvas(), ctx=c.getContext('2d'); tNavyBase(ctx);
+  ctx.fillStyle=THUMB.cream; ctx.font=`44px ${THUMB.sans}`; tSpaced(ctx, "WHAT'S INCLUDED IN THE", 1000, 132, 17, 'center');
+  tSerifTitle(ctx, F.title, 1000, 248, 150, 1180, 'center');
+  ctx.font=`bold 50px ${THUMB.sans}`;
+  const kind = (F.tech==='knit' ? 'KNIT COLORWORK' : `${F.techName.toUpperCase()} ${F.craft.toUpperCase()}`) + ' PATTERN';
+  tFit(ctx, kind, 'bold', THUMB.sans, 50, 1250, 14); tSpaced(ctx, kind, 1000, 312, 12, 'center');
+  ctx.strokeStyle=THUMB.cream; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(795,347); ctx.lineTo(975,347); ctx.moveTo(1052,347); ctx.lineTo(1232,347); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(1014,335); ctx.lineTo(1026,347); ctx.lineTo(1014,359); ctx.lineTo(1002,347); ctx.closePath(); ctx.stroke();
+  await tLogo(ctx, 1690, 148, 78, F.shop);
+  // photo (stamp style)
+  const img=await tHeroImage();
+  const px=306, py=392, pw=640, ph=640;
+  tShadow(ctx,true); ctx.fillStyle='#FFFFFF'; ctx.fillRect(px,py,pw,ph); tShadow(ctx,false);
+  tCover(ctx, img, px+14, py+14, pw-28, ph-28);
+  ctx.setLineDash([8,6]); ctx.strokeStyle='rgba(8,26,59,.55)'; ctx.lineWidth=2; ctx.strokeRect(px+5,py+5,pw-10,ph-10); ctx.setLineDash([]);
+  // page count badge
+  ctx.strokeStyle='rgba(220,220,220,.7)'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(1398,612,218,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle=THUMB.cream; ctx.beginPath(); ctx.arc(1398,612,196,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=THUMB.sky; ctx.textAlign='center';
+  ctx.font=`bold ${F.pages>=100?150:190}px ${THUMB.digits}`; ctx.fillText(String(F.pages||'—'), 1398, 640);
+  ctx.font=`bold 46px ${THUMB.sans}`; tSpaced(ctx, 'PAGE PDF', 1398, 712, 12, 'center');
+  ctx.fillStyle=THUMB.sky; ctx.font=`36px ${THUMB.sans}`;
+  tWrap(ctx, thumbVal('exThumbBlurb') || 'Complete pattern file with chart, instructions & extras.', 1398, 900, 470, 50, 'center');
+  // features: the sections that really are in the PDF (first four)
+  const chartTxt = `${F.W}×${F.H} stitch ${F.techName.toLowerCase()} chart` +
+    (F.overview && F.tiled ? ' plus a printable tiled version for easy reference.' : F.tiled ? ' printed full size on tiled pages.' : ' on one clear overview page.');
+  const feats = [];
+  if(F.overview || F.tiled) feats.push(['chart','FULL COLOR CHART', chartTxt]);
+  if(F.written) feats.push(['book','WRITTEN ROW-BY-ROW GUIDE','Every row spelled out with exact stitch counts, no guesswork.']);
+  if(F.yarn) feats.push(['yarn','YARN & GAUGE INFO','Yarn weight, hook size, gauge, and estimated yarn needed per color.']);
+  if(F.checklist) feats.push(['check','PROGRESS CHECKLIST',`Track your rows as you stitch, from Row 1 to Row ${F.H}.`]);
+  if(F.howto) feats.push(['arrows','HOW TO READ THE CHART','Where Row 1 starts and which way every row runs.']);
+  if(F.legend) feats.push(['legend','COLOR LEGEND','Every color listed with its code, so you know which yarn to use.']);
+  feats.slice(0,4).forEach((f,i)=>{
+    const col=i%2, row=Math.floor(i/2);
+    const ix = col ? 1116 : 270, iy = 1125 + row*222;
+    tIcon(ctx, f[0], ix, iy, 44);
+    ctx.fillStyle=THUMB.cream; ctx.textAlign='left'; tFit(ctx, f[1], 'bold', THUMB.sans, 38, 640); ctx.fillText(f[1], ix+72, iy-8);
+    ctx.fillStyle=THUMB.sky; ctx.font=`33px ${THUMB.sans}`; tWrap(ctx, f[2], ix+72, iy+42, 560, 43, 'left');
+  });
+  // level
+  ctx.fillStyle=THUMB.peach; const lx=488, ly=1475, lw=1050, lh=160;
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(lx,ly,lw,lh,40) : ctx.rect(lx,ly,lw,lh); ctx.fill();
+  ctx.fillStyle=THUMB.navy; ctx.textAlign='center'; ctx.font=`bold 44px ${THUMB.sans}`;
+  ctx.fillText(`${F.level.toUpperCase()} LEVEL`, lx+lw/2, ly+60);
+  ctx.fillStyle='#5B6270'; ctx.font=`31px ${THUMB.sans}`; tWrap(ctx, F.levelNote, lx+lw/2, ly+104, 600, 38, 'center');
+  tTagline(ctx, F.tagline, 1728); tOrnament(ctx, 1800);
+  return c;
+}
+
+/* --------------------------------- 3. how to read ------------------------------------ */
+async function thumbHowTo(F){
+  const c=thumbCanvas(), ctx=c.getContext('2d'); tNavyBase(ctx);
+  ctx.fillStyle=THUMB.cream; ctx.font=`44px ${THUMB.sans}`; tSpaced(ctx,'FOR NEW CHART READERS',966,185,17,'center');
+  tSerifTitle(ctx,'HOW TO READ THE CHART',966,295,112,1400,'center'); ctx.textAlign='center';
+  ctx.fillStyle=THUMB.sky; ctx.font=`36px ${THUMB.sans}`; ctx.fillText('Once you get the rhythm, every row after Row 1 falls into place',966,356);
+  await tLogo(ctx, 1724, 86, 78, F.shop);
+  // legend
+  ctx.textAlign='left'; ctx.fillStyle=THUMB.cream; ctx.font=`bold 40px ${THUMB.sans}`; ctx.fillText('COLOR CODES',92,660);
+  ctx.fillStyle='#F7EFDF'; ctx.fillRect(104,698,46,46); ctx.fillStyle='#1E3A62'; ctx.fillRect(104,771,46,46);
+  ctx.strokeStyle='rgba(157,187,211,.6)'; ctx.lineWidth=2; ctx.strokeRect(104,771,46,46);
+  ctx.fillStyle=THUMB.cream; ctx.font=`bold 40px ${THUMB.sans}`; ctx.fillText('C01',175,737); ctx.fillText('C02',175,810);
+  ctx.fillText('C03 …',104,888); ctx.font=`bold 34px ${THUMB.sans}`; ctx.fillText('One code per color in your chart.',104,938);
+  // mini chart 10 x 10 (a small tree), row 1 at the bottom
+  const gx=736, gy=522, cs=46, n=10;
+  const tree=['..........','....#.....','...###....','..#.#.#...','...#.#....','..#.#.#...','...###....','....#.....','....#.....','..........'];
+  for(let r=0;r<n;r++) for(let q=0;q<n;q++){ ctx.fillStyle = tree[r][q]==='#' ? '#F2E2C4' : '#1E3A62'; ctx.fillRect(gx+q*cs,gy+r*cs,cs,cs); }
+  ctx.strokeStyle='rgba(157,187,211,.35)'; ctx.lineWidth=1.5;
+  for(let k=0;k<=n;k++){ ctx.beginPath(); ctx.moveTo(gx+k*cs,gy); ctx.lineTo(gx+k*cs,gy+n*cs); ctx.stroke(); ctx.beginPath(); ctx.moveTo(gx,gy+k*cs); ctx.lineTo(gx+n*cs,gy+k*cs); ctx.stroke(); }
+  ctx.strokeStyle='#8E97A6'; ctx.lineWidth=3; ctx.strokeRect(gx,gy,n*cs,n*cs);
+  const rtl=F.dirRtl, right=gx+n*cs, left=gx, bottom=gy+n*cs;
+  // row numbers on the side where each row starts
+  ctx.fillStyle=THUMB.cream; ctx.font=`bold 22px ${THUMB.sans}`; ctx.textAlign='center';
+  const rowSide = r => (r%2===1) === rtl ? 'R' : 'L';          // row 1 starts right when rtl
+  [1,2,3,4].forEach(r=>{ const y=bottom-(r-0.5)*cs+8; ctx.fillText(String(r), rowSide(r)==='R' ? right+26 : left-26, y); });
+  ctx.fillText('…', right+26, bottom-6.5*cs);
+  // arrows row 1 and row 2
+  const arrow=(y,fromX,toX,color,w)=>{ ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=w; ctx.beginPath(); ctx.moveTo(fromX,y); ctx.lineTo(toX,y); ctx.stroke();
+    const d=Math.sign(toX-fromX); ctx.beginPath(); ctx.moveTo(toX,y); ctx.lineTo(toX-d*18,y-12); ctx.moveTo(toX,y); ctx.lineTo(toX-d*18,y+12); ctx.stroke(); };
+  const r1y=bottom-cs/2, r2y=bottom-1.5*cs;
+  arrow(r1y, rtl?right-18:left+18, rtl?left+24:right-24, THUMB.orange, 4);
+  ctx.fillStyle=THUMB.orange; ctx.beginPath(); ctx.arc(rtl?right-18:left+18, r1y, 11, 0, Math.PI*2); ctx.fill();
+  arrow(r2y, rtl?left+14:right-14, rtl?right-24:left+24, '#E9DECB', 3);
+  ctx.fillStyle=THUMB.orange; ctx.textAlign='left'; ctx.font=`bold 30px ${THUMB.sans}`;
+  ctx.fillText(`ROW 1 [RS] — WORK ${rtl?'RIGHT → LEFT':'LEFT → RIGHT'}`, gx, bottom+46);
+  // callouts
+  ctx.strokeStyle='#C9CED6'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(rtl?right-10:left+10, r1y-12); ctx.lineTo(1352,900); ctx.stroke();
+  ctx.fillStyle=THUMB.cream; ctx.font=`bold 32px ${THUMB.sans}`; ctx.fillText('ROW NUMBER = STARTING SIDE',1358,888);
+  ctx.fillStyle=THUMB.sky; ctx.font=`29px ${THUMB.sans}`; ctx.fillText("It's printed on the side that row begins.",1358,922);
+  ctx.strokeStyle=THUMB.orange; ctx.beginPath(); ctx.moveTo(rtl?right-8:left+8, r1y+8); ctx.lineTo(1352,1042); ctx.stroke();
+  ctx.fillStyle=THUMB.orange; ctx.font=`bold 34px ${THUMB.sans}`; ctx.fillText('START HERE',1360,1030);
+  ctx.fillStyle=THUMB.sky; ctx.font=`29px ${THUMB.sans}`; ctx.fillText(`${rtl?'Bottom-right':'Bottom-left'} corner = Row 1, Stitch 1`,1360,1064);
+  ctx.strokeStyle='#C9CED6'; ctx.beginPath(); ctx.moveTo(gx+2*cs,bottom-4.5*cs); ctx.lineTo(676,bottom-4.5*cs); ctx.lineTo(676,1115); ctx.stroke();
+  const unit = {c2c:['1 SQUARE = 1 TILE','Every square is one small block of stitches.'], filet:['1 SQUARE = 1 MESH','Filled squares are blocks, empty squares are open mesh.'],
+                knit:['1 SQUARE = 1 STITCH','Every square is one knit stitch.']}[F.tech] || ['1 SQUARE = 1 STITCH','Every filled or empty box is one single crochet.'];
+  ctx.fillStyle=THUMB.cream; ctx.font=`bold 32px ${THUMB.sans}`; ctx.fillText(unit[0],735,1140);
+  ctx.fillStyle=THUMB.sky; ctx.font=`29px ${THUMB.sans}`; ctx.fillText(unit[1],735,1174);
+  ctx.textAlign='center'; ctx.font=`29px ${THUMB.sans}`;
+  ctx.fillText('Every code on the chart is listed on the Color Legend page with the shade it stands for.',966,1382);
+  ctx.strokeStyle='rgba(157,187,211,.4)'; ctx.beginPath(); ctx.moveTo(598,1430); ctx.lineTo(1334,1430); ctx.stroke();
+  const tip = {tapestry:'Carry the unused color inside your stitches as you go. It keeps the back tidy and leaves almost no ends to weave in later.',
+               graphgan:'Switch to the new color on the last pull-through of the stitch before it. Your color changes stay crisp and clean.',
+               c2c:'Work diagonally from one corner, adding a tile each row, then decrease once you pass the widest diagonal.',
+               filet:'Keep your chains even. Open and filled squares line up best when every mesh is the same size.',
+               knit:'Twist the yarns on long floats so they do not snag on the back of your work.'}[F.tech] ||
+               'Carry the unused color inside your stitches as you go. It keeps the back tidy.';
+  ctx.font=`34px ${THUMB.sans}`; tWrap(ctx, tip, 966, 1495, 1100, 44, 'center');
+  tTagline(ctx, F.tagline, 1728); tOrnament(ctx, 1800);
+  return c;
+}
+
+/* ------------------------------- 4. digital pattern ---------------------------------- */
+async function thumbDigital(F){
+  const c=thumbCanvas(), ctx=c.getContext('2d'); tNavyBase(ctx);
+  ctx.fillStyle=THUMB.cream; tFit(ctx,'PLEASE READ BEFORE BUYING','',THUMB.sans,44,1330,17); tSpaced(ctx,'PLEASE READ BEFORE BUYING',136,195,17,'left');
+  tSerifTitle(ctx,'DIGITAL PATTERN',136,330,150,1330,'left');
+  ctx.fillStyle=THUMB.sky; tFit(ctx,'INSTANT DOWNLOAD, NOTHING IS SHIPPED','bold',THUMB.sans,46,1380,12); tSpaced(ctx,'INSTANT DOWNLOAD, NOTHING IS SHIPPED',136,396,12,'left');
+  await tLogo(ctx, 1688, 148, 78, F.shop);
+  ctx.strokeStyle=THUMB.line; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(136,442); ctx.lineTo(1798,442); ctx.stroke();
+  const tick=(x,y)=>{ ctx.fillStyle=THUMB.peach; ctx.beginPath(); ctx.arc(x,y,20,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle=THUMB.navy; ctx.lineWidth=5; ctx.beginPath(); ctx.moveTo(x-9,y); ctx.lineTo(x-2,y+7); ctx.lineTo(x+10,y-7); ctx.stroke(); };
+  const cross=(x,y)=>{ ctx.strokeStyle=THUMB.cream; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(x,y,19,0,Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x-7,y-7); ctx.lineTo(x+7,y+7); ctx.moveTo(x+7,y-7); ctx.lineTo(x-7,y+7); ctx.stroke(); };
+  ctx.textAlign='left'; ctx.fillStyle='#F2E2C4'; ctx.font=`bold 44px ${THUMB.sans}`; ctx.fillText('YOU WILL RECEIVE',136,550);
+  const recv=[ F.pages ? `A printable ${F.pages}-page PDF pattern file` : 'A printable PDF pattern file',
+               F.written ? 'Color chart and written rows' : 'Full color chart and legend',
+               'Instant download after checkout', 'Re-download from your Etsy account' ];
+  ctx.font=`36px ${THUMB.sans}`;
+  recv.forEach((t,i)=>{ tick(156,636+i*73); ctx.textAlign='left'; ctx.fillStyle=THUMB.cream; ctx.fillText(t,202,649+i*73); });
+  ctx.strokeStyle=THUMB.line; ctx.beginPath(); ctx.moveTo(136,928); ctx.lineTo(966,928); ctx.stroke();
+  ctx.textAlign='left'; ctx.fillStyle=THUMB.cream; ctx.font=`bold 44px ${THUMB.sans}`; ctx.fillText('YOU WILL NOT RECEIVE',136,1010);
+  const tools = F.tech==='knit' ? 'No yarn or needles' : (/wall hanging/i.test(F.item) ? 'No yarn, hook, or dowel' : 'No yarn or hook');
+  const nrecv=[ `No finished ${F.item}`, tools, 'No printed booklet', 'Nothing is posted to you' ];
+  ctx.font=`36px ${THUMB.sans}`;
+  nrecv.forEach((t,i)=>{ cross(156,1095+i*73); ctx.textAlign='left'; ctx.fillStyle='#DCE2EA'; ctx.fillText(t,202,1108+i*73); });
+  const img=await tHeroImage();
+  tShadow(ctx,true); ctx.fillStyle='#FFFFFF'; ctx.fillRect(981,495,818,818); tShadow(ctx,false);
+  tCover(ctx, img, 981, 495, 818, 818);
+  ctx.fillStyle='#CDBFA6'; ctx.textAlign='center'; ctx.font=`34px ${THUMB.sans}`;
+  ctx.fillText('Because the file is delivered instantly, digital downloads are non-refundable.',966,1488);
+  ctx.fillText('Message me before buying if anything is unclear and I will gladly help.',966,1538);
+  tTagline(ctx, F.tagline, 1728); tOrnament(ctx, 1800);
+  return c;
+}
+
+/* ---------------------------------- 5. three steps ----------------------------------- */
+async function thumbSteps(F){
+  const c=thumbCanvas(), ctx=c.getContext('2d'); tNavyBase(ctx);
+  ctx.fillStyle=THUMB.cream; tFit(ctx,'HOW YOUR ORDER WORKS','',THUMB.sans,44,1330,17); tSpaced(ctx,'HOW YOUR ORDER WORKS',136,195,17,'left');
+  tSerifTitle(ctx,'3 SIMPLE STEPS',136,318,150,1330,'left');
+  ctx.fillStyle=THUMB.sky; const sub3 = F.tech==='knit' ? 'FROM CHECKOUT TO YOUR NEEDLES' : 'FROM CHECKOUT TO YOUR CROCHET HOOK';
+  tFit(ctx, sub3, 'bold', THUMB.sans, 44, 1380, 9); tSpaced(ctx, sub3, 136, 392, 9, 'left');
+  await tLogo(ctx, 1688, 148, 78, F.shop); ctx.textAlign='left';
+  ctx.strokeStyle=THUMB.line; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(136,442); ctx.lineTo(1798,442); ctx.stroke();
+  const steps=[['PURCHASE THE PATTERN','Add the listing to your cart and complete checkout on Etsy, just like any other order.'],
+    ['GET YOUR PDF INSTANTLY','Etsy sends a download link to your email and "Purchases & Reviews" the moment payment clears. No waiting, no shipping: the file is ready right away.'],
+    ['PRINT, VIEW & START '+(F.tech==='knit'?'KNITTING':'STITCHING'), `Open the ${F.pages?F.pages+'-page ':''}PDF on your phone, tablet, or computer, or print it out, and follow the chart at your own pace, row by row.`]];
+  ctx.setLineDash([4,10]); ctx.strokeStyle='rgba(200,205,214,.6)'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(243,710); ctx.lineTo(243,905); ctx.moveTo(243,1048); ctx.lineTo(243,1243); ctx.stroke(); ctx.setLineDash([]);
+  steps.forEach((s,i)=>{ const y=637+i*338;
+    ctx.fillStyle=THUMB.peach; ctx.beginPath(); ctx.arc(243,y,70,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=THUMB.navy; ctx.font=`bold 56px ${THUMB.sans}`; ctx.textAlign='center'; ctx.fillText(String(i+1),243,y+20);
+    ctx.textAlign='left'; ctx.fillStyle=THUMB.cream; ctx.font=`bold 50px ${THUMB.sans}`; ctx.fillText(s[0],368,y-18);
+    ctx.fillStyle='#D5D9DF'; ctx.font=`32px ${THUMB.sans}`; tWrap(ctx, s[1], 368, y+38, 1420, 42, 'left'); });
+  ctx.strokeStyle=THUMB.line; ctx.beginPath(); ctx.moveTo(136,1448); ctx.lineTo(1798,1448); ctx.stroke();
+  ctx.fillStyle='#CDBFA6'; ctx.textAlign='center'; ctx.font=`33px ${THUMB.sans}`;
+  ctx.fillText('Your files never expire. Redownload them anytime from your Etsy account.',966,1505);
+  ctx.fillText('Questions before or after buying? Just send me a message.',966,1555);
+  tTagline(ctx, F.tagline, 1728); tOrnament(ctx, 1800);
+  return c;
+}
+
+/* ------------------------------------ 6. photo --------------------------------------- */
+async function thumbPhoto(){
+  if(!(coverPhotoHi || coverPhoto)) return null;
+  const c=thumbCanvas(), ctx=c.getContext('2d'); ctx.fillStyle='#FFFFFF'; ctx.fillRect(0,0,THUMB.W,THUMB.W);
+  tCover(ctx, await tHeroImage(), 0, 0, THUMB.W, THUMB.W); return c;
+}
+
+/* --------------------------------- build the whole set -------------------------------- */
+const THUMB_SET = [
+  ['exThumbMain','01_main', thumbMain], ['exThumbIncluded','02_whats_included', thumbIncluded],
+  ['exThumbHowTo','03_how_to_read', thumbHowTo], ['exThumbDigital','04_digital_pattern', thumbDigital],
+  ['exThumbSteps','05_3_simple_steps', thumbSteps], ['exThumbPhoto','06_photo', thumbPhoto] ];
+async function buildEtsyThumbs(pageCount){
+  const F = thumbFacts(pageCount); const out=[];
+  const base=(state.title||'pattern').replace(/[^\w\-]+/g,'_');
+  for(const [id, name, fn] of THUMB_SET){
+    if(!thumbOn(id)) continue;
+    try{ const cv = await fn(F); if(cv) out.push({name:`${base}_${name}.jpg`, canvas:cv}); }
+    catch(e){ console.error('thumbnail', name, e); }
+  }
+  return out;
+}
+function canvasToJpegBlob(cv){ return new Promise(res=>cv.toBlob(res,'image/jpeg',0.92)); }
+async function downloadEtsyThumbs(list){
+  for(const t of list){
+    const blob = await canvasToJpegBlob(t.canvas);
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=t.name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+    await new Promise(r=>setTimeout(r, 450));         // browsers accept a series of downloads when they are spaced
+  }
+}
+/* Preview strip under the PDF preview */
+async function renderThumbStrip(pageCount){
+  const box = document.getElementById('thumbStrip'); if(!box) return;
+  box.innerHTML='';
+  window._etsyThumbs = [];
+  if(!thumbOn('exThumbs')){ box.style.display='none'; return; }
+  box.style.display='flex';
+  const note=document.createElement('div'); note.className='hint-text'; note.style.cssText='width:100%;margin:0 0 4px;';
+  note.textContent='Etsy thumbnails, made from this PDF. They download together with the PDF.'; box.appendChild(note);
+  const list = await buildEtsyThumbs(pageCount);
+  window._etsyThumbs = list;
+  for(const t of list){
+    const im=document.createElement('img'); im.src=t.canvas.toDataURL('image/jpeg',0.7); im.alt=t.name; im.title=t.name;
+    im.style.cssText='width:120px;height:120px;border-radius:6px;border:1px solid var(--line,#ddd);cursor:zoom-in;object-fit:cover;';
+    im.addEventListener('click', ()=>{ const w=window.open(); if(w){ w.document.write(`<title>${t.name}</title><img src="${t.canvas.toDataURL('image/jpeg',0.92)}" style="max-width:100%">`); } });
+    box.appendChild(im);
+  }
+}
 
 /* ----------------------------- Help / About ----------------------------------- */
 function showHelp(){

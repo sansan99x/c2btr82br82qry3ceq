@@ -358,6 +358,7 @@ about it again. Only ask if the design image is missing.
 ## Brief
 
 - **Title:** {{TITLE}}
+- **Design brief:** {{THEME}}
 - **Target size:** {{W}} × {{H}} beads. This is a target, not a hard rule (see step 3).
 - **Bead colors:** {{N}}, matched to real **Artkal S** (5 mm) codes.
 - **Background:** empty. Cells outside the piece are `-1` (no bead).
@@ -473,23 +474,61 @@ Edit operations (`python img2pattern.py edit "{{OUTNAME}}" ops.json` or inline J
 Colors can be given by Artkal code, name or index. `"empty"` means no bead. `axis_col` may be
 x.5.
 
-## Step 5: Deliver
+## Step 5: Write the pattern description
+
+Pegwright prints this text on the "About this pattern" page of the PDF and fills its *Pattern
+description* field with it when the JSON is opened. So write it and store it in the JSON as
+`aboutDesc`.
+
+- **Language and length:** English (US), 60–100 words, 2 short paragraphs. Plain text only: no
+  markdown, emojis or hashtags.
+- **Paragraph 1: the design.** What the finished piece shows, taken from the converted chart
+  and the brief: the subject, its key details and colors, the mood or season. Suggest uses that
+  suit its finished size: a small piece works as a magnet, keychain, coaster or gift tag, a
+  large one as wall art or a shelf decoration. Mention only details that are really in the chart.
+- **Paragraph 2: the facts, read from the final JSON** (compute them with code, do not
+  estimate):
+  - a fuse bead pattern for Artkal S 5 mm midi beads (name no other bead brand);
+  - the design size W × H beads and the number of bead colors (count only colors that have
+    beads; the 0-bead background slot does not count);
+  - the finished size at 5 mm per bead: W × 0.5 cm by H × 0.5 cm, rounded, also given in inches;
+  - the number of pegboards: ceil(W ÷ boardSize) × ceil(H ÷ boardSize) boards of
+    boardSize × boardSize pegs;
+  - that the chart is printed board by board at actual size, with a bead count for each color.
+- **Voice:** warm and friendly, like a small shop owner talking to a maker.
+  - Work in 2–3 natural search phrases buyers use, e.g. "fuse bead pattern", "melty bead
+    pattern", "bead pixel art", "<theme> bead design". Never stuff keywords.
+  - No claims you cannot back up ("bestseller", "easy for everyone"), no trademarks.
+
+Save it with a small script, so that quotes and apostrophes need no escaping:
+
+```python
+import json, subprocess
+desc = """<your description>"""
+json.dump([{"op": "meta", "aboutDesc": desc}], open("desc_ops.json", "w"))
+subprocess.run(["python", "img2pattern.py", "edit", "{{OUTNAME}}", "desc_ops.json"], check=True)
+```
+
+## Step 6: Deliver
 
 - `{{OUTNAME}}`, a Pegwright project with `v, title, designer, notes, width, height, cells,
-  palette, paletteName, app:"pegwright", boardSize, extraPct, bagSize`. The `cells` are
+  palette, paletteName, app:"pegwright", boardSize, extraPct, bagSize, aboutDesc`. The `cells` are
   row-major from the top-left, with `-1` = no bead. Each palette entry is
   `{id, name, hex, brand:"Artkal S", yardage:0, code, hidden:false}`.
 - Validate:
   - `len(cells) == width*height`;
   - every cell is `-1` or less than the palette length;
-  - every palette color except the last background slot is used.
+  - every palette color except the last background slot is used;
+  - `aboutDesc` is present.
 - Send the JSON and the final `_chart.png`. The user opens the JSON in Pegwright via
   *File → Open project (.json)*.
 - Report in a few lines:
   - final size and the number of pegboards;
   - bead count per Artkal code;
   - what was auto-fixed and your edits;
-  - areas to check by eye (row/column ranges).
+  - areas to check by eye (row/column ranges);
+  - the description text, so the user can adjust it before importing. Opening the JSON in
+    Pegwright fills *Pattern description* automatically.
 
 ---
 
@@ -1186,6 +1225,7 @@ def convert_main(argv):
     ap.add_argument("--board", type=int, help="pegwright: pegs per board side (default 29)")
     ap.add_argument("--extra", type=int, help="pegwright: spare beads %% for the shopping list (default 10)")
     ap.add_argument("--bag", type=int, help="pegwright: beads per bag (default 1000)")
+    ap.add_argument("--description", help="pattern description saved as aboutDesc (Warpwright/Pegwright fill their Pattern description field)")
     A = ap.parse_args(argv); random.seed(A.seed); np.random.seed(A.seed)
 
     ex = json.load(open(A.example)) if A.example else {}
@@ -1390,6 +1430,7 @@ def convert_main(argv):
                "boardSize": A.board or ex.get("boardSize", 29),
                "extraPct": A.extra if A.extra is not None else ex.get("extraPct", 10),
                "bagSize": A.bag or ex.get("bagSize", 1000)}
+        if A.description: out["aboutDesc"] = A.description.strip()
         for i, (rgb, nm) in enumerate(zip(pal_rgb, pal_names)):
             out["palette"].append({"id": rid_peg(), "name": nm, "hex": hexs(rgb),
                                    "brand": "Artkal S" if codes else "", "yardage": 0,
@@ -1398,7 +1439,8 @@ def convert_main(argv):
         json.dump(out, open(outp, "w"), separators=(",", ":"))
         print("SAVED", outp, f"(pegwright, {W} x {H}, {len(out['palette'])} bead colors, board {out['boardSize']})")
     else:
-        out = {k: v for k, v in ex.items()} if ex else {"v": 1}
+        out = {k: v for k, v in ex.items() if k != "aboutDesc"} if ex else {"v": 1}
+        if A.description: out["aboutDesc"] = A.description.strip()
         out.update({"title": A.title or ex.get("title") or os.path.splitext(os.path.basename(A.image))[0],
                     "width": W, "height": H, "cells": [int(v) for v in g.ravel()]})
         old = ex.get("palette") or []
@@ -1593,6 +1635,7 @@ def edit_main(argv):
       {"op":"palette","color":"Pink 2","name":"Nutcracker Red","hex":"#AD0318"}
       {"op":"shift","dr":1,"dc":0,"fill":"Cream"}          (move whole design)
       {"op":"artkal","color":"Red","code":"S05"}           (pegwright: use a specific Artkal bead)
+      {"op":"meta","aboutDesc":"Pattern description..."}   (text fields: title, notes, aboutDesc, designer)
       color "empty" = no bead (pegwright)
     """
     ap = argparse.ArgumentParser(prog="img2pattern.py edit")
@@ -1652,6 +1695,11 @@ def edit_main(argv):
             if not a_: raise SystemExit(f"unknown Artkal code {o['code']!r}")
             P["palette"][k].update({"name": a_["name"], "hex": "#" + a_["hex"].lstrip("#").upper(),
                                     "code": a_["code"], "brand": "Artkal S"})
+        elif op == "meta":                                     # top-level text fields, e.g. the description
+            for k_ in ("title", "notes", "aboutDesc", "designer", "paletteName"):
+                if k_ in o:
+                    if o[k_] in (None, ""): P.pop(k_, None)
+                    else: P[k_] = str(o[k_]).strip()
         elif op == "shift":
             dr, dc = o.get("dr", 0), o.get("dc", 0); f_ = ci(o["fill"]); n_ = np.full_like(g, f_)
             ys, ye = max(0, dr), min(H, H + dr); xs_, xe = max(0, dc), min(W, W + dc)
@@ -1807,7 +1855,7 @@ if __name__ == "__main__":
       SYMNOTE: sym === 'balanced' ? 'The piece is not forced into a mirror image (balanced design).'
                                   : 'The piece is mirrored left/right on its detected axis; each disagreeing pair is decided by the pixel evidence of both sides.',
       OUTNAME: `${v.title.replace(/[\\/:*?"<>|]+/g, '').trim() || 'pattern'}.json`,
-      DESIGNER: v.designer || '(empty)', BOARD: v.board, EXTRA: v.extra, BAG: v.bag, EXAMPLEJSON: exampleJson(v)
+      THEME: v.theme || '(see the design image)', DESIGNER: v.designer || '(empty)', BOARD: v.board, EXTRA: v.extra, BAG: v.bag, EXAMPLEJSON: exampleJson(v)
     });
     const code = $('convCode').textContent.replace(/^\n/, '');
     if (withCode) out += '#### BEGIN-IMG2PATTERN\n' + code + '#### END-IMG2PATTERN\n```\n';

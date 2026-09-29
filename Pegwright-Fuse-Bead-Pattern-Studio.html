@@ -3503,7 +3503,11 @@ function openModal(id){
     // pola yang sedang dikerjakan tidak boleh ikut berubah warnanya.
     try{
       const raw = localStorage.getItem(PROFILE_KEY);
-      if(raw && !openModal._profileDone){ profileApply(JSON.parse(raw), {skipPalette:true}); openModal._profileDone = true; }
+      if(raw && !openModal._profileDone){
+        profileApply(JSON.parse(raw), {skipPalette:true}); openModal._profileDone = true;
+        // The saved profile must not overwrite the description of the project just opened.
+        if(state.aboutDesc) $('#exAboutDesc').value = state.aboutDesc;
+      }
     }catch(e){}
     const sel = $('#exTechnique');
     if(sel && sel.value !== state.technique) sel.value = state.technique;
@@ -3874,6 +3878,8 @@ function saveProject(){
     palette: state.palette, paletteName: state.paletteName, app: 'pegwright',
     boardSize: state.boardSize, extraPct: state.extraPct, bagSize: state.bagSize
   };
+  const about = ($('#exAboutDesc') && $('#exAboutDesc').value.trim()) || '';
+  if(about) proj.aboutDesc = about;
   downloadText(JSON.stringify(proj), (state.title||'pattern').replace(/[^\w\-]+/g,'_')+'.json', 'application/json');
 }
 function handleOpenProject(file){
@@ -3891,6 +3897,10 @@ function handleOpenProject(file){
       state.boardSize = p.boardSize || 29;
       state.extraPct = p.extraPct ?? state.extraPct;
       state.bagSize = p.bagSize || state.bagSize;
+      // A description saved in the project (e.g. written by the conversion skill) fills the
+      // "Pattern description" field, replacing whatever the last design left there.
+      state.aboutDesc = (typeof p.aboutDesc === 'string') ? p.aboutDesc.trim() : '';
+      if(state.aboutDesc && $('#exAboutDesc')) $('#exAboutDesc').value = state.aboutDesc;
       if(state.activeColorId==null || !colorById(state.activeColorId)) state.activeColorId=state.palette[0]?.id;
       state.history=[]; state.future=[];
       renderPaletteSelect(); renderSwatches(); fitToScreen(); renderTab();

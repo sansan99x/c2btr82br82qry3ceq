@@ -1283,15 +1283,16 @@ input[type=text], input[type=number], select, textarea{
             <div class="field"><label>Pinterest / Facebook</label><input type="text" id="exLinkOther" placeholder="@yourshop"></div>
           </div>
           <div class="section-title">Etsy thumbnails</div>
-          <div class="field"><label><input type="checkbox" id="exThumbs" checked> Download Etsy listing thumbnails with the PDF (2000 × 2000 JPG)</label>
-            <div class="hint">Made from this PDF: real page count, chart size, technique, row direction and the sections switched on above. The cover photo is used as the mockup. Leave a text field empty to fill it in automatically.</div></div>
+          <div class="field"><div class="checkbox-row" style="margin:0;"><input type="checkbox" id="exThumbs" checked><label for="exThumbs" style="text-transform:none;letter-spacing:0;font-weight:400;font-size:12.5px;color:inherit;margin:0;">Download Etsy listing thumbnails with the PDF (2000 × 2000 JPG)</label></div>
+            <div class="hint-text">Made from this PDF: real page count, chart size, technique, row direction and the sections switched on above. The cover photo is used as the mockup. Leave a text field empty to fill it in automatically.</div></div>
           <div class="field" style="display:flex;flex-wrap:wrap;gap:4px 14px;">
-            <label><input type="checkbox" id="exThumbMain" checked> Main (photo + title)</label>
-            <label><input type="checkbox" id="exThumbIncluded" checked> What's included</label>
-            <label><input type="checkbox" id="exThumbHowTo" checked> How to read the chart</label>
-            <label><input type="checkbox" id="exThumbDigital" checked> Digital pattern notice</label>
-            <label><input type="checkbox" id="exThumbSteps" checked> 3 simple steps</label>
-            <label><input type="checkbox" id="exThumbPhoto" checked> Photo only (square)</label>
+            <div class="checkbox-row" style="margin:0;"><input type="checkbox" id="exThumbMain" checked><label for="exThumbMain" style="text-transform:none;letter-spacing:0;font-weight:400;font-size:12.5px;color:inherit;margin:0;">Main (photo + title)</label></div>
+            <div class="checkbox-row" style="margin:0;"><input type="checkbox" id="exThumbIncluded" checked><label for="exThumbIncluded" style="text-transform:none;letter-spacing:0;font-weight:400;font-size:12.5px;color:inherit;margin:0;">What's included</label></div>
+            <div class="checkbox-row" style="margin:0;"><input type="checkbox" id="exThumbHowTo" checked><label for="exThumbHowTo" style="text-transform:none;letter-spacing:0;font-weight:400;font-size:12.5px;color:inherit;margin:0;">How to read the chart</label></div>
+            <div class="checkbox-row" style="margin:0;"><input type="checkbox" id="exThumbDigital" checked><label for="exThumbDigital" style="text-transform:none;letter-spacing:0;font-weight:400;font-size:12.5px;color:inherit;margin:0;">Digital pattern notice</label></div>
+            <div class="checkbox-row" style="margin:0;"><input type="checkbox" id="exThumbSteps" checked><label for="exThumbSteps" style="text-transform:none;letter-spacing:0;font-weight:400;font-size:12.5px;color:inherit;margin:0;">3 simple steps</label></div>
+            <div class="checkbox-row" style="margin:0;"><input type="checkbox" id="exThumbPhoto" checked><label for="exThumbPhoto" style="text-transform:none;letter-spacing:0;font-weight:400;font-size:12.5px;color:inherit;margin:0;">Photo only (square)</label></div>
+            <div class="checkbox-row" style="margin:0;"><input type="checkbox" id="exThumbChart" checked><label for="exThumbChart" style="text-transform:none;letter-spacing:0;font-weight:400;font-size:12.5px;color:inherit;margin:0;">Chart image (PNG, shop watermark)</label></div>
           </div>
           <div class="field-row">
             <div class="field"><label>Tagline</label><input type="text" id="exThumbTagline" placeholder="Stitch. Hang. Cherish."></div>
@@ -1303,6 +1304,39 @@ input[type=text], input[type=number], select, textarea{
           </div>
           <div class="field"><label>Main image title</label><input type="text" id="exThumbMainTitle" placeholder="automatic: [title] [technique] Crochet Pattern"></div>
           <div class="field"><label>Main image subtitle</label><input type="text" id="exThumbSubtitle" placeholder="automatic: Single Crochet Only | Chart + Written Rows | Instant PDF Download"></div>
+          <div class="field"><label>Main image style</label>
+            <div class="hint-text">Saved with the project, so each design keeps its own colors. Click a swatch to use a color from this design.</div>
+            <div style="display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-start;margin-top:6px;">
+              <canvas id="exThumbStylePrev" width="400" height="400" title="Live preview of the main image" style="width:150px;height:150px;border:1px solid var(--line,#ddd);border-radius:6px;background:#f4ede4;"></canvas>
+              <div style="flex:1;min-width:230px;display:flex;flex-direction:column;gap:9px;">
+                <div><div class="hint-text" style="margin-bottom:3px;">Title font</div>
+                  <select id="exThumbFont">
+                    <optgroup label="On every computer">
+                      <option value="Georgia, &quot;Times New Roman&quot;, serif;bold;8" selected>Georgia (default)</option>
+                      <option value="&quot;Times New Roman&quot;, Times, serif;bold;8">Times New Roman</option>
+                      <option value="&quot;Palatino Linotype&quot;, Palatino, &quot;Book Antiqua&quot;, Georgia, serif;bold;8">Palatino</option>
+                      <option value="&quot;Trebuchet MS&quot;, &quot;Helvetica Neue&quot;, Arial, sans-serif;bold;6">Trebuchet</option>
+                      <option value="&quot;Arial Black&quot;, &quot;Helvetica Neue&quot;, Arial, sans-serif;900;4">Arial Black</option>
+                    </optgroup>
+                    <optgroup label="Google Fonts (needs internet)">
+                      <option value="&quot;Playfair Display&quot;, Georgia, serif;bold;4">Playfair Display</option>
+                      <option value="&quot;DM Serif Display&quot;, Georgia, serif;normal;4">DM Serif Display</option>
+                      <option value="&quot;Abril Fatface&quot;, Georgia, serif;normal;4">Abril Fatface</option>
+                      <option value="&quot;Cormorant Garamond&quot;, Georgia, serif;bold;6">Cormorant Garamond</option>
+                      <option value="Cinzel, Georgia, serif;bold;6">Cinzel</option>
+                      <option value="Montserrat, &quot;Helvetica Neue&quot;, Arial, sans-serif;bold;4">Montserrat</option>
+                      <option value="Lobster, Georgia, serif;normal;0">Lobster</option>
+                      <option value="Pacifico, Georgia, serif;normal;0">Pacifico</option>
+                    </optgroup>
+                  </select></div>
+                <div><div class="hint-text" style="margin-bottom:3px;">Title color</div>
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><input type="color" id="exThumbTitleColor" value="#D8577A" style="width:40px;height:28px;padding:0;border:1px solid var(--line,#ddd);"><span id="exThumbTitleSw" style="display:flex;flex-wrap:wrap;gap:4px;"></span></div></div>
+                <div><div class="hint-text" style="margin-bottom:3px;">Background color</div>
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><input type="color" id="exThumbBgColor" value="#F2E6DA" style="width:40px;height:28px;padding:0;border:1px solid var(--line,#ddd);"><span id="exThumbBgSw" style="display:flex;flex-wrap:wrap;gap:4px;"></span></div></div>
+                <div><button type="button" class="small-btn" id="exThumbStyleReset">Default style</button></div>
+              </div>
+            </div>
+          </div>
           <div class="field"><label>"What's included" text under the page count</label><input type="text" id="exThumbBlurb" placeholder="Complete pattern file with chart, instructions & extras."></div>
         </div>
       </div>
@@ -3074,7 +3108,7 @@ const PROFILE_FIELDS = [
   'exCover','exCoverTrueShape','exAbout','exHowTo','exOverview','exTiled','exTileKey','exWritten',
   'exYarn','exChecklist','exResources','exResourceLinks','exLegendMode',
   'exLegendSymbols','exSize','exDraw','exFileType','exTechnique','exConstruction',
-  'exThumbs','exThumbMain','exThumbIncluded','exThumbHowTo','exThumbDigital','exThumbSteps','exThumbPhoto',
+  'exThumbs','exThumbMain','exThumbIncluded','exThumbHowTo','exThumbDigital','exThumbSteps','exThumbPhoto','exThumbChart','exThumbFont','exThumbTitleColor','exThumbBgColor',
   'exThumbTagline','exThumbItem'
 ];
 
@@ -3578,11 +3612,13 @@ function openModal(id){
         profileApply(JSON.parse(raw), {skipPalette:true}); openModal._profileDone = true;
         // The saved profile must not overwrite the description of the project just opened.
         if(state.aboutDesc) $('#exAboutDesc').value = state.aboutDesc;
+        if(state.thumbStyle) thumbStyleApply(state.thumbStyle);
       }
     }catch(e){}
     const sel = $('#exTechnique');
     if(sel && sel.value !== state.technique) sel.value = state.technique;
     syncWrittenForTechnique();
+    if(typeof wireThumbStyle === 'function') wireThumbStyle();
   }
 }
 $('#exTechnique')?.addEventListener('change', syncWrittenForTechnique);
@@ -3905,6 +3941,7 @@ function saveProject(){
   // the pattern description (export dialog) belongs to this design, so it travels with the project
   const about = ($('#exAboutDesc') && $('#exAboutDesc').value.trim()) || '';
   if(about) proj.aboutDesc = about;
+  if(typeof thumbStyleCollect === 'function') proj.thumbStyle = thumbStyleCollect();
   downloadText(JSON.stringify(proj), (state.title||'pattern').replace(/[^\w\-]+/g,'_')+'.json', 'application/json');
 }
 function handleOpenProject(file){
@@ -3927,6 +3964,9 @@ function handleOpenProject(file){
       // "Pattern description" field, replacing whatever the last design left there.
       state.aboutDesc = (typeof p.aboutDesc === 'string') ? p.aboutDesc.trim() : '';
       if(state.aboutDesc && $('#exAboutDesc')) $('#exAboutDesc').value = state.aboutDesc;
+      // Main-image style (title font/colors) belongs to the design as well.
+      state.thumbStyle = (p.thumbStyle && typeof p.thumbStyle === 'object') ? p.thumbStyle : null;
+      if(state.thumbStyle) thumbStyleApply(state.thumbStyle);
       if(state.activeColorId==null || !colorById(state.activeColorId)) state.activeColorId=state.palette[0]?.id;
       state.history=[]; state.future=[];
       renderPaletteSelect(); renderSwatches(); fitToScreen(); renderTab();
@@ -6305,6 +6345,25 @@ function tContain(ctx, img, x, y, w, h){
   const iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height, k=Math.min(w/iw,h/ih);
   const dw=iw*k, dh=ih*k; ctx.drawImage(img, x+(w-dw)/2, y+(h-dh)/2, dw, dh); return {x:x+(w-dw)/2, y:y+(h-dh)/2, w:dw, h:dh};
 }
+/* "Mockup image" label for the main thumbnail. It sits in the beige margin above the
+   photo frame, right-aligned with the frame, so the photo itself stays untouched. Etsy asks
+   that listing photos represent what the buyer gets; the label makes clear the photo shows a
+   finished piece made from the pattern. Only drawn for a real cover photo, never for the
+   chart preview used when no photo was added. */
+function tMockupTag(ctx, right, frameTop){
+  if(!(coverPhotoHi || coverPhoto)) return;
+  const size = 30, text = 'MOCKUP IMAGE', sp = 6;
+  ctx.save();
+  ctx.font = `bold ${size}px ${THUMB.sans}`;
+  const tw = [...text].reduce((a,ch)=>a+ctx.measureText(ch).width,0) + sp*(text.length-1);
+  const padX = 26, bh = 58, bw = tw + padX*2;
+  const bx = right - bw, byy = frameTop - bh - 44;
+  ctx.strokeStyle = 'rgba(29,53,87,.55)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx,byy,bw,bh,bh/2) : ctx.rect(bx,byy,bw,bh); ctx.stroke();
+  ctx.fillStyle = '#1D3557'; ctx.textBaseline = 'middle';
+  tSpaced(ctx, text, bx + bw/2, byy + bh/2 + 1, sp, 'center');
+  ctx.restore();
+}
 function tShadow(ctx, on){ if(on){ ctx.shadowColor='rgba(0,0,0,.35)'; ctx.shadowBlur=40; ctx.shadowOffsetY=14; } else { ctx.shadowColor='transparent'; ctx.shadowBlur=0; ctx.shadowOffsetY=0; } }
 function tIcon(ctx, kind, cx, cy, r){
   ctx.save(); ctx.fillStyle=THUMB.peach; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
@@ -6338,14 +6397,95 @@ function tIcon(ctx, kind, cx, cy, r){
 }
 
 /* ------------------------------------ 1. main --------------------------------------- */
+/* ------------------------- main image style (font + colors) -------------------------
+   Title font, title color and background color of the main image. They follow the design,
+   so they are stored in the project JSON (thumbStyle) as well as in the studio profile.
+   Google Fonts are fetched only when one is picked; offline, the title falls back to Georgia. */
+const THUMB_STYLE_DEFAULT = { font:'Georgia, "Times New Roman", serif;bold;8', title:'#D8577A', bg:'#F2E6DA' };
+function tShade(hex, k){                       // k<0 darker, k>0 lighter
+  const n=parseInt(hex.slice(1),16); let r=n>>16, g=(n>>8)&255, b=n&255;
+  const f=v=> Math.round(k<0 ? v*(1+k) : v+(255-v)*k);
+  return '#'+[f(r),f(g),f(b)].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+let _gfontsLink = null;
+async function tEnsureFont(family, weight){
+  const first = family.split(',')[0].replace(/"/g,'').trim();
+  if(!/^(Playfair Display|DM Serif Display|Abril Fatface|Cormorant Garamond|Cinzel|Montserrat|Lobster|Pacifico)$/.test(first)) return;
+  if(!_gfontsLink){
+    _gfontsLink=document.createElement('link'); _gfontsLink.rel='stylesheet';
+    _gfontsLink.href='https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Serif+Display&family=Abril+Fatface&family=Cormorant+Garamond:wght@700&family=Cinzel:wght@700&family=Montserrat:wght@700&family=Lobster&family=Pacifico&display=swap';
+    document.head.appendChild(_gfontsLink);
+  }
+  try{ await Promise.race([ document.fonts.load(`${weight} 84px "${first}"`, 'Aa'), new Promise(r=>setTimeout(r,5000)) ]); }catch(e){}
+}
+async function thumbStyle(){
+  const raw = thumbVal('exThumbFont') || THUMB_STYLE_DEFAULT.font;
+  const [family, weight, spacing] = raw.split(';');
+  await tEnsureFont(family, weight||'bold');
+  const okHex = v => /^#[0-9a-f]{6}$/i.test(v||'');
+  return { family, weight: weight||'bold', spacing: Number(spacing)||0,
+    title: okHex(thumbVal('exThumbTitleColor')) ? thumbVal('exThumbTitleColor') : THUMB_STYLE_DEFAULT.title,
+    bg: okHex(thumbVal('exThumbBgColor')) ? thumbVal('exThumbBgColor') : THUMB_STYLE_DEFAULT.bg };
+}
+function thumbStyleCollect(){
+  return { font: thumbVal('exThumbFont'), title: thumbVal('exThumbTitleColor'), bg: thumbVal('exThumbBgColor') };
+}
+function thumbStyleApply(t){
+  if(!t) return;
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el && v) el.value=v; };
+  const sel=document.getElementById('exThumbFont');
+  if(sel && t.font && [...sel.options].some(o=>o.value===t.font)) sel.value=t.font;
+  set('exThumbTitleColor', t.title); set('exThumbBgColor', t.bg);
+}
+// Swatches from the design's own palette, plus the default color first.
+function thumbStyleSwatches(){
+  const mk=(boxId, inputId, def)=>{
+    const box=document.getElementById(boxId), inp=document.getElementById(inputId); if(!box||!inp) return;
+    box.innerHTML='';
+    const cols=[def].concat(state.palette.filter(c=>!c.hidden).map(c=>c.hex.toUpperCase()));
+    [...new Set(cols)].forEach((hex,i)=>{
+      const b=document.createElement('button'); b.type='button';
+      b.title = i===0 ? 'Default' : (state.palette.find(c=>c.hex.toUpperCase()===hex)||{}).name || hex;
+      b.style.cssText=`width:22px;height:22px;border-radius:50%;border:1px solid rgba(0,0,0,.25);background:${hex};cursor:pointer;padding:0;`+(i===0?'outline:2px dashed rgba(0,0,0,.25);outline-offset:1px;':'');
+      b.addEventListener('click',()=>{ inp.value=hex.toLowerCase(); thumbStylePreviewSoon(); });
+      box.appendChild(b);
+    });
+  };
+  mk('exThumbTitleSw','exThumbTitleColor',THUMB_STYLE_DEFAULT.title);
+  mk('exThumbBgSw','exThumbBgColor',THUMB_STYLE_DEFAULT.bg);
+}
+let _tsTimer=null, _tsBusy=false;
+function thumbStylePreviewSoon(){ clearTimeout(_tsTimer); _tsTimer=setTimeout(thumbStylePreview, 250); }
+async function thumbStylePreview(){
+  const cv=document.getElementById('exThumbStylePrev'); if(!cv) return;
+  if(_tsBusy){ thumbStylePreviewSoon(); return; }
+  _tsBusy=true;
+  try{ const big=await thumbMain(thumbFacts(0)); const x=cv.getContext('2d'); x.clearRect(0,0,cv.width,cv.height); x.drawImage(big,0,0,cv.width,cv.height); }
+  catch(e){ console.error('style preview', e); }
+  _tsBusy=false;
+}
+function wireThumbStyle(){
+  thumbStyleSwatches();
+  if(!wireThumbStyle._done){ wireThumbStyle._done=true;
+    ['exThumbFont','exThumbTitleColor','exThumbBgColor','exThumbMainTitle','exThumbSubtitle','exDesigner'].forEach(id=>{
+      const el=document.getElementById(id); if(el){ el.addEventListener('input', thumbStylePreviewSoon); el.addEventListener('change', thumbStylePreviewSoon); } });
+    const ph=document.getElementById('exPhotoInput'); if(ph) ph.addEventListener('change', ()=>setTimeout(thumbStylePreviewSoon, 900));
+    const clr=document.getElementById('btnExPhotoClear'); if(clr) clr.addEventListener('click', ()=>setTimeout(thumbStylePreviewSoon, 100));
+    const rs=document.getElementById('exThumbStyleReset'); if(rs) rs.addEventListener('click', ()=>{ thumbStyleApply(THUMB_STYLE_DEFAULT); thumbStylePreviewSoon(); });
+  }
+  thumbStylePreviewSoon();
+}
+
 async function thumbMain(F){
   const c=thumbCanvas(), ctx=c.getContext('2d');
-  const bg=ctx.createLinearGradient(0,0,0,THUMB.W); bg.addColorStop(0,'#F2E6DA'); bg.addColorStop(1,'#EBDDCF');
+  const st = await thumbStyle();
+  const bg=ctx.createLinearGradient(0,0,0,THUMB.W); bg.addColorStop(0,st.bg); bg.addColorStop(1,tShade(st.bg,-0.035));
   ctx.fillStyle=bg; ctx.fillRect(0,0,THUMB.W,THUMB.W);
   const img=await tHeroImage();
   const fx=236, fy=236, fw=1450, fh=1450;                       // white frame
   tShadow(ctx,true); ctx.fillStyle='#FFFFFF'; ctx.fillRect(fx,fy,fw,fh); tShadow(ctx,false);
   tCover(ctx, img, fx+14, fy+14, fw-28, fh-28);
+  tMockupTag(ctx, fx+fw, fy);                                   // outside the frame, top-right corner
   // banner
   const by=1680, bh=250;
   tShadow(ctx,true); ctx.fillStyle='#FFFFFF'; ctx.fillRect(176,by,THUMB.W-176,bh); tShadow(ctx,false);
@@ -6353,12 +6493,13 @@ async function thumbMain(F){
   await tLogo(ctx, 88, by+58, 74, '');
   ctx.fillStyle='#E9E2D2'; ctx.textAlign='center'; tFit(ctx, F.shop, '', THUMB.serif, 22, 150); ctx.fillText(F.shop, 88, by+178);
   const titleTxt = thumbVal('exThumbMainTitle') || `${F.title} ${F.techName} ${F.craft} Pattern`;
-  ctx.fillStyle='#D8577A';
+  ctx.fillStyle=st.title;
   const tx=(176+THUMB.W)/2, maxW=THUMB.W-176-140;
-  tFit(ctx, titleTxt, 'bold', THUMB.serif, 84, maxW, 10); tSpaced(ctx, titleTxt, tx, by+118, 8, 'center');
+  const tSize = tFit(ctx, titleTxt, st.weight, st.family, 84, maxW, st.spacing*1.25);
+  tSpaced(ctx, titleTxt, tx, by+118, st.spacing*tSize/84, 'center');
   const stitch = {graphgan:'Single Crochet Only', tapestry:'Single Crochet Only', c2c:'Corner-to-Corner', filet:'Filet Crochet', knit:'Knit Colorwork'}[F.tech] || 'Colorwork';
   const sub = thumbVal('exThumbSubtitle') || [stitch, F.written ? 'Chart + Written Rows' : 'Color Chart', 'Instant PDF Download'].join(' | ');
-  ctx.fillStyle='#D8577A'; tFit(ctx, sub, '', THUMB.mono, 44, maxW); ctx.textAlign='center'; ctx.fillText(sub, tx, by+196);
+  ctx.fillStyle=st.title; tFit(ctx, sub, '', THUMB.mono, 44, maxW); ctx.textAlign='center'; ctx.fillText(sub, tx, by+196);
   return c;
 }
 
@@ -6544,17 +6685,55 @@ async function thumbPhoto(){
   tCover(ctx, await tHeroImage(), 0, 0, THUMB.W, THUMB.W); return c;
 }
 
+/* ------------------------------ 7. chart image (PNG) ---------------------------------
+   The digital design itself - every stitch as a square with thin grid lines, no mockup
+   label - sized for Etsy (longest side about 2000 px) and saved as PNG so the squares stay
+   crisp. The shop name is repeated diagonally at low opacity as a watermark, so a copied
+   image still carries the shop name. */
+async function thumbChart(F){
+  const W=state.width, H=state.height;
+  const s=Math.max(4, Math.floor(2000/Math.max(W,H)));
+  const c=document.createElement('canvas'); c.width=W*s; c.height=H*s;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#FFFFFF'; ctx.fillRect(0,0,c.width,c.height);
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    const p=effectiveCellAt(x,y); if(p<0) continue;
+    ctx.fillStyle=state.palette[p].hex; ctx.fillRect(x*s,y*s,s,s);
+  }
+  ctx.strokeStyle='rgba(0,0,0,.15)'; ctx.lineWidth=1;
+  for(let x=0;x<=W;x++){ ctx.beginPath(); ctx.moveTo(x*s+0.5,0); ctx.lineTo(x*s+0.5,c.height); ctx.stroke(); }
+  for(let y=0;y<=H;y++){ ctx.beginPath(); ctx.moveTo(0,y*s+0.5); ctx.lineTo(c.width,y*s+0.5); ctx.stroke(); }
+  const mark = (F.shop || '').trim();
+  if(mark){
+    ctx.save();
+    const fs = Math.round(Math.max(c.width,c.height)/22);
+    ctx.font=`bold ${fs}px ${THUMB.serif}`; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.lineJoin='round'; ctx.lineWidth=Math.max(2, fs/16);
+    ctx.strokeStyle='rgba(0,0,0,.10)'; ctx.fillStyle='rgba(255,255,255,.30)';
+    const stepX = ctx.measureText(mark).width + fs*2.2, stepY = fs*4.2;
+    ctx.translate(c.width/2, c.height/2); ctx.rotate(-Math.PI/6);
+    const R = Math.hypot(c.width, c.height)/2 + stepX;
+    for(let y=-R, row=0; y<=R; y+=stepY, row++){
+      for(let x=-R + (row%2 ? stepX/2 : 0); x<=R; x+=stepX){ ctx.strokeText(mark,x,y); ctx.fillText(mark,x,y); }
+    }
+    ctx.restore();
+  }
+  c._png = true;
+  return c;
+}
+
 /* --------------------------------- build the whole set -------------------------------- */
 const THUMB_SET = [
   ['exThumbMain','01_main', thumbMain], ['exThumbIncluded','02_whats_included', thumbIncluded],
   ['exThumbHowTo','03_how_to_read', thumbHowTo], ['exThumbDigital','04_digital_pattern', thumbDigital],
-  ['exThumbSteps','05_3_simple_steps', thumbSteps], ['exThumbPhoto','06_photo', thumbPhoto] ];
+  ['exThumbSteps','05_3_simple_steps', thumbSteps], ['exThumbPhoto','06_photo', thumbPhoto],
+  ['exThumbChart','07_chart', thumbChart] ];
 async function buildEtsyThumbs(pageCount){
   const F = thumbFacts(pageCount); const out=[];
   const base=(state.title||'pattern').replace(/[^\w\-]+/g,'_');
   for(const [id, name, fn] of THUMB_SET){
     if(!thumbOn(id)) continue;
-    try{ const cv = await fn(F); if(cv) out.push({name:`${base}_${name}.jpg`, canvas:cv}); }
+    try{ const cv = await fn(F); if(cv) out.push({name:`${base}_${name}.${cv._png ? 'png' : 'jpg'}`, canvas:cv}); }
     catch(e){ console.error('thumbnail', name, e); }
   }
   return out;
@@ -6562,7 +6741,7 @@ async function buildEtsyThumbs(pageCount){
 function canvasToJpegBlob(cv){ return new Promise(res=>cv.toBlob(res,'image/jpeg',0.92)); }
 async function downloadEtsyThumbs(list){
   for(const t of list){
-    const blob = await canvasToJpegBlob(t.canvas);
+    const blob = t.canvas._png ? await new Promise(res=>t.canvas.toBlob(res,'image/png')) : await canvasToJpegBlob(t.canvas);
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=t.name;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(()=>URL.revokeObjectURL(a.href), 4000);

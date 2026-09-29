@@ -211,6 +211,7 @@ code{font:12.5px var(--mono); background:var(--paper); border:1px solid var(--ru
           <li>Upload <code id="fn-png">grid_60x70.png</code> + <code id="fn-md">skill-gambar….md</code> ke ChatGPT, tulis “ikuti skill ini”.</li>
           <li>Simpan gambar hasilnya (dan salin kartu <code>CHART SPEC</code> kalau ada).</li>
           <li>Upload gambar + <code id="fn-json">skill-json….md</code> ke AI yang bisa menjalankan Python, tulis “ikuti skill ini”.</li>
+          <li>Hasilnya 2 file: <b>JSON</b> (buka di Warpwright, deskripsi pola langsung terisi) dan <b>teks listing Etsy</b> (judul, 13 tag dipisah koma, deskripsi).</li>
         </ol>
       </div>
       <details>
@@ -359,7 +360,8 @@ description: Convert the finished chart image of "{{TITLE}}" into a Warpwright p
 The user attached this skill and a **finished chart image** (a grid of colored cells, made by
 coloring the template `grid_{{W}}x{{H}}.png`). They may also paste a `CHART SPEC` card. Your
 deliverable is **one pattern JSON file** in the Warpwright format embedded below, plus the
-numbered chart PNG for checking and a short report.
+numbered chart PNG for checking, a short report, and **an Etsy listing text file**
+(`{{ETSYNAME}}`: title, tags and description for the shop {{DESIGNER}}).
 
 Reply in the language the user writes in. Everything below is already decided. Do not ask
 about it again. Only ask if the chart image is missing.
@@ -508,17 +510,95 @@ json.dump([{"op": "meta", "aboutDesc": desc}], open("desc_ops.json", "w"))
 subprocess.run(["python", "img2pattern.py", "edit", "{{OUTNAME}}", "desc_ops.json"], check=True)
 ```
 
-## Step 6: Deliver
+## Step 6: Write the Etsy listing
+
+Write the listing for the shop **{{DESIGNER}}**, which sells digital tapestry crochet wall
+hanging patterns (PDF). Base everything on the final JSON and the brief. Save it with code as
+**`{{ETSYNAME}}`** (plain UTF-8 text) in exactly this layout:
+
+```
+TITLE
+<title>
+
+OTHER TITLE OPTIONS
+1. <title>
+2. <title>
+
+TAGS (13, comma separated)
+<tag>, <tag>, ...
+
+DESCRIPTION
+<description>
+```
+
+**Title** (the main one and 2 alternatives, each a different angle):
+- Etsy limit 140 characters; aim for 70–120. Readable for a person, not a keyword list.
+- Put what it is first: `<Theme> Tapestry Crochet Pattern`, then 1–2 phrases buyers search
+  for, separated by commas, e.g. `, <Item> Wall Hanging, <Season/Style> Decor, PDF Chart`.
+- Each word at most once or twice; no ALL CAPS, emojis, or "best/cheap/sale".
+- Match the shop's existing titles, e.g.
+  `Nutcracker Tapestry Crochet Pattern, Christmas Wall Hanging, Pink Holiday Decor`.
+
+**Tags:** exactly 13, each **at most 20 characters including spaces**, lowercase, no `#`.
+- Use multi-word phrases a buyer would type; no single generic words.
+- Cover different angles, without repeating the same phrase:
+  - the product: tapestry crochet, crochet pattern, wall hanging pattern;
+  - the theme and its motifs;
+  - the season or occasion;
+  - the style (e.g. nordic, boho, kawaii);
+  - the room or the gift;
+  - the format (e.g. pdf crochet chart).
+- No trademarks, character or brand names, and no words that do not fit this design.
+
+**Description** (English (US), about 200–300 words, plain text, short paragraphs; lines
+starting with "- " are fine for lists):
+1. **Opening, 1–2 sentences:** the most important phrase in a natural sentence, e.g. "Stitch
+   a cozy Nutcracker tapestry crochet wall hanging...". Etsy shows these first lines in
+   search, so make them count.
+2. **The design:** what is in it, its colors and mood, and where it looks good. Reuse the
+   `aboutDesc` ideas in new words.
+3. **WHAT YOU GET:** a digital PDF pattern with a full color chart, a tiled chart for
+   printing, a color legend and row-by-row written instructions. Also mention the optional
+   fringe instructions and yarn estimates. Do not state a page count; it is not known yet.
+4. **PATTERN DETAILS**, computed from the JSON with code:
+   - technique;
+   - grid W × H stitches;
+   - number of colors;
+   - finished size in cm and inches from the gauge (as in Step 5);
+   - yarn weight {{YARN}} and hook {{HOOK}};
+   - skill level: Beginner if ≤ 3 colors, Advanced if ≥ 12 colors, otherwise Intermediate.
+5. **PLEASE NOTE:**
+   - This is a digital download: no finished item, yarn or hook is shipped.
+   - The pattern is for personal use; please do not share, copy or resell the pattern file.
+6. **ABOUT THE DESIGN AND PHOTOS**, always include, worded like this:
+   "This is an original design by {{DESIGNER}}. It was developed with the help of AI tools,
+   then charted, refined and checked by hand in my own design studio. The product photos
+   are AI-generated mockups that show how the finished piece can look."
+
+   Etsy requires sellers to disclose the use of AI in the listing description. Keep this
+   paragraph truthful and do not remove it.
+7. **Close** with one warm line inviting questions via Etsy messages. No links, emails or
+   other contact details.
+
+Check with code before saving:
+- the title is at most 140 characters;
+- there are exactly 13 tags, all distinct and each at most 20 characters;
+- the description contains the AI paragraph.
+
+Fix anything that fails, then save the file.
+
+## Step 7: Deliver
 
 - `{{OUTNAME}}`, with the same structure as the embedded template: `cells` row-major from the
   top-left, and every palette entry with `id/name/hex/brand/yardage/hidden`.
 - Validate: `len(cells) == width*height`, every cell index is less than the palette length,
   every palette color is used, and `aboutDesc` is present.
-- Send the JSON and the final `_chart.png`.
+- Send the JSON, `{{ETSYNAME}}` and the final `_chart.png`.
 - Report in a few lines: final size (and why, if it differs from {{W}} × {{H}}), color names,
   what was auto-fixed, your edits, and areas to check by eye (row/column ranges).
 - Show the description text in the report too, so the user can adjust it before importing.
   Opening the JSON in Warpwright fills *Pattern description* automatically.
+- Also show the Etsy title and tags in the report, so the user can copy them straight away.
 
 ---
 
@@ -1216,7 +1296,7 @@ def convert_main(argv):
     ap.add_argument("--board", type=int, help="pegwright: pegs per board side (default 29)")
     ap.add_argument("--extra", type=int, help="pegwright: spare beads %% for the shopping list (default 10)")
     ap.add_argument("--bag", type=int, help="pegwright: beads per bag (default 1000)")
-    ap.add_argument("--description", help="pattern description saved as aboutDesc (Warpwright fills its Pattern description field)")
+    ap.add_argument("--description", help="pattern description saved as aboutDesc (Warpwright/Pegwright fill their Pattern description field)")
     A = ap.parse_args(argv); random.seed(A.seed); np.random.seed(A.seed)
 
     ex = json.load(open(A.example)) if A.example else {}
@@ -1421,6 +1501,7 @@ def convert_main(argv):
                "boardSize": A.board or ex.get("boardSize", 29),
                "extraPct": A.extra if A.extra is not None else ex.get("extraPct", 10),
                "bagSize": A.bag or ex.get("bagSize", 1000)}
+        if A.description: out["aboutDesc"] = A.description.strip()
         for i, (rgb, nm) in enumerate(zip(pal_rgb, pal_names)):
             out["palette"].append({"id": rid_peg(), "name": nm, "hex": hexs(rgb),
                                    "brand": "Artkal S" if codes else "", "yardage": 0,
@@ -1872,6 +1953,7 @@ if __name__ == "__main__":
         ? 'balanced design, so no mirror is needed; repeated motifs should still match.'
         : '`ASYM 0` in the main figure is expected. If a deliberate one-sided detail in the source got mirrored away, restore it with `set`/`rect`.',
       OUTNAME: `${v.title.replace(/[\\/:*?"<>|]+/g, '').trim() || 'pattern'}.json`,
+      ETSYNAME: `${v.title.replace(/[\\/:*?"<>|]+/g, '').trim() || 'pattern'} - Etsy listing.txt`,
       DESIGNER: f.designer || '(empty)', TECHNIQUE: f.technique, GST: f.gst, GRW: f.grw, HOOK: f.hook || '(empty)',
       YARN: f.yarn, ROWDIR: f.rowdir, EXAMPLEJSON: exampleJson(f)
     };

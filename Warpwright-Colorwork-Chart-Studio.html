@@ -3898,6 +3898,9 @@ function saveProject(){
     gauge: state.gauge, hook: state.hook, yarnWeightId: state.yarnWeightId,
     carryPct: state.carryPct, rowDirection: state.rowDirection
   };
+  // the pattern description (export dialog) belongs to this design, so it travels with the project
+  const about = ($('#exAboutDesc') && $('#exAboutDesc').value.trim()) || '';
+  if(about) proj.aboutDesc = about;
   downloadText(JSON.stringify(proj), (state.title||'pattern').replace(/[^\w\-]+/g,'_')+'.json', 'application/json');
 }
 function handleOpenProject(file){
@@ -3916,6 +3919,9 @@ function handleOpenProject(file){
       state.yarnWeightId=p.yarnWeightId||state.yarnWeightId;
       state.carryPct = p.carryPct ?? state.carryPct;
       state.rowDirection = p.rowDirection || 'rtl';
+      // A description saved in the project (e.g. written by the conversion skill) fills the
+      // "Pattern description" field, replacing whatever the last design left there.
+      if(typeof p.aboutDesc === 'string' && p.aboutDesc.trim() && $('#exAboutDesc')) $('#exAboutDesc').value = p.aboutDesc.trim();
       if(state.activeColorId==null || !colorById(state.activeColorId)) state.activeColorId=state.palette[0]?.id;
       state.history=[]; state.future=[];
       renderPaletteSelect(); renderSwatches(); fitToScreen(); renderTab();

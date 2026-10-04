@@ -104,7 +104,7 @@ code{font:12.5px var(--mono); background:var(--paper); border:1px solid var(--ru
   <header class="top">
     <div>
       <h1>Chart Brief <span class="x">Studio</span></h1>
-      <p class="lede">Isi brief sekali, lalu unduh 3 file: template grid, skill untuk membuat gambar, dan skill untuk mengubah gambar jadi JSON Warpwright. Semua sudah terisi, jadi di ChatGPT cukup tulis “ikuti skill ini”.</p>
+      <p class="lede">Isi brief sekali, lalu unduh 4 file: template grid, skill untuk membuat gambar, skill untuk mengubah gambar jadi JSON Warpwright, dan skill untuk membuat mockup dengan proporsi asli. Semua sudah terisi, jadi di ChatGPT cukup tulis “ikuti skill ini”.</p>
     </div>
     <div class="flow" aria-label="Alur kerja">
       <span><b>1</b> brief di sini</span><span><b>2</b> template + skill gambar → ChatGPT</span><span><b>3</b> gambar + skill JSON → AI dengan Python</span>
@@ -124,6 +124,14 @@ code{font:12.5px var(--mono); background:var(--paper); border:1px solid var(--ru
         <div class="field">
           <label for="title">Judul desain</label>
           <input type="text" id="title" value="Witch Pumpkin" placeholder="dipakai di nama file dan kartu spesifikasi">
+        </div>
+        <div class="field">
+          <label for="origin">Asal desain <span class="opt">(untuk teks listing Etsy)</span></label>
+          <select id="origin">
+            <option value="ai" selected>Dari gambar AI, lalu saya rapikan sendiri</option>
+            <option value="manual">Saya desain sendiri secara manual (tanpa AI)</option>
+          </select>
+          <p class="hint">Menentukan kalimat soal desain &amp; foto di deskripsi Etsy. Etsy mewajibkan menyebut AI kalau desainnya dibuat dengan bantuan AI.</p>
         </div>
 
         <div class="field">
@@ -160,6 +168,14 @@ code{font:12.5px var(--mono); background:var(--paper); border:1px solid var(--ru
           <input type="text" id="motifs" value="" placeholder="contoh: bintang kecil identik, titik-titik; pita lantai polos di bawah">
           <p class="hint">Kosongkan kalau mau AI yang memilih sesuai tema.</p>
         </div>
+        <div class="field">
+          <label for="fringe">Fringe di mockup</label>
+          <select id="fringe">
+            <option value="no" selected>Tidak, tepi bawah lurus</option>
+            <option value="yes">Ya, fringe krem 10 cm</option>
+          </select>
+          <p class="hint">Untuk skill mockup. Ukuran mockup selalu dihitung dari jumlah stitch dan gauge, jadi desain dengan ukuran sama selalu sama lebar.</p>
+        </div>
 
         <fieldset class="fmt">
           <legend>Format JSON (Warpwright)</legend>
@@ -188,11 +204,12 @@ code{font:12.5px var(--mono); background:var(--paper); border:1px solid var(--ru
         </fieldset>
 
         <div class="actions">
-          <button type="submit" class="btn primary" id="go">Generate &amp; unduh 3 file</button>
+          <button type="submit" class="btn primary" id="go">Generate &amp; unduh 4 file</button>
           <div class="files">
             <button type="button" class="btn small" id="dl-png">Template (.png)</button>
             <button type="button" class="btn small" id="dl-md">Skill gambar (.md)</button>
             <button type="button" class="btn small" id="dl-json">Skill JSON (.md)</button>
+            <button type="button" class="btn small" id="dl-mock">Skill mockup (.md)</button>
           </div>
         </div>
         <p class="status" id="status" role="status" aria-live="polite"></p>
@@ -211,6 +228,7 @@ code{font:12.5px var(--mono); background:var(--paper); border:1px solid var(--ru
           <li>Upload <code id="fn-png">grid_60x70.png</code> + <code id="fn-md">skill-gambar….md</code> ke ChatGPT, tulis “ikuti skill ini”.</li>
           <li>Simpan gambar hasilnya (dan salin kartu <code>CHART SPEC</code> kalau ada).</li>
           <li>Upload gambar + <code id="fn-json">skill-json….md</code> ke AI yang bisa menjalankan Python, tulis “ikuti skill ini”.</li>
+          <li>Setelah desain final: upload JSON (atau PNG chart dari Warpwright) + <code id="fn-mock">skill-mockup….md</code>, tulis “ikuti skill ini” untuk foto mockup dengan proporsi asli.</li>
           <li>Hasilnya 2 file: <b>JSON</b> (buka di Warpwright, deskripsi pola langsung terisi) dan <b>teks listing Etsy</b> (judul, 13 tag dipisah koma, deskripsi).</li>
         </ol>
       </div>
@@ -570,20 +588,18 @@ starting with "- " are fine for lists):
 5. **PLEASE NOTE:**
    - This is a digital download: no finished item, yarn or hook is shipped.
    - The pattern is for personal use; please do not share, copy or resell the pattern file.
-6. **ABOUT THE DESIGN AND PHOTOS**, always include, worded like this:
-   "This is an original design by {{DESIGNER}}. It was developed with the help of AI tools,
-   then charted, refined and checked by hand in my own design studio. The product photos
-   are AI-generated mockups that show how the finished piece can look."
+6. **ABOUT THE DESIGN AND PHOTOS**, always include, word for word:
+   "{{AIPARA}}"
 
-   Etsy requires sellers to disclose the use of AI in the listing description. Keep this
-   paragraph truthful and do not remove it.
+   The shop owner chose this wording to match how the design was made. Keep it exactly as
+   written and do not remove it.
 7. **Close** with one warm line inviting questions via Etsy messages. No links, emails or
    other contact details.
 
 Check with code before saving:
 - the title is at most 140 characters;
 - there are exactly 13 tags, all distinct and each at most 20 characters;
-- the description contains the AI paragraph.
+- the description contains the ABOUT THE DESIGN AND PHOTOS paragraph word for word.
 
 Fix anything that fails, then save the file.
 
@@ -614,6 +630,451 @@ palette.
 Converter script (Python 3, needs numpy and Pillow):
 
 ```python
+</script>
+<script type="text/plain" id="mockTpl">---
+name: wall-hanging-mockup-{{SLUG}}
+description: Make the product mockup photo of the finished "{{TITLE}}" tapestry crochet wall hanging from its final chart PNG or pattern JSON, with the true finished proportions ({{W}} x {{H}} stitches, gauge {{GST}} x {{GRW}} per 10 cm). Use when the user uploads this file with the final chart and asks for the mockup.
+---
+
+# {{TITLE}}: wall-hanging mockup with the true finished proportions
+
+The user attached this skill and the **final design** of "{{TITLE}}". The design is one of:
+- the pattern **JSON** (most exact), or
+- the chart **PNG** from Warpwright: *File → Export chart as PNG*. This is the clean chart, not
+  the watermarked `_07_chart.png`.
+
+Your deliverable is the listing mockup: a photo-style picture of the finished wall hanging.
+**The width-to-height ratio must be the real finished shape**, so every mockup of this size
+looks the same.
+
+Reply in the language the user writes in. Everything below is already decided. Do not ask
+about it again. Only ask if the design file is missing.
+
+## Spec
+
+- **Title:** {{TITLE}}
+- **Stitches:** {{W}} × {{H}}. If the uploaded file has a different size, use the file's
+  size; it is the final one.
+- **Gauge:** {{GST}} stitches and {{GRW}} rows per 10 cm. Finished size ≈ {{WCM}} × {{HCM}} cm.
+  A crochet stitch is wider than it is tall, so the piece is **wider than the chart grid
+  looks**.
+- **Hanging:** wooden dowel across the top with a jute rope; the top edge folds over the dowel.
+- **Fringe:** {{FRINGE}}
+- **Wall:** plain warm off-white wall, soft daylight, no props, no text.
+
+## Why the code step comes first
+
+Image models guess the shape of a wall hanging, so the same chart comes out wider or
+narrower each time. The embedded script calculates the real shape from stitches and gauge,
+and draws the piece at a fixed size and position on a fixed 1024 × 1536 canvas. The image
+tool only adds realism on top. It is never allowed to change the shape.
+
+**Code execution is required** (Python 3 with numpy + Pillow). If you cannot run code, say so
+in one sentence and stop.
+
+## Step 1: Extract the script
+
+```python
+import glob
+cands = glob.glob('**/*.md', recursive=True) + glob.glob('/mnt/data/*.md') + glob.glob('/mnt/user-data/uploads/*.md')
+skill = [p for p in cands if 'BEGIN-' + 'MOCKUPPY' in open(p, encoding='utf-8', errors='ignore').read()][0]
+src = open(skill, encoding='utf-8').read()
+open('mockup.py', 'w', encoding='utf-8').write(src.split('#### BEGIN-' + 'MOCKUPPY')[-1].split('#### END-' + 'MOCKUPPY')[0])
+print('ok')
+```
+
+## Step 2: Build the layout and the code-rendered mockup
+
+```bash
+python mockup.py layout DESIGN --stper10 {{GST}} --rowper10 {{GRW}} --fringe {{FRINGEFLAG}} --out "{{OUTBASE}}"
+```
+
+`DESIGN` is the uploaded `.json` or `.png`. With a JSON, the gauge inside it is used. The
+script prints the detected stitches, the finished size, and where the piece sits on the
+canvas. Then it writes three files:
+- `{{OUTBASE}}_layout.png`: a flat picture with the exact outline, colors and position. This is
+  the input for the image tool.
+- `{{OUTBASE}}_mockup.png`: a finished mockup drawn by code, with a single-crochet stitch
+  texture, dowel, rope and wall shadow. It is always correct, so it is the safe fallback.
+- `{{OUTBASE}}_box.json`: the exact box of the piece, used by the check in Step 4.
+
+If the printed stitch count is not what the user expects, stop and tell them. A wrong size
+means the wrong file was uploaded.
+
+## Step 3: Make it look like a real photo (image tool, edit mode)
+
+Attach **`{{OUTBASE}}_layout.png`** as the image to edit. If your image tool cannot take a file
+made by code, show the layout image in the chat, then edit that image. If that is not
+possible either, deliver the code mockup from Step 2 and say so.
+
+Prompt:
+
+```
+EDIT THIS IMAGE into a realistic product photo of a handmade tapestry crochet wall hanging.
+
+KEEP EXACTLY: the canvas size, and the position, width, height and outline of the hanging
+piece, the dowel and the rope. Do not crop, zoom, rotate, move or resize anything. The piece
+must stay exactly this wide and this tall.
+
+KEEP EXACTLY: every colored square of the design. Each square is ONE single crochet stitch,
+so turn each square into one visible yarn stitch of the same color. Do not redraw, simplify,
+add or remove any part of the design, and do not change any color.
+
+ADD ONLY: real yarn texture (worsted weight, single crochet rows), a natural wooden dowel, a
+jute rope, the top edge folded over the dowel, soft daylight from the upper left, and a soft
+shadow of the piece on a plain warm off-white wall.{{FRINGEPROMPT}}
+
+DO NOT add: text, logos, watermark, props, plants, furniture, hands, frames, perspective or
+tilt. Straight-on front view.
+```
+
+## Step 4: Check the photo with code
+
+If the generated image is available as a file in your code environment, run:
+
+```bash
+python mockup.py check PHOTO.png "{{OUTBASE}}_box.json"
+```
+
+- **PASS:** the piece has the same size, position and design as the chart.
+- **FAIL:** the image tool resized, moved or redrew it. Regenerate with the same prompt, and add
+  one sentence at the top naming the problem, e.g. "The previous result made the piece
+  narrower; keep its exact width." Make at most 3 attempts in total.
+
+If the image cannot be read by code, compare it by eye with `{{OUTBASE}}_mockup.png`. The outer
+shape must be the same, and all motifs must sit in the same places.
+
+## Step 5: Deliver
+
+1. **The photo mockup**, if it passed. Otherwise deliver the best attempt and say plainly what
+   is off.
+2. **`{{OUTBASE}}_mockup.png`**, the code-rendered mockup, always included as the exact
+   reference.
+3. One line: stitches, finished size in cm and inches, and fringe yes/no.
+
+The user will use the mockup as the cover photo in Warpwright. Warpwright adds the
+"MOCKUP IMAGE" label on the main Etsy thumbnail itself, so do **not** put any text on the
+image.
+
+---
+
+Mockup script (Python 3, needs numpy and Pillow):
+
+```python
+#### BEGIN-MOCKUPPY
+{{MOCKUPPY}}
+#### END-MOCKUPPY
+```
+</script>
+<script type="text/plain" id="mockCode">#!/usr/bin/env python3
+"""
+mockup.py - turn a finished stitch-chart PNG into a wall-hanging mockup with the TRUE finished
+proportions, so every mockup of the same size comes out the same width and height.
+
+  read     python mockup.py read CHART.png [--cols W --rows H]
+           -> prints the detected grid (columns x rows) and writes cells.json
+  layout   python mockup.py layout CHART.png|PATTERN.json --stper10 16 --rowper10 18 [--cols W --rows H]
+                [--fringe yes|no] [--fringe-color "#HEX"] [--wall "#HEX"] [--out NAME]
+           -> NAME_layout.png  : flat base image for the image tool (exact size and position)
+              NAME_mockup.png  : finished code-rendered mockup with stitch texture (always usable)
+              NAME_box.json    : where the tapestry sits on the canvas (used by `check`)
+  check    python mockup.py check PHOTO.png NAME_box.json
+           -> compares an AI-made photo with the chart inside the same box: size, position and
+              colors must still match (prints PASS / FAIL with numbers)
+
+Canvas is always 1024 x 1536 (portrait 2:3). The tapestry is scaled with one fixed rule
+(fit inside 720 x 1000 px), so the same stitch count and gauge always give the same picture.
+Needs Pillow + numpy.
+"""
+import argparse, json, math, os, random, sys
+import numpy as np
+from PIL import Image, ImageDraw, ImageFilter
+
+CANVAS = (1024, 1536)
+BOX_W, BOX_H = 720, 1000            # the tapestry body always fits inside this box
+TOP_Y = 260                         # top edge of the tapestry body
+
+
+# ------------------------------------------------------------------ reading the chart
+def lab(rgb):
+    rgb = np.asarray(rgb, dtype=float) / 255.0
+    lin = np.where(rgb <= 0.04045, rgb / 12.92, ((rgb + 0.055) / 1.055) ** 2.4)
+    M = np.array([[0.4124564, 0.3575761, 0.1804375], [0.2126729, 0.7151522, 0.0721750],
+                  [0.0193339, 0.1191920, 0.9503041]])
+    xyz = lin @ M.T / np.array([0.95047, 1.0, 1.08883])
+    f = np.where(xyz > 216 / 24389, np.cbrt(xyz), (24389 / 27 * xyz + 16) / 116)
+    return np.stack([116 * f[..., 1] - 16, 500 * (f[..., 0] - f[..., 1]), 200 * (f[..., 1] - f[..., 2])], -1)
+
+
+def detect_cell(a):
+    """Cell size in px for an exported chart (whole image = grid, no margin). Picks the
+    largest size that divides the image and gives near-uniform cell centres."""
+    H, W = a.shape[:2]
+    best = None
+    for s in range(4, 81):
+        if W % s or H % s:
+            continue
+        cols, rows = W // s, H // s
+        if cols < 8 or rows < 8:
+            continue
+        m = max(1, s // 4)
+        blk = a[:rows * s, :cols * s].reshape(rows, s, cols, s, 3)[:, m:s - m, :, m:s - m]
+        spread = blk.std(axis=(1, 3)).mean()
+        if spread < 6:
+            best = s
+    return best
+
+
+def read_json(path):
+    """Exact stitches from a Warpwright / Pegwright project JSON (no guessing from pixels)."""
+    P = json.load(open(path))
+    W, H = int(P["width"]), int(P["height"])
+    pal = np.array([[int(c["hex"].lstrip('#')[i:i + 2], 16) for i in (0, 2, 4)] for c in P["palette"]], float)
+    idx = np.array(P["cells"], int).reshape(H, W)
+    bg = int(np.bincount(idx[idx >= 0].ravel()).argmax())
+    idx = np.where(idx < 0, bg, idx)
+    cnt = np.bincount(idx.ravel(), minlength=len(pal))
+    used = cnt > 0
+    g = pal[idx].astype(np.uint8)
+    gauge = P.get("gauge") or {}
+    return W, H, g, pal[used], cnt[used], gauge
+
+
+def read_cells(path, cols=None, rows=None):
+    im = Image.open(path).convert("RGB")
+    a = np.asarray(im).astype(float)
+    H, W = a.shape[:2]
+    if cols and rows:
+        sx, sy = W / cols, H / rows
+    else:
+        s = detect_cell(a)
+        if not s:
+            sys.exit("Could not detect the grid. Pass --cols and --rows (the chart size in stitches).")
+        cols, rows, sx, sy = W // s, H // s, s, s
+    g = np.zeros((rows, cols, 3))
+    for r in range(rows):
+        for c in range(cols):
+            x0, x1 = int(c * sx + sx * .3), int((c + 1) * sx - sx * .3)
+            y0, y1 = int(r * sy + sy * .3), int((r + 1) * sy - sy * .3)
+            g[r, c] = np.median(a[y0:max(y1, y0 + 1), x0:max(x1, x0 + 1)].reshape(-1, 3), 0)
+    # snap to a clean palette: merge colours closer than dE 6
+    flat = g.reshape(-1, 3); L = lab(flat)
+    pal, idx = [], np.zeros(len(flat), int)
+    for i, l in enumerate(L):
+        for k, (pl, _) in enumerate(pal):
+            if np.linalg.norm(l - pl) < 6:
+                idx[i] = k; break
+        else:
+            pal.append((l, flat[i])); idx[i] = len(pal) - 1
+    cnt = np.bincount(idx, minlength=len(pal))
+    colors = np.array([flat[idx == k].mean(0) for k in range(len(pal))])
+    return cols, rows, colors[idx].reshape(rows, cols, 3).round().astype(np.uint8), colors, cnt
+
+
+# ------------------------------------------------------------------ geometry
+def body_box(cols, rows, stper10, rowper10):
+    wcm, hcm = cols / stper10 * 10, rows / rowper10 * 10
+    k = min(BOX_W / wcm, BOX_H / hcm)                 # px per cm, one fixed rule
+    w, h = round(wcm * k), round(hcm * k)
+    x = (CANVAS[0] - w) // 2
+    # centre the whole hanging (rope + dowel + body + room for a 10 cm fringe) vertically
+    total = 200 + h + round(10 * k)
+    y = max(TOP_Y, (CANVAS[1] - total) // 2 + 200)
+    return {"x": x, "y": y, "w": w, "h": h, "cols": cols, "rows": rows,
+            "wcm": round(wcm, 1), "hcm": round(hcm, 1), "pxPerCm": round(k, 3)}
+
+
+def shade(rgb, f):
+    rgb = np.asarray(rgb, float)
+    return tuple(int(v) for v in (np.clip(rgb * f, 0, 255) if f < 1 else np.clip(rgb + (255 - rgb) * (f - 1), 0, 255)))
+
+
+# ------------------------------------------------------------------ drawing
+def draw_wall(wall):
+    W, H = CANVAS
+    base = np.array(Image.new("RGB", CANVAS, wall)).astype(float)
+    yy, xx = np.mgrid[0:H, 0:W]
+    vign = 1 - 0.10 * (((xx - W / 2) / W) ** 2 + ((yy - H * .45) / H) ** 2) * 2.2
+    noise = np.random.default_rng(1).normal(0, 1.6, (H, W, 1))
+    return Image.fromarray(np.clip(base * vign[..., None] + noise, 0, 255).astype(np.uint8))
+
+
+def draw_hanger(img, box):
+    d = ImageDraw.Draw(img)
+    x, y, w = box["x"], box["y"], box["w"]
+    over = max(30, int(w * .07))
+    rod_y, rod_h = y - 22, 26
+    # rope
+    cx = CANVAS[0] // 2
+    for dx in (-1, 0, 1):
+        d.line([(x - over // 2 + 8 + dx, rod_y + 6), (cx + dx, rod_y - 170)], fill=(176, 150, 112), width=5)
+        d.line([(x + w + over // 2 - 8 + dx, rod_y + 6), (cx + dx, rod_y - 170)], fill=(176, 150, 112), width=5)
+    # dowel with a simple wood gradient
+    for i in range(rod_h):
+        t = i / rod_h
+        col = shade((196, 158, 108), 1.12 - .35 * abs(t - .35))
+        d.line([(x - over, rod_y + i), (x + w + over, rod_y + i)], fill=col)
+    d.ellipse([x - over - 6, rod_y, x - over + 8, rod_y + rod_h], fill=(168, 128, 82))
+    d.ellipse([x + w + over - 8, rod_y, x + w + over + 6, rod_y + rod_h], fill=(168, 128, 82))
+    return rod_y, rod_h
+
+
+def stitch_tile(cw, ch, rgb, rnd):
+    """One single-crochet stitch: a V of two slanted loops, lit from the top left."""
+    t = Image.new("RGB", (cw, ch), shade(rgb, .78))
+    d = ImageDraw.Draw(t)
+    j = 1 + rnd.uniform(-.04, .04)
+    hi, mid, lo = shade(rgb, 1.10 * j), shade(rgb, 1.0 * j), shade(rgb, .86 * j)
+    lw = max(2, int(cw * .42))
+    d.line([(cw * .08, ch * .05), (cw * .48, ch * .92)], fill=mid, width=lw)
+    d.line([(cw * .92, ch * .05), (cw * .52, ch * .92)], fill=lo, width=lw)
+    d.line([(cw * .16, ch * .08), (cw * .44, ch * .70)], fill=hi, width=max(1, lw // 3))
+    return t
+
+
+def draw_tapestry(img, box, grid, fringe, fringe_rgb):
+    cols, rows = box["cols"], box["rows"]
+    x0, y0, w, h = box["x"], box["y"], box["w"], box["h"]
+    cw, ch = w / cols, h / rows
+    rnd = random.Random(7)
+    body = Image.new("RGB", (w, h))
+    for r in range(rows):
+        for c in range(cols):
+            xa, xb = round(c * cw), round((c + 1) * cw)
+            ya, yb = round(r * ch), round((r + 1) * ch)
+            body.paste(stitch_tile(max(2, xb - xa), max(2, yb - ya), grid[r, c], rnd), (xa, ya))
+    # soft shadow on the wall, then the piece
+    sh = Image.new("L", CANVAS, 0)
+    ImageDraw.Draw(sh).rectangle([x0 + 10, y0 + 14, x0 + w + 10, y0 + h + 18], fill=120)
+    sh = sh.filter(ImageFilter.GaussianBlur(18))
+    img.paste((40, 34, 28), (0, 0), sh)
+    img.paste(body, (x0, y0))
+    # top edge folded over the dowel (same colour as the top row)
+    top = tuple(int(v) for v in np.median(grid[0].reshape(-1, 3), 0))
+    ImageDraw.Draw(img).rectangle([x0, y0 - 30, x0 + w, y0 + 2], fill=shade(top, .9))
+    if fringe:
+        d = ImageDraw.Draw(img)
+        flen = round(10 * box["pxPerCm"])                    # 10 cm fringe, same as the PDF
+        knots = math.ceil(cols / 2)
+        for k in range(knots):
+            fx = x0 + (2 * k + .5) * cw
+            d.ellipse([fx - cw * .9, y0 + h - cw * .4, fx + cw * .9, y0 + h + cw * 1.1], fill=shade(fringe_rgb, .92))
+            for s in range(-2, 3):
+                sx = fx + s * cw * .28
+                d.line([(sx, y0 + h + cw), (sx + s * 1.5, y0 + h + flen)], fill=shade(fringe_rgb, 1 - abs(s) * .05), width=max(2, int(cw * .3)))
+    return img
+
+
+def flat_layout(box, grid, fringe, fringe_rgb, wall):
+    img = Image.new("RGB", CANVAS, wall)
+    draw_hanger(img, box)
+    cols, rows = box["cols"], box["rows"]
+    small = Image.fromarray(grid)
+    img.paste(small.resize((box["w"], box["h"]), Image.NEAREST), (box["x"], box["y"]))
+    top = tuple(int(v) for v in np.median(grid[0].reshape(-1, 3), 0))
+    ImageDraw.Draw(img).rectangle([box["x"], box["y"] - 30, box["x"] + box["w"], box["y"] + 2], fill=top)
+    if fringe:
+        d = ImageDraw.Draw(img); cw = box["w"] / cols; flen = round(10 * box["pxPerCm"])
+        for k in range(math.ceil(cols / 2)):
+            fx = box["x"] + (2 * k + .5) * cw
+            d.rectangle([fx - cw * .6, box["y"] + box["h"], fx + cw * .6, box["y"] + box["h"] + flen], fill=fringe_rgb)
+    return img
+
+
+# ------------------------------------------------------------------ check an AI photo
+def check(photo, boxfile):
+    B = json.load(open(boxfile))
+    im = Image.open(photo).convert("RGB")
+    if im.size != CANVAS:
+        im = im.resize(CANVAS, Image.LANCZOS)
+    a = np.asarray(im).astype(float)
+    ref = np.array(B["grid"], dtype=float)
+    rows, cols = ref.shape[:2]
+    cw, ch = B["w"] / cols, B["h"] / rows
+    got = np.zeros_like(ref)
+    for r in range(rows):
+        for c in range(cols):
+            x = int(B["x"] + (c + .5) * cw); y = int(B["y"] + (r + .5) * ch)
+            m = max(1, int(min(cw, ch) * .25))
+            got[r, c] = np.median(a[y - m:y + m + 1, x - m:x + m + 1].reshape(-1, 3), 0)
+    dE = np.linalg.norm(lab(got) - lab(ref), axis=-1)
+    # nearest palette colour per cell: does the photo still show the same colour in each stitch?
+    pal = np.array(B["palette"], float)
+    pick = np.argmin(np.linalg.norm(lab(got)[..., None, :] - lab(pal)[None, None], axis=-1), -1)
+    want = np.argmin(np.linalg.norm(lab(ref)[..., None, :] - lab(pal)[None, None], axis=-1), -1)
+    wrong = float((pick != want).mean() * 100)
+    print(f"cells checked {rows}x{cols} | wrong colour {wrong:.1f}% | median dE {np.median(dE):.1f}")
+    ok = wrong <= 12
+    # measure the real left/right edge of the piece at mid-height against the wall colour
+    yc = int(B["y"] + B["h"] * .5)
+    band = lab(a[yc - 8:yc + 9].mean(0))                       # one Lab value per column
+    wall = band[:40].mean(0)
+    diff = np.linalg.norm(band - wall, axis=-1)
+    edge = np.nonzero(diff > max(12, np.percentile(diff[:40], 99) * 3))[0]
+    if len(edge) > B["w"] * .5:
+        left, right = int(edge[0]), int(edge[-1])
+        width = right - left + 1
+        dw = (width - B["w"]) / B["w"] * 100
+        print(f"width {width}px (expected {B['w']}px, {dw:+.1f}%) | left edge {left} (expected {B['x']})")
+        if abs(dw) > 3 or abs(left - B["x"]) > B["w"] * .03:
+            ok = False
+    else:
+        print("edge not measurable (piece and wall too similar) - colour test only")
+    print("PASS: size, position and design match the chart" if ok else
+          "FAIL: the photo moved, resized or redrew the design - regenerate (see the skill)")
+    return ok
+
+
+# ------------------------------------------------------------------ main
+def main():
+    ap = argparse.ArgumentParser()
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    r = sub.add_parser("read"); r.add_argument("chart"); r.add_argument("--cols", type=int); r.add_argument("--rows", type=int)
+    l = sub.add_parser("layout"); l.add_argument("chart", help="chart PNG, or the pattern .json (most exact)")
+    l.add_argument("--stper10", type=float); l.add_argument("--rowper10", type=float)
+    l.add_argument("--cols", type=int); l.add_argument("--rows", type=int)
+    l.add_argument("--fringe", default="no"); l.add_argument("--fringe-color"); l.add_argument("--wall", default="#ECE9E4")
+    l.add_argument("--out", default="mockup")
+    c = sub.add_parser("check"); c.add_argument("photo"); c.add_argument("box")
+    A = ap.parse_args()
+
+    if A.cmd == "check":
+        sys.exit(0 if check(A.photo, A.box) else 1)
+
+    gauge = {}
+    if A.chart.lower().endswith(".json"):
+        cols, rows, grid, colors, cnt, gauge = read_json(A.chart)
+    else:
+        cols, rows, grid, colors, cnt = read_cells(A.chart, A.cols, A.rows)
+    print(f"GRID {cols} x {rows} stitches, {len(colors)} colours")
+    if A.cmd == "read":
+        json.dump({"cols": cols, "rows": rows}, open("cells.json", "w")); return
+
+    hexrgb = lambda h: tuple(int(h.lstrip('#')[i:i + 2], 16) for i in (0, 2, 4))
+    st = A.stper10 or gauge.get("stPer10"); rw = A.rowper10 or gauge.get("rowPer10")
+    if not (st and rw):
+        sys.exit("Gauge missing: pass --stper10 and --rowper10 (stitches and rows per 10 cm).")
+    box = body_box(cols, rows, float(st), float(rw))
+    fringe = str(A.fringe).lower() in ("yes", "y", "true", "1")
+    main_col = tuple(int(v) for v in colors[int(np.argmax(cnt))])
+    # default fringe colour: the lightest colour of the design (cream), else the main colour
+    light = tuple(int(v) for v in colors[int(np.argmax(lab(colors)[:, 0]))])
+    fringe_rgb = hexrgb(A.fringe_color) if A.fringe_color else light
+    wall = hexrgb(A.wall)
+    print(f"FINISHED {box['wcm']} x {box['hcm']} cm  ->  tapestry body {box['w']} x {box['h']} px "
+          f"at x={box['x']}, y={box['y']} on a {CANVAS[0]} x {CANVAS[1]} canvas"
+          + (f" | fringe 10 cm in {'#%02X%02X%02X' % fringe_rgb}" if fringe else " | no fringe"))
+
+    flat_layout(box, grid, fringe, fringe_rgb, wall).save(f"{A.out}_layout.png")
+    img = draw_wall(wall); draw_hanger(img, box); draw_tapestry(img, box, grid, fringe, fringe_rgb)
+    img.save(f"{A.out}_mockup.png")
+    B = dict(box); B["grid"] = grid.tolist(); B["palette"] = colors.round().astype(int).tolist()
+    json.dump(B, open(f"{A.out}_box.json", "w"))
+    print(f"SAVED {A.out}_layout.png (for the image tool), {A.out}_mockup.png (code-rendered), {A.out}_box.json")
+
+
+if __name__ == "__main__":
+    main()
 </script>
 <script type="text/plain" id="convCode">#!/usr/bin/env python3
 """
@@ -1808,7 +2269,7 @@ if __name__ == "__main__":
   const $ = id => document.getElementById(id);
   const els = {theme:$('theme'), title:$('title'), w:$('w'), h:$('h'), n:$('n'), colors:$('colors'), motifs:$('motifs'),
                gst:$('gst'), grw:$('grw'), designer:$('designer'), technique:$('technique'), hook:$('hook'),
-               yarn:$('yarn'), rowdir:$('rowdir'), carry:$('carry'), yardage:$('yardage')};
+               yarn:$('yarn'), rowdir:$('rowdir'), carry:$('carry'), yardage:$('yardage'), origin:$('origin'), fringe:$('fringe')};
   let sym = 'balanced';
   const status = $('status');
 
@@ -1830,7 +2291,7 @@ if __name__ == "__main__":
     const W = clampInt(els.w.value, 10, 200, 60), H = clampInt(els.h.value, 10, 200, 70), N = clampInt(els.n.value, 2, 16, 6);
     const theme = els.theme.value.trim().replace(/\s+/g,' ');
     const title = els.title.value.trim() || (theme ? theme.split(/[,.]/)[0].slice(0,40) : 'Design');
-    return {W, H, N, theme, title, colors: els.colors.value.trim(), motifs: els.motifs.value.trim()};
+    return {W, H, N, theme, title, colors: els.colors.value.trim(), motifs: els.motifs.value.trim(), origin: els.origin.value, fringe: els.fringe.value};
   }
 
   // ---------- template geometry (same rules as make_grid_template.py)
@@ -1954,6 +2415,9 @@ if __name__ == "__main__":
         : '`ASYM 0` in the main figure is expected. If a deliberate one-sided detail in the source got mirrored away, restore it with `set`/`rect`.',
       OUTNAME: `${v.title.replace(/[\\/:*?"<>|]+/g, '').trim() || 'pattern'}.json`,
       ETSYNAME: `${v.title.replace(/[\\/:*?"<>|]+/g, '').trim() || 'pattern'} - Etsy listing.txt`,
+      AIPARA: (d => v.origin === 'manual'
+        ? `This is an original design by ${d}, designed and charted by hand, stitch by stitch, so the chart is precise and easy to follow. The product photos are AI-generated mockups that show how the finished piece can look.`
+        : `This is an original design by ${d}. It was developed with the help of AI tools, then charted, refined and checked by hand, stitch by stitch, so the chart is precise and easy to follow. The product photos are AI-generated mockups that show how the finished piece can look.`)(f.designer || 'my shop'),
       DESIGNER: f.designer || '(empty)', TECHNIQUE: f.technique, GST: f.gst, GRW: f.grw, HOOK: f.hook || '(empty)',
       YARN: f.yarn, ROWDIR: f.rowdir, EXAMPLEJSON: exampleJson(f)
     };
@@ -1984,7 +2448,7 @@ if __name__ == "__main__":
     else warn.hidden = true;
     $('skillpre').textContent = buildSkill(v);
     $('jsonpre').textContent = buildJsonSkill(v, false);
-    const nm = names(v); $('fn-png').textContent = nm.png; $('fn-md').textContent = nm.md; $('fn-json').textContent = nm.json;
+    const nm = names(v); $('fn-png').textContent = nm.png; $('fn-md').textContent = nm.md; $('fn-json').textContent = nm.json; $('fn-mock').textContent = nm.mock;
     for (const b of document.querySelectorAll('#presets .chip'))
       b.setAttribute('aria-pressed', String(+b.dataset.w === v.W && +b.dataset.h === v.H));
     $('sym-balanced').setAttribute('aria-pressed', String(sym === 'balanced'));
@@ -2028,7 +2492,7 @@ if __name__ == "__main__":
     if (!v.theme){ setStatus('Isi dulu gambar yang mau dibuat.', 'bad'); els.theme.focus(); return false; }
     return true;
   }
-  function names(v){ const b = `${slugify(v.title)}-${v.W}x${v.H}`; return {png: `grid_${v.W}x${v.H}.png`, md: `skill-gambar-${b}.md`, json: `skill-json-${b}.md`}; }
+  function names(v){ const b = `${slugify(v.title)}-${v.W}x${v.H}`; return {png: `grid_${v.W}x${v.H}.png`, md: `skill-gambar-${b}.md`, json: `skill-json-${b}.md`, mock: `skill-mockup-${b}.md`}; }
 
   async function downloadMd(){
     const v = vals(); if (!check(v)) return false;
@@ -2037,6 +2501,26 @@ if __name__ == "__main__":
   }
   async function downloadPng(){
     const v = vals(); const blob = await pngBlob(); await saveFile(names(v).png, blob); return true;
+  }
+  function buildMockSkill(v){
+    const f = fmt(), fr = v.fringe === 'yes';
+    const map = {
+      SLUG: slugify(v.title), TITLE: v.title, W: v.W, H: v.H, GST: f.gst, GRW: f.grw,
+      WCM: (Math.round(v.W / f.gst * 100) / 10).toFixed(1), HCM: (Math.round(v.H / f.grw * 100) / 10).toFixed(1),
+      FRINGE: fr ? 'yes - a 10 cm cream fringe along the bottom edge, matching the optional fringe section of the PDF'
+                 : 'no - the bottom edge is a straight finished edge (the PDF fringe section is optional)',
+      FRINGEFLAG: fr ? 'yes' : 'no',
+      FRINGEPROMPT: fr ? " Keep the fringe exactly as long as drawn and make it real yarn strands tied with lark's head knots."
+                       : ' The bottom edge is straight: no fringe, no tassels.',
+      OUTBASE: v.title.replace(/[\\/:*?"<>|]+/g, '').trim() || 'mockup'
+    };
+    const code = $('mockCode').textContent.replace(/^\n/, '').replace(/\n+$/, '');
+    return $('mockTpl').textContent.replace(/\{\{(\w+)\}\}/g, (m, k) => k === 'MOCKUPPY' ? code : (k in map ? String(map[k]) : m));
+  }
+  async function downloadMockSkill(){
+    const v = vals(); if (!check(v)) return false;
+    const blob = new Blob([buildMockSkill(v)], {type: 'text/markdown'});
+    await saveFile(names(v).mock, blob); return true;
   }
   async function downloadJsonSkill(){
     const v = vals(); if (!check(v)) return false;
@@ -2049,21 +2533,27 @@ if __name__ == "__main__":
     const v = vals(); if (!check(v)) return;
     const go = $('go'); go.disabled = true;
     try{
-      setStatus(inClaude() ? 'Konfirmasi unduhan 1 dari 3: template grid…' : 'Mengunduh 3 file…');
+      setStatus(inClaude() ? 'Konfirmasi unduhan 1 dari 4: template grid…' : 'Mengunduh 4 file…');
       await downloadPng();
       if (!inClaude()) await new Promise(r => setTimeout(r, 350));
-      setStatus(inClaude() ? 'Konfirmasi unduhan 2 dari 3: skill gambar…' : 'Mengunduh 3 file…');
+      setStatus(inClaude() ? 'Konfirmasi unduhan 2 dari 4: skill gambar…' : 'Mengunduh 4 file…');
       await downloadMd();
       if (!inClaude()) await new Promise(r => setTimeout(r, 350));
-      setStatus(inClaude() ? 'Konfirmasi unduhan 3 dari 3: skill JSON…' : 'Mengunduh 3 file…');
+      setStatus(inClaude() ? 'Konfirmasi unduhan 3 dari 4: skill JSON…' : 'Mengunduh 4 file…');
       await downloadJsonSkill();
+      if (!inClaude()) await new Promise(r => setTimeout(r, 350));
+      setStatus(inClaude() ? 'Konfirmasi unduhan 4 dari 4: skill mockup…' : 'Mengunduh 4 file…');
+      await downloadMockSkill();
       const n = names(v);
-      setStatus(`Selesai: ${n.png}, ${n.md}, ${n.json}.`, 'ok');
+      setStatus(`Selesai: ${n.png}, ${n.md}, ${n.json}, ${n.mock}.`, 'ok');
     }catch(err){ setStatus(errMsg(err), err && err.code === 'declined' ? 'warn' : 'bad'); }
     finally{ go.disabled = false; }
   });
   $('dl-md').addEventListener('click', async () => {
     try{ if (await downloadMd()) setStatus('Skill gambar diunduh: ' + names(vals()).md, 'ok'); }catch(err){ setStatus(errMsg(err), 'bad'); }
+  });
+  $('dl-mock').addEventListener('click', async () => {
+    try{ if (await downloadMockSkill()) setStatus('Skill mockup diunduh: ' + names(vals()).mock, 'ok'); }catch(err){ setStatus(errMsg(err), 'bad'); }
   });
   $('dl-json').addEventListener('click', async () => {
     try{ if (await downloadJsonSkill()) setStatus('Skill JSON diunduh: ' + names(vals()).json, 'ok'); }catch(err){ setStatus(errMsg(err), 'bad'); }

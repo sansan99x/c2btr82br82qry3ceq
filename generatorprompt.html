@@ -77,6 +77,7 @@ summary{cursor:pointer;font-size:14px;color:var(--redup)}
       </label>
       <label>Vertikal <input type="range" id="vertikal" min="0" max="100" step="5" value="50"><span class="nilai" id="vV"></span></label>
       <label>Render 3D <input type="range" id="tigaD" min="0" max="60" step="5" value="15"><span class="nilai" id="v3"></span></label>
+      <label>Latar putih <input type="range" id="putih" min="0" max="60" step="5" value="15"><span class="nilai" id="vP"></span></label>
       <label><input type="checkbox" id="musim" checked> Bobot musim (acara 1–3 bulan ke depan lebih sering)</label>
       <button class="btn utama" id="acak">Acak prompt</button>
     </div>
@@ -98,11 +99,11 @@ summary{cursor:pointer;font-size:14px;color:var(--redup)}
 
   <div class="panel">
     <div class="baris">
-      <button class="btn kecil" id="ekspor">Ekspor riwayat</button>
+      <button class="btn kecil" id="ekspor">Ekspor (HTML batch terakhir + JSON riwayat)</button>
       <label class="btn kecil" style="color:var(--teks)">Impor riwayat<input type="file" id="impor" accept=".json" hidden></label>
       <button class="btn kecil bahaya" id="reset">Reset riwayat</button>
     </div>
-    <div class="catatan">Riwayat (item yang sudah keluar) tersimpan di browser ini. Ekspor secara berkala supaya tidak hilang saat ganti browser/PC.</div>
+    <div class="catatan">Ekspor mengunduh 2 file: <b>HTML</b> berisi prompt batch terakhir (bisa disalin tanpa generator) dan <b>JSON</b> riwayat semua subjek yang sudah keluar. Impor JSON itu sebelum generate lagi di browser/PC lain supaya tidak ada subjek dobel. Bila Chrome bertanya "unduh beberapa file", pilih Izinkan.</div>
     <details><summary>Isi kamus per kategori</summary><div id="kamus"></div></details>
   </div>
 </div>
@@ -279,6 +280,13 @@ const FORMAT = [
     x => ({ adegan: `${x.S} as an abstract background`, komposisi: `Smooth, flowing abstract composition with ${RUANG(x.r, x)}`, cahaya: x.pilih(['Soft studio light with clean exposure', 'Backlit glow with clean, noise-free gradients']), lensa: x.pilih(LENSA.makro) })),
   F('wallpaper-alam', 'Wallpaper estetik alam', 'foto', ['wallpaper'], { latar: true, wallpaper: true },
     x => ({ adegan: x.S, komposisi: x.r === 'P' ? 'Tall wallpaper composition with the subject in the lower two thirds and a calm, open upper third' : 'Wide wallpaper composition with the subject to one side and calm open space', cahaya: x.pilih(CAHAYA.luar), lensa: x.pilih(LENSA.closeup), blur: true })),
+  // --- LATAR PUTIH (isolated, tanpa bayangan) ---
+  F('putih', 'Latar putih polos (isolated)', 'foto', ['makanan', 'minuman', 'buah', 'sayur', 'bahan', 'benda', 'bunga', 'tanaman', 'mineral', 'hewan', 'hewanlaut', 'serangga', 'peliharaan'], { kecil: true, putih: true },
+    x => ({ adegan: `${x.S} isolated on a pure white background`, komposisi: 'The whole subject is fully visible and centered with even margins on all sides, nothing touching the frame edges', cahaya: 'Bright, even, shadowless high-key studio lighting from all sides; the background is flat pure white (#FFFFFF) with no cast shadow, no reflection, no floor line and no gradient', lensa: x.pilih(['a full-frame camera and a 100mm lens at f/11', 'a full-frame camera and a 70mm lens at f/10', 'a full-frame camera and a 90mm lens at f/11']), tajamTambah: 'clean, crisp edges all around the subject', palet: 'True-to-life colors with clean separation from the white background.', akhir: 'Clean cut-out style image ready for e-commerce and design use.' })),
+  F('putih-orang', 'Orang latar putih polos (isolated)', 'foto', ['orang'], { orang: true, putih: true },
+    x => ({ adegan: `${x.orang} ${x.S}, isolated on a pure white background`, komposisi: 'Full figure or three-quarter framing, the whole person visible and centered with even margins, nothing touching the frame edges', cahaya: 'Bright, even, shadowless high-key studio lighting; the background is flat pure white (#FFFFFF) with no cast shadow, no floor line and no gradient', lensa: x.pilih(['a full-frame camera and an 85mm lens at f/8', 'a full-frame camera and a 70mm lens at f/8']), tajamTambah: 'clean, crisp edges around the figure and hair', tekstur: 'Natural skin texture and real fabric detail.', akhir: 'Clean cut-out style image ready for design use.' })),
+  F('3d-putih', '3D cute latar putih (isolated)', '3d', ['benda', 'makanan', 'buah', 'sayur', 'minuman', 'peliharaan', 'bunga'], { putih: true },
+    x => ({ adegan: `${x.S} rendered in a ${x.pilih([GAYA3D['3d-cute'], GAYA3D['3d-pastel'], GAYA3D['3d-clay']])}, isolated on a pure white (#FFFFFF) background`, komposisi: 'The whole object is fully visible and centered with even margins on all sides', render: 'bright, even, shadowless lighting with no cast shadow, no floor and no gradient on the white background' })),
   // --- 3D (Illustration) ---
   ...Object.keys(GAYA3D).map(id => F(id, { '3d-cute': '3D cute', '3d-pastel': '3D pastel', '3d-clay': '3D clay matte', '3d-kaca': '3D kaca buram', '3d-tiup': '3D inflatable' }[id], '3d',
     ['benda', 'makanan', 'buah', 'sayur', 'minuman', 'peliharaan', 'bunga'], { gaya: id },
@@ -295,7 +303,13 @@ function denganKata(t) {
   const kata = t.split(/[\s(]+/);
   let i = kata.findIndex((w, n) => n > 0 && PENGHUBUNG.test(w));
   const inti = (i > 0 ? kata[i - 1] : kata[kata.length - 1]).toLowerCase().replace(/[^a-z']/g, '');
-  if (MASSA.has(inti) || (inti.endsWith('s') && !/(ss|us|is)$/.test(inti))) return t;
+  const jamak = w => { w = (w || '').toLowerCase().replace(/[^a-z']/g, ''); return MASSA.has(w) || (w.endsWith('s') && !/(ss|us|is)$/.test(w)); };
+  // "lion cubs playing ...", "cheetah scanning the plains": yang menentukan kata benda sebelum kata kerja -ing pertama
+  const ing = kata.findIndex((w, n) => n > 0 && /^[a-z]{3,}ing$/i.test(w) && !/^(spring|morning|evening|ceiling|building|pudding|dumpling|filling|frosting|icing|topping|dressing|stuffing|wedding|painting|clothing|bedding|wing|ring|king|string|sling|swing|thing|sibling|ling|duckling|gosling|seedling|sapling|earring|awning|herring|whiting|riesling|darjeeling|daging|kuning|lingling|ting)$/i.test(w));
+  // "matcha whisking bowl", "wood carving gouges": kata -ing sebagai penjelas benda terakhir -> pakai aturan biasa
+  const penjelas = ing > 0 && i < 0 && ing === kata.length - 2 && !/^(up|down|out|upstream|away|together|playfully|slowly|underwater|outdoors)$/i.test(kata[kata.length - 1]);
+  if (ing > 0 && (i < 0 || ing < i) && !penjelas) { if (jamak(kata[ing - 1])) return t; }
+  else if (jamak(inti)) return t;
   return (/^[aeiou]/i.test(t) && !/^(uni|eu|one|use)/i.test(t) ? 'an ' : 'a ') + t;
 }
 function rakit(it, fmt, r, rnd) {
@@ -312,13 +326,13 @@ function rakit(it, fmt, r, rnd) {
   const ori = r === 'L' ? '16:9 landscape-format' : '9:16 vertical';
   const besar = s => s.charAt(0).toUpperCase() + s.slice(1);
   if (!fmt.foto) {
-    return `A ${ori} 3D render illustration: ${b.adegan}. ${besar(b.komposisi)}. Rendered with ${x.pilih(CAHAYA.render)}, smooth clean surfaces, high-quality materials and crisp edges. ${x.pilih(['Soft, harmonious color palette.', 'Gentle pastel palette with one accent color.', 'Fresh, cheerful but refined colors.'])} Clean, uncluttered composition. Not a flat vector graphic and not a hand-drawn cartoon. No text, letters, numbers, logos or brand marks anywhere in the image.`.replace(/\s+/g, ' ');
+    return `A ${ori} 3D render illustration: ${b.adegan}. ${besar(b.komposisi)}. Rendered with ${b.render || x.pilih(CAHAYA.render)}, smooth clean surfaces, high-quality materials and crisp edges. ${x.pilih(['Soft, harmonious color palette.', 'Gentle pastel palette with one accent color.', 'Fresh, cheerful but refined colors.'])} Clean, uncluttered composition. Not a flat vector graphic and not a hand-drawn cartoon. No text, letters, numbers, logos or brand marks anywhere in the image.`.replace(/\s+/g, ' ');
   }
   const tajam = b.blur ? `keeping the main subject tack-sharp with crisp, clean, noise-free detail while the background melts into smooth, creamy blur` : `keeping the main subject in crisp, sharp focus with clean, noise-free detail and accurate exposure${b.tajamTambah ? ', ' + b.tajamTambah : ''}`;
   const penutup = isOrang ? 'The person is a fictional adult with natural, correct anatomy and relaxed, natural hands. No text, letters, numbers, logos or brand marks anywhere in the image.'
     : isTangan ? 'Only adult hands and forearms appear, with natural, correct anatomy and no face visible. No text, letters, numbers, logos or brand marks anywhere in the image.'
     : 'No people. No text, letters, numbers, logos or brand marks anywhere in the image.';
-  const akhir = fmt.wallpaper ? 'Clean, uncluttered wallpaper-style composition.' : fmt.latar ? 'Clean, uncluttered background ready for design use.' : x.pilih(['Clean, uncluttered composition.', 'Clean, uncluttered wallpaper-style composition.']);
+  const akhir = b.akhir ? b.akhir : fmt.wallpaper ? 'Clean, uncluttered wallpaper-style composition.' : fmt.latar ? 'Clean, uncluttered background ready for design use.' : x.pilih(['Clean, uncluttered composition.', 'Clean, uncluttered wallpaper-style composition.']);
   return `A realistic ${ori} stock photograph of ${b.adegan}. ${besar(b.komposisi)}. ${b.cahaya}. Photographed with ${b.lensa}, ${tajam}. ${b.palet || x.pilih(PALET)} ${b.tekstur || x.pilih(TEKSTUR)} ${akhir} ${penutup}`.replace(/\s+/g, ' ').replace(/\.\./g, '.');
 }
 
@@ -339,17 +353,21 @@ function formatUntuk(it) {
   const khusus = KAT_FORMAT[it.kat.id];
   let f = FORMAT.filter(f => (khusus ? khusus.includes(f.id) : f.untuk.includes(it.kat.jenis)));
   if (it.kecil) f = f.filter(f => f.kecil); else f = f.filter(f => !f.hanyaKecil);
+  // latar putih hanya untuk subjek tanpa keterangan tempat/adegan (mis. "puppy on green grass" tidak cocok)
+  if (!['makanan', 'minuman', 'buah', 'sayur', 'bahan', 'benda', 'bunga', 'mineral'].includes(it.kat.jenis) && /\b(in|at|on|among|under|by|over|through|across|from|into|beside|near|during|while)\b/i.test(it.t)) f = f.filter(f => !f.putih);
   return (it._fmt = f);
 }
 // kategori yang formatnya dibatasi
 const KAT_FORMAT = {
-  'pose-iklan': ['potret-studio'], 'profesi': ['orang-lokasi', 'siluet'], 'hobi': ['orang-lokasi'], 'olahraga': ['orang-lokasi', 'siluet'],
-  'kebugaran': ['orang-lokasi', 'potret-studio', 'siluet'], 'gaya-hidup': ['orang-lokasi'], 'hubungan': ['orang-lokasi'],
-  'kecantikan': ['orang-lokasi', 'potret-studio'], 'kesehatan': ['orang-lokasi'], 'budaya': ['orang-lokasi', 'potret-studio'],
-  'hewan-imut': ['satwa', '3d-cute', '3d-clay', 'closeup-v'],
-  'hewan-peliharaan': ['satwa', 'latar-warna', '3d-cute', '3d-clay', 'closeup-v'], 'makanan-hari-raya': ['still-acara', 'flatlay', 'closeup-v', 'banner'],
+  'pose-iklan': ['potret-studio', 'putih-orang'], 'profesi': ['orang-lokasi', 'siluet'], 'hobi': ['orang-lokasi'], 'olahraga': ['orang-lokasi', 'siluet'],
+  'kebugaran': ['orang-lokasi', 'potret-studio', 'siluet', 'putih-orang'], 'gaya-hidup': ['orang-lokasi'], 'hubungan': ['orang-lokasi'],
+  'kecantikan': ['orang-lokasi', 'potret-studio'], 'kesehatan': ['orang-lokasi'], 'budaya': ['orang-lokasi', 'potret-studio', 'putih-orang'],
+  'kerja-kehutanan': ['orang-lokasi'], 'kerja-perikanan': ['orang-lokasi'], 'kerja-peternakan': ['orang-lokasi'], 'kerja-perkebunan': ['orang-lokasi'], 'kerja-konstruksi': ['orang-lokasi'],
+  'perilaku-satwa': ['satwa', 'siluet', 'makro-kecil'],
+  'hewan-imut': ['satwa', '3d-cute', '3d-clay', 'closeup-v', 'putih', '3d-putih'],
+  'hewan-peliharaan': ['satwa', 'latar-warna', '3d-cute', '3d-clay', 'closeup-v', 'putih', '3d-putih'], 'makanan-hari-raya': ['still-acara', 'flatlay', 'closeup-v', 'banner'],
   'ruangan': ['interior'], 'festival': ['acara-luar', 'closeup-v'], 'musim': ['acara-luar', 'still-acara', 'closeup-v'], 'momen-hidup': ['still-acara', 'flatlay', 'closeup-v', 'banner'], 'hari-besar': ['still-acara', 'closeup-v', 'banner'], 'arsitektur': ['interior'], 'transportasi': ['lanskap-luas', 'siluet', 'lanskap-tele'],
-  'alat-musik': ['latar-warna', 'hero-gelap', 'minimalis', 'bayangan', 'kontekstual'], 'pohon-daun': ['makro', 'closeup-v', 'siluet', 'bayangan', 'minimalis', 'lanskap-tele'],
+  'alat-musik': ['latar-warna', 'hero-gelap', 'minimalis', 'bayangan', 'kontekstual', 'putih'], 'pohon-daun': ['makro', 'closeup-v', 'siluet', 'bayangan', 'minimalis', 'lanskap-tele'],
 };
 
 function buatBatch(opsi, state) {
@@ -361,6 +379,9 @@ function buatBatch(opsi, state) {
   for (let i = 0; i < N; i++) {
     let sisa = ITEM.filter(it => !state.dipakai[it.key] && formatUntuk(it).length);
     if (!sisa.length) { state.putaran++; state.dipakai = {}; sisa = ITEM.filter(it => formatUntuk(it).length); }
+    // porsi latar putih: slot ini khusus subjek yang bisa berlatar putih
+    const inginPutih = rnd() < (opsi.porsiPutih ?? 0);
+    if (inginPutih) { const sp = sisa.filter(it => formatUntuk(it).some(f => f.putih)); if (sp.length) sisa = sp; }
     // pilih grup (sesuai resep), lalu kategori, lalu item
     const grupAda = Object.keys(GRUP).filter(g => (opsi.resep[g] || 0) > 0 && sisa.some(it => it.kat.grup === g));
     const g = pilihBobot(rnd, grupAda, g => opsi.resep[g]); if (!g) break;
@@ -370,10 +391,13 @@ function buatBatch(opsi, state) {
     const it = pilihBobot(rnd, kandidat, it => opsi.musim ? bobotMusim(it, bulanIni) : 1) || kandidat[0];
     // pilih format: belum pernah dipasangkan dengan item ini, tidak sama dengan sebelumnya, porsi 3D
     let fs = formatUntuk(it);
+    const fsP = fs.filter(f => f.putih), fsN = fs.filter(f => !f.putih);
+    if (inginPutih && fsP.length) fs = fsP; else if (fsN.length) fs = fsN;
     const fsBaru = fs.filter(f => !state.pasangan[`${it.key}|${f.id}`]); if (fsBaru.length) fs = fsBaru;
-    const fsBeda = fs.filter(f => f !== lalu.fmt && (hitFmt[f.id] || 0) < capFmt); if (fsBeda.length) fs = fsBeda;
-    const ada3d = fs.some(f => !f.foto), adaFoto = fs.some(f => f.foto);
-    const f = pilihBobot(rnd, fs, f => ada3d && adaFoto ? (f.foto ? (1 - opsi.porsi3d) / fs.filter(x => x.foto).length : opsi.porsi3d / fs.filter(x => !x.foto).length) : 1);
+    const fsBeda = fs.filter(f => f.putih || (f !== lalu.fmt && (hitFmt[f.id] || 0) < capFmt)); if (fsBeda.length) fs = fsBeda;
+    const nF = fs.filter(f => f.foto).length, n3 = fs.length - nF;
+    const bobotF = f => nF && n3 ? (f.foto ? (1 - opsi.porsi3d) / nF : opsi.porsi3d / n3) : 1;
+    const f = pilihBobot(rnd, fs, bobotF) || fs[Math.floor(rnd() * fs.length)];
     const r = f.rasio || (rnd() < opsi.porsiVertikal ? 'P' : 'L');
     const teks = rakit(it, f, r, rnd);
     state.dipakai[it.key] = state.putaran; state.pasangan[`${it.key}|${f.id}`] = 1;
@@ -823,6 +847,29 @@ T('bg-3d', `
 pastel arches and spheres with copy space|soft clay shapes in mint and peach|frosted glass panels with gradient glow|inflatable hearts in pink|floating clouds in pastel sky|cute 3d flowers on pastel background|candy shapes floating|bubbles iridescent|pastel podium with floating rings|soft 3d waves in lilac|paper cut layers in teal|blobs in candy colors|pastel stairs with spheres|arches in terracotta|cylinder stack in pastel|donut shapes floating|stars in soft yellow|moon and clouds pastel|rainbow arch pastel|leaves in sage|hearts and confetti|gift boxes floating@12|christmas ornaments pastel@12|easter eggs pastel@3,4|lanterns and crescent moon@2,3|ketupat pastel@3|cute pumpkins@10|snowflakes soft@12,1|balloons in gold|party confetti|bubbles and podium|spheres in gradient|torus in glass|ribbon loops|geometric shapes in clay|terrazzo shapes|marble spheres|frosted cubes|glass prisms|sand dunes pastel|mountains pastel|cute island|cute planet|cute rocket|cloud podium|water ripple podium|flower podium|leaf podium|stone podium pastel|arch window with sky|door with clouds|staircase to sky|cute floating islands|cute cactus|cute mushroom|cute cherries|cute strawberry|cute ice cream|cute donut|cute coffee cup|cute boba tea|cute sushi|cute avocado|cute watermelon|cute lemon|cute cupcake|cute cake|cute cookie|cute macaron|cute candle|cute plant pot|cute house|cute toy van|cute umbrella|cute sun|cute rainbow|cute heart|cute star|cute moon
 `);
 
+// ===== TAMBAHAN 9: AKTIVITAS KERJA (orang fiktif dewasa) & PERILAKU SATWA =====
+K('kerja-kehutanan', 'Aktivitas kehutanan', 'manusia', 'orang', `
+planting a tree seedling on a cleared hillside|carrying seedling trays through a forest nursery|watering rows of seedlings in a tree nursery|sorting tree seeds on a mesh tray|measuring a tree trunk with a diameter tape|recording tree data on a clipboard in a forest|marking a tree with a paint dot during a forest survey|checking soil moisture under a pine canopy|patrolling a forest trail in a ranger uniform|scanning the canopy with binoculars from a watchtower|checking a wildlife camera strapped to a tree|clearing dry brush to make a firebreak|carrying a water backpack sprayer on a forest firebreak|tapping a rubber tree with a curved tool at dawn|collecting latex cups in a rubber plantation|tapping pine resin into small cups|harvesting cork bark from an oak tree|stacking cut logs at a forest landing|guiding a log onto a timber trailer|operating a timber crane at a sawmill yard|sorting planks in a timber yard|measuring planks with a folding rule in a sawmill|replanting mangrove propagules in tidal mud|carrying mangrove seedlings through shallow water|restoring a peatland with native seedlings|collecting wild honey from a tall forest tree|gathering bamboo poles in a bamboo forest|bundling bamboo stems by a river|harvesting rattan vines in a rainforest|collecting fallen nuts on a forest floor|foraging wild mushrooms with a woven basket|tending beehives at the edge of a forest|climbing a tall tree with ropes for seed collection|pruning young trees in a plantation|thinning a young pine stand|inspecting tree bark for pests with a magnifier|taking a soil core sample in a forest|guiding visitors along a canopy walkway|maintaining a forest boardwalk|planting trees with a community group on a slope|loading seedlings onto a small boat for river planting|monitoring a river in a forest with a water sampler|tagging a tree with a numbered metal tag|using a handheld gps unit in dense forest|mapping a forest plot with a measuring tape|watching a forest at sunrise from a ranger station|burning a controlled fire line with a drip torch under supervision|cooling smoldering ground with a hose after a controlled burn|carrying firewood bundles from a community forest|stacking firewood under a shelter|carving a wooden bowl from local timber|operating a portable sawmill in a clearing|sharpening forestry tools at a workbench|repairing a fence around a young forest plot|raising a tree nursery shade net|transplanting seedlings into larger polybags|mixing potting soil for tree seedlings|labeling seedling trays with wooden stakes|studying leaf samples at a field station table|guiding a forest school group of adults|planting a sacred fig sapling beside a village path
+`);
+K('kerja-perikanan', 'Aktivitas perikanan & kelautan', 'manusia', 'orang', `
+casting a round net from a wooden canoe|hauling a fishing net onto a boat deck at sunrise|mending a fishing net on a harbor dock|sorting fresh fish into crates on a boat|unloading fish crates at a busy harbor|auctioning fresh tuna at a fish market|weighing fish at a market stall|arranging fresh fish on crushed ice|cleaning a boat deck after a fishing trip|steering a traditional fishing boat out of a harbor|pulling a lobster trap from the sea|checking crab pots on a wooden pier|line fishing from a small rowing boat|free diving for sea cucumbers with a net bag|gleaning shellfish on a tidal flat at low tide|digging for clams on a muddy beach|collecting mussels from rocks at low tide|harvesting oysters from floating racks|opening oysters at a seafood stall|farming seaweed on bamboo lines in shallow water|drying seaweed on racks on a beach|harvesting seaweed from a boat|feeding fish in a floating net cage|checking a fish pond with a hand net|harvesting tilapia from a pond with a seine net|draining a shrimp pond at harvest|sorting shrimp into baskets beside a pond|testing pond water with a test kit|feeding catfish in a concrete tank|raising milkfish fry in a hatchery|counting fish fry in a shallow tray|inspecting a recirculating fish tank system|tending an aquaponics system with fish and lettuce|salting fish on drying racks|drying fish over a smoky wood fire|drying anchovies on large mesh trays|packing dried fish into baskets|cleaning fish at a market sink|making fish balls in a small kitchen|loading ice into a fishing boat hold|repainting the hull of a fishing boat in dry dock|repairing a wooden boat on the beach|building a traditional wooden boat in a shipyard|launching a boat from the beach at dawn|rowing a canoe across a calm lagoon|guiding a snorkeling group over a reef|planting coral fragments on an underwater frame|cleaning litter from a beach with a sack|recording fish species on an underwater slate|tagging a sea turtle on a beach at night with a red light|releasing turtle hatchlings at the shoreline|measuring a fish on a board for research|collecting plankton with a fine net from a boat|monitoring water quality from a research boat|fly fishing in a mountain river|ice fishing on a frozen lake@1,2|fishing with a long bamboo pole from rocks|pulling a beach seine net with a group of fishers|selling grilled fish at a beachside stall|teaching a fishing knot on a dock|loading crates of fish onto a handcart|hosing down a fish market floor|working on a salt pan raking white salt|harvesting salt into baskets at sunset|collecting pearls from oysters at a pearl farm|diving for pearl oysters in clear water|harvesting lotus roots in a muddy pond|harvesting water spinach from a floating garden
+`);
+K('kerja-peternakan', 'Aktivitas peternakan', 'manusia', 'orang', `
+milking a cow in a clean barn|feeding hay to dairy cows|herding cattle across a green pasture on horseback|herding sheep with a dog on a hillside|shearing a sheep in a wooden shed|carrying a young lamb in a spring field@3,4|bottle feeding a calf|brushing a horse in a stable|leading a horse across a paddock|cleaning a horse stable with a pitchfork|collecting eggs from a hen house|scattering grain for free-range chickens|carrying a rooster in a farmyard|checking ducklings in a warm brooder|herding ducks along a rice field path|feeding goats at a fence|milking a goat on a stool|making goat cheese in a farm kitchen|tending pigs in a clean pen|feeding a pig with vegetable scraps|grazing water buffalo by a river|bathing a water buffalo in a river|plowing a rice paddy with a water buffalo|riding an ox cart along a village road|feeding rabbits in a hutch|cleaning a rabbit hutch|tending alpacas in a mountain pasture|herding yaks in high mountains|herding camels in the desert|herding reindeer in snow@12,1,2|checking beehive frames in protective gear|extracting honey with a manual extractor|bottling honey in glass jars|stacking hay bales in a barn|pushing a cart of hay|mixing animal feed in a barn|filling water troughs for cattle|checking a calf with a veterinarian|trimming a horse hoof|weighing a goat on a farm|carrying milk churns to a cooling room|pouring fresh milk through a strainer|making butter in a wooden churn|making yogurt in a farm kitchen|feeding silkworms on mulberry leaves|collecting silk cocoons on bamboo trays|feeding fish in a farm pond|tending quails in a coop|harvesting duck eggs at dawn|walking cows home at sunset|repairing a wooden fence on a ranch|riding a horse along a ranch fence line|leading a donkey loaded with sacks|showing a cow at a rural fair@8|grooming a sheep for a show
+`);
+K('kerja-perkebunan', 'Aktivitas perkebunan & pertanian', 'manusia', 'orang', `
+picking tea leaves on a misty hillside|carrying a tea basket on the back|withering tea leaves on bamboo trays|rolling tea leaves on a table|harvesting ripe coffee cherries|sorting coffee cherries on a tarp|drying coffee beans on a raised bed|raking coffee beans on a drying patio|roasting coffee beans in a small drum roaster|opening cocoa pods with a wooden mallet|scooping cocoa beans into a fermenting box|drying cocoa beans under the sun|harvesting oil palm fruit bunches with a long pole|loading palm fruit bunches into a cart|tapping palm sugar from a tall palm tree|boiling palm sap into sugar|harvesting coconuts from a palm|husking coconuts on a spike|grating coconut by a village house|harvesting sugarcane in a field|carrying sugarcane bundles|harvesting pineapples in rows|cutting banana bunches from a plant|carrying a banana bunch on the shoulder|picking mangoes from a ladder|picking oranges in an orchard|picking apples into a canvas bag@9|harvesting grapes in a vineyard@9|pressing grapes in a wooden press@9|harvesting olives with a rake into nets@11|pressing olives at a small mill@11|picking strawberries in a greenhouse|harvesting tomatoes in a greenhouse|tying tomato vines|harvesting chili peppers|harvesting corn cobs|drying corn on a rooftop|threshing rice by hand on a mat|planting rice seedlings in a flooded paddy|harvesting rice with a sickle|winnowing rice with a bamboo tray|carrying rice sacks on a shoulder pole|harvesting wheat with a scythe|bundling wheat sheaves|harvesting potatoes from soil|digging sweet potatoes|harvesting cassava roots|harvesting onions in a field|braiding garlic bulbs|harvesting carrots|washing vegetables in a farm trough|packing vegetables into crates|selling produce at a farmers market|harvesting lettuce in a hydroponic greenhouse|checking a vertical farm rack|spraying organic fertilizer with a backpack sprayer|spreading compost on a garden bed|turning a compost pile|planting seeds in raised beds|transplanting seedlings in a field|weeding a vegetable bed with a hoe|irrigating a field with a hose|checking a drip irrigation line|pruning grapevines in winter|grafting a fruit tree|pollinating vanilla flowers by hand|harvesting vanilla pods|curing vanilla beans on cloth|harvesting nutmeg|drying cloves on mats|peeling cinnamon bark|harvesting pepper berries|picking cotton bolls|harvesting lavender bundles@7|cutting flowers in a flower farm|harvesting saffron flowers|harvesting stevia leaves|drying herbs in bundles|harvesting mushrooms in a grow room|checking a beekeeper box in an orchard
+`);
+K('kerja-konstruksi', 'Aktivitas konstruksi & energi', 'manusia', 'orang', `
+laying bricks on a new wall|pouring concrete into a foundation form|leveling wet concrete with a screed|tying steel rebar on a construction site|reading blueprints on a construction site|measuring a wall with a laser level|installing a window frame|framing a wooden house|nailing roof shingles|installing roof tiles|plastering a wall with a trowel|rolling fresh paint onto an exterior wall|tiling a bathroom floor|installing wooden flooring|welding a steel beam on site|operating an excavator on a building site|guiding a crane lift with hand signals|inspecting scaffolding with a clipboard|surveying land with a total station|installing solar panels on a roof|cleaning solar panels on a solar farm|inspecting a wind turbine from a lift|climbing inside a wind turbine tower|maintaining power lines from a bucket lift|installing an electric meter box|wiring a new building|installing a water pipe in a trench|repairing a road with fresh asphalt|repainting a stone curb|building a bamboo house|building a stone wall without mortar|thatching a roof with palm leaves|restoring an old timber beam|installing insulation in an attic|installing a heat pump outside a house|checking a geothermal well head|inspecting a hydro dam turbine hall|working in a battery storage facility|installing an ev charging station|inspecting pipelines with a checklist|working on an offshore platform deck|maintaining a biogas digester|building a green roof with plants|installing rainwater tanks|building a wooden boardwalk|repairing a suspension footbridge
+`);
+K('perilaku-satwa', 'Perilaku satwa liar (berburu, migrasi, merawat anak)', 'alam', 'hewan', `
+lioness stalking through tall golden grass|lion crouched low watching the savanna|cheetah sprinting across the savanna|cheetah scanning the plains from a termite mound|leopard resting on a tree branch at dusk|leopard stalking along a dry riverbed|tiger stalking through jungle undergrowth|tiger wading across a forest stream|snow leopard leaping between rocks|lynx stalking through snowy forest|red fox pouncing headfirst into deep snow@12,1,2|arctic fox listening for movement under snow@12,1|pack of wolves running through snow|wolf howling on a ridge at dusk|coyote trotting across a desert flat|african wild dogs running in a pack|bear catching a leaping salmon in a waterfall|grizzly bear fishing in a river|polar bear walking across sea ice|polar bear waiting by a seal breathing hole|bald eagle snatching a fish from a lake|osprey diving toward the water with talons out|osprey flying with a fish in its talons|kingfisher diving into a pond|kingfisher perched with a small fish in its beak|heron holding a fish in its beak|great egret spearing a fish in shallow water|pelican scooping fish with its bill|gannet diving into the sea|puffin with small fish in its beak|owl gliding silently over a meadow at dusk|barn owl hunting over a hay field|peregrine falcon in a high-speed dive|kestrel hovering over a field|hawk perched watching a field|crocodile lying in wait at a river edge|crocodile with jaws open sunning on a bank|chameleon catching an insect with its tongue|frog catching a fly with its tongue|praying mantis waiting on a flower*|spider wrapping a moth in silk*|anteater digging into a termite mound|aardvark digging at night|honey badger digging in sand|meerkat standing guard on a mound|otter cracking a shell on its belly|sea otter eating a crab while floating|dolphin pod chasing a fish shoal|humpback whales bubble-net feeding|orca breaching near the coast|shark gliding through a sardine shoal|seal hunting in a kelp forest|penguin diving underwater after fish|wildebeest herd crossing a river|zebra herd migrating across the plains|herd of caribou crossing a river|flock of geese migrating at sunrise@10|cranes flying in a v formation@10|cluster of monarch butterflies on a tree*|salmon run in a clear river|sea turtle swimming to nesting beach|elephant herd walking to a waterhole|elephants dust bathing|elephant spraying water with its trunk|giraffe drinking with legs splayed|hippos resting half submerged at sunrise|rhino wallowing in mud|warthog kneeling to graze|buffalo herd kicking up dust|deer stag roaring in autumn mist@10|two stags sparring in autumn@10|two zebras sparring playfully|two kangaroos boxing playfully|two bear cubs wrestling in the grass|lion cubs playing with their mother|wolf pups playing near their den|fox kits playing at dusk|lioness carrying a cub gently|leopard mother grooming her cub|chimpanzee using a stick tool|chimpanzees grooming each other|gorilla mother cradling her young|orangutan swinging through the canopy|monkey eating fruit in a tree|macaque bathing in a hot spring@12,1|squirrel burying an acorn@10|beaver carrying a branch in water|beaver building a dam|bird feeding its chicks in a nest@4,5|swallow feeding fledglings on a wire|woodpecker drumming on a trunk|hummingbird feeding from a flower|bee collecting pollen*|weaver bird building its nest|bowerbird decorating its bower|peacock fanning its tail feathers|flamingo courtship dance|cranes dancing in snow@1,2|albatross pair bonding display|frigatebird with its red throat pouch inflated|penguin parents feeding a chick|emperor penguins huddling against the wind@6,7|elephant seals resting on a beach|walruses resting on ice|bats leaving a cave at dusk|fireflies flashing in a forest at night|turtle hatchlings racing to the sea|red crabs migrating across a forest floor|frogs calling in a pond at night|snake basking on a warm rock|lizard sunbathing on a stone wall|iguana swimming in the sea|komodo dragon walking on a beach|gecko licking its eye*|camel caravan resting at an oasis|horses running in a misty field|wild horses galloping along a beach|mustang herd running across plains|bison herd in a snowstorm@1,2|moose crossing a lake|elk grazing in a meadow at sunrise|deer leaping over a fence|rabbit sitting alert in a meadow|hare running across a snowy field|hedgehog foraging in leaves at night@10|badger leaving its sett at dusk|raccoon washing food in a stream|panda munching bamboo|koala eating eucalyptus leaves|sloth hanging from a branch|bear standing up to sniff the air|bear scratching its back on a tree|wolf drinking from a lake|lion pride resting under an acacia|lion roaring on a rock|tiger yawning showing teeth|cheetah mother and cubs resting on a mound|vultures circling in the sky|eagle soaring over mountains|owl turning its head on a branch|swan taking off from a lake|ducks taking flight from water|starling murmuration at sunset|herons nesting in a colony|storks on a chimney nest
+`);
+T('pertanian', `
+tree nursery rows under shade nets|seedling polybags in a forest nursery|reforested hillside with young trees|stacked timber logs in a forest yard|rubber latex cups on tapped trees|pine resin cups on trunks|cork oak trunks after harvest|fishing boats lined up at a harbor at dawn|fishing nets drying on a dock|fish crates on ice at an auction hall|floating fish cages on a calm lake|shrimp ponds with paddle wheel aerators|seaweed lines in turquoise water|seaweed drying racks on a beach|salt mounds on salt pans|dried fish on bamboo racks|oyster racks at low tide|mussel ropes in clear water|dairy barn with cows at feeding rails|sheep pens at shearing time|chicken coop in a green yard|beehives in a flowering meadow|hay bales in a golden field at sunset|cattle grazing on misty hills|tea factory withering racks|coffee drying beds|cocoa fermentation boxes|palm fruit bunches in a collection point|rubber sheets drying on bamboo|stevia field rows|vanilla curing cloths in the sun
+`);
+
 // ===================== TAMPILAN =====================
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -837,14 +884,14 @@ async function salin(t) {
   catch (e) { const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (e2) {} a.remove(); return ok; }
 }
 // --- opsi ---
-const opsiAwal = { jumlah: 50, vertikal: 50, tigaD: 15, musim: true, urut: 'P', resep: { ...RESEP_AWAL } };
+const opsiAwal = { jumlah: 50, vertikal: 50, tigaD: 15, putih: 15, musim: true, urut: 'P', resep: { ...RESEP_AWAL } };
 const O = Object.assign({}, opsiAwal, S.opsi || {}); O.resep = Object.assign({}, RESEP_AWAL, (S.opsi || {}).resep || {});
-$('#jumlah').value = O.jumlah; $('#vertikal').value = O.vertikal; $('#tigaD').value = O.tigaD; $('#musim').checked = O.musim;
+$('#jumlah').value = O.jumlah; $('#vertikal').value = O.vertikal; $('#tigaD').value = O.tigaD; $('#putih').value = O.putih; $('#musim').checked = O.musim;
 $('#resep').innerHTML = Object.entries(GRUP).map(([g, n]) => `<label>${esc(n)} <span><input type="range" min="0" max="5" step="1" value="${O.resep[g]}" data-g="${g}"> <span class="nilai" data-v="${g}">${O.resep[g]}</span></span></label>`).join('');
 function bacaOpsi() {
-  O.jumlah = +$('#jumlah').value; O.vertikal = +$('#vertikal').value; O.tigaD = +$('#tigaD').value; O.musim = $('#musim').checked;
+  O.jumlah = +$('#jumlah').value; O.vertikal = +$('#vertikal').value; O.tigaD = +$('#tigaD').value; O.putih = +$('#putih').value; O.musim = $('#musim').checked;
   document.querySelectorAll('#resep input').forEach(i => { O.resep[i.dataset.g] = +i.value; $(`[data-v="${i.dataset.g}"]`).textContent = i.value; });
-  $('#vV').textContent = O.vertikal + '%'; $('#v3').textContent = O.tigaD + '%'; S.opsi = O;
+  $('#vV').textContent = O.vertikal + '%'; $('#v3').textContent = O.tigaD + '%'; $('#vP').textContent = O.putih + '%'; S.opsi = O;
 }
 document.querySelectorAll('select, input[type=range], input[type=checkbox]').forEach(el => el.addEventListener('input', () => { bacaOpsi(); simpan(); }));
 bacaOpsi();
@@ -884,7 +931,7 @@ function gambar() {
 $('#acak').onclick = () => {
   bacaOpsi();
   if (!Object.values(O.resep).some(v => v > 0)) return toast('Semua porsi kelompok 0. Naikkan minimal satu.');
-  const prompt = buatBatch({ jumlah: O.jumlah, porsiVertikal: O.vertikal / 100, porsi3d: O.tigaD / 100, musim: O.musim, resep: O.resep }, S);
+  const prompt = buatBatch({ jumlah: O.jumlah, porsiVertikal: O.vertikal / 100, porsi3d: O.tigaD / 100, porsiPutih: O.putih / 100, musim: O.musim, resep: O.resep }, S);
   const id = (S.batch[0]?.id || 0) + 1, w = new Date();
   S.batch.unshift({ id, waktu: w.toLocaleDateString('id-ID') + ' ' + w.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }), prompt });
   S.batch = S.batch.slice(0, 15);
@@ -921,9 +968,52 @@ $('#daftar').addEventListener('click', async e => {
   simpan(); gambar();
 });
 // --- riwayat ---
+const unduh = (isi, nama, tipe) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([isi], { type: tipe })); a.download = nama; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000); };
+// halaman HTML mandiri berisi prompt satu batch (salin, salin 10 berikutnya per rasio, tandai dipakai, urutan 9:16/16:9)
+function htmlBatch(b, stempel) {
+  const data = b.prompt.map(p => ({ no: p.no, r: p.r, adobe: p.adobe, orang: !!p.orang, kat: p.kat, fmt: p.fmt, item: p.item, teks: p.teks, pakai: !!p.pakai }));
+  const json = JSON.stringify(data).replace(/</g, '\\u003c');
+  return `<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Prompt stok · Batch ${b.id} · ${esc(b.waktu)}</title>
+<style>:root{--bg:#f4f3ee;--panel:#fff;--teks:#1c1c1a;--redup:#6a6962;--garis:#e2e0d8;--aksen:#2b5f4c;--aksen-teks:#fff;--L:#2a5cad;--P:#a2532c;--I:#7a3fa6;--O:#b07a00}
+@media (prefers-color-scheme:dark){:root{--bg:#141413;--panel:#1f1f1d;--teks:#ecebe5;--redup:#a3a199;--garis:#33322e;--aksen:#62c7a3;--aksen-teks:#0e1f19;--L:#80aaf2;--P:#e8a07a;--I:#c79bea;--O:#e7b54a}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--teks);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}.wrap{max-width:1000px;margin:0 auto;padding:20px 16px 70px}
+h1{font-size:20px;margin:0}.sub{color:var(--redup);font-size:13px;margin:4px 0 14px}.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;position:sticky;top:0;background:var(--bg);padding:10px 0;z-index:2}
+.seg{display:inline-flex;border:1px solid var(--garis);border-radius:9px;overflow:hidden}.seg button,.btn{font:inherit;font-size:13px;border:0;background:var(--panel);color:var(--teks);padding:6px 12px;cursor:pointer}.seg button+button{border-left:1px solid var(--garis)}.seg .on{background:var(--aksen);color:var(--aksen-teks);font-weight:600}
+.btn{border:1px solid var(--garis);border-radius:9px}.btn.u{background:var(--aksen);border-color:var(--aksen);color:var(--aksen-teks);font-weight:600}
+.grp{display:flex;align-items:center;gap:10px;margin:14px 0 8px;font-size:13px;font-weight:600}.grp:after{content:"";flex:1;height:1px;background:var(--garis)}.grp.L{color:var(--L)}.grp.P{color:var(--P)}
+.p{background:var(--panel);border:1px solid var(--garis);border-radius:10px;padding:11px 13px;margin-bottom:8px;display:grid;grid-template-columns:1fr auto;gap:10px}.p.pakai{opacity:.45}
+.meta{display:flex;flex-wrap:wrap;gap:6px;font-size:12px;color:var(--redup)}.no{font-weight:700;color:var(--teks)}.bd{border:1px solid currentColor;border-radius:5px;padding:0 6px;font-weight:600;font-size:11px}.bd.L{color:var(--L)}.bd.P{color:var(--P)}.bd.I{color:var(--I)}.bd.O{color:var(--O)}.bd.F{color:var(--aksen)}
+.teks{font-size:14px;margin-top:4px;line-height:1.55}.aksi{display:flex;flex-direction:column;gap:6px}.aksi button{font:inherit;font-size:12.5px;border:1px solid var(--garis);background:var(--bg);color:var(--teks);border-radius:7px;padding:5px 11px;cursor:pointer;white-space:nowrap}.aksi .s{background:var(--aksen);border-color:var(--aksen);color:var(--aksen-teks);font-weight:600}.aksi .on{background:var(--teks);color:var(--bg)}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--teks);color:var(--bg);padding:8px 16px;border-radius:9px;opacity:0;transition:opacity .2s;pointer-events:none;font-size:14px}.toast.on{opacity:1}
+@media (max-width:640px){.p{grid-template-columns:1fr}.aksi{flex-direction:row}}</style></head><body><div class="wrap">
+<h1>Prompt stok · Batch ${b.id}</h1><div class="sub">${esc(b.waktu)} · ${b.prompt.length} prompt (9:16: ${b.prompt.filter(p => p.r === 'P').length} · 16:9: ${b.prompt.filter(p => p.r === 'L').length}) · tanda "Dipakai" tersimpan di browser ini</div>
+<div class="bar"><div class="seg" id="urut"><button data-u="P">9:16 di atas</button><button data-u="L">16:9 di atas</button><button data-u="asli">Campur</button></div><button class="btn u" id="s10">Salin 10 berikutnya</button><button class="btn" id="semua">Salin semua</button><span class="sub" id="info" style="margin:0"></span></div>
+<div id="daftar"></div></div><div class="toast" id="toast"></div>
+<script>const D=${json};const K='stokEkspor.${stempel}';let st={};try{st=JSON.parse(localStorage.getItem(K))||{}}catch(e){}
+if(st.pakai)D.forEach(p=>{if(st.pakai.includes(p.no))p.pakai=true});let U=st.urut||'P';
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const simpan=()=>{try{localStorage.setItem(K,JSON.stringify({urut:U,pakai:D.filter(p=>p.pakai).map(p=>p.no)}))}catch(e){}};
+const toast=t=>{const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),1600)};
+async function salin(t){try{await navigator.clipboard.writeText(t);return true}catch(e){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand('copy')}catch(x){}a.remove();return ok}}
+const urutan=()=>{const l=D.slice();return U==='asli'?l:l.sort((a,b)=>(a.r===U?0:1)-(b.r===U?0:1)||a.no-b.no)};
+function gambar(){document.querySelectorAll('#urut button').forEach(b=>b.classList.toggle('on',b.dataset.u===U));const l=urutan();
+$('#daftar').innerHTML=l.map((p,i)=>(U!=='asli'&&(i===0||l[i-1].r!==p.r)?'<div class="grp '+p.r+'">'+(p.r==='P'?'9:16 vertikal':'16:9 landscape')+' · '+l.filter(x=>x.r===p.r).length+' prompt</div>':'')+'<div class="p'+(p.pakai?' pakai':'')+'" data-no="'+p.no+'"><div><div class="meta"><span class="no">#'+p.no+'</span><span class="bd '+p.r+'">'+(p.r==='L'?'16:9':'9:16')+'</span><span class="bd '+(p.adobe==='Photo'?'F':'I')+'">'+p.adobe+'</span>'+(p.orang?'<span class="bd O">People fictional</span>':'')+'<span>'+esc(p.kat)+'</span><span>· '+esc(p.fmt)+'</span><span>· '+esc(p.item)+'</span></div><div class="teks">'+esc(p.teks)+'</div></div><div class="aksi"><button class="s">Salin</button><button class="d'+(p.pakai?' on':'')+'">'+(p.pakai?'✓ Dipakai':'Dipakai')+'</button></div></div>').join('');
+$('#info').textContent='Dipakai '+D.filter(p=>p.pakai).length+' / '+D.length}
+$('#urut').onclick=e=>{const b=e.target.closest('button');if(!b)return;U=b.dataset.u;simpan();gambar()};
+$('#daftar').onclick=async e=>{const b=e.target.closest('button');if(!b)return;const p=D.find(x=>x.no==b.closest('.p').dataset.no);
+if(b.classList.contains('s')){if(await salin(p.teks)){p.pakai=true;toast('#'+p.no+' tersalin')}}else p.pakai=!p.pakai;simpan();gambar()};
+$('#s10').onclick=async()=>{const belum=urutan().filter(p=>!p.pakai);if(!belum.length)return toast('Semua sudah dipakai');const l=belum.filter(p=>p.r===belum[0].r).slice(0,10);
+if(await salin(l.map(p=>p.teks).join('\\n\\n'))){l.forEach(p=>p.pakai=true);simpan();gambar();toast(l.length+' prompt '+(l[0].r==='P'?'9:16':'16:9')+' tersalin')}};
+$('#semua').onclick=async()=>{if(await salin(urutan().map(p=>p.teks).join('\\n\\n'))){D.forEach(p=>p.pakai=true);simpan();gambar();toast('Semua prompt tersalin')}};
+gambar();<\/script></body></html>`;
+}
 $('#ekspor').onclick = () => {
-  const blob = new Blob([JSON.stringify({ versi: 1, tanggal: new Date().toISOString(), putaran: S.putaran, dipakai: S.dipakai, pasangan: S.pasangan }, null, 0)], { type: 'application/json' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `riwayat-prompt-stok-${new Date().toISOString().slice(0, 10)}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  const tgl = new Date(), d2 = n => String(n).padStart(2, '0'), st = `${tgl.getFullYear()}${d2(tgl.getMonth() + 1)}${d2(tgl.getDate())}-${d2(tgl.getHours())}${d2(tgl.getMinutes())}`;
+  unduh(JSON.stringify({ versi: 1, tanggal: tgl.toISOString(), putaran: S.putaran, dipakai: S.dipakai, pasangan: S.pasangan }), `riwayat-prompt-stok-${st}.json`, 'application/json');
+  const b = S.batch[0];
+  if (!b) return toast('Riwayat JSON terunduh (belum ada batch untuk HTML)');
+  setTimeout(() => unduh(htmlBatch(b, st + '-' + b.id), `prompt-stok-batch${b.id}-${st}.html`, 'text/html'), 400);
+  toast(`Mengunduh JSON riwayat + HTML batch ${b.id}`);
 };
 $('#impor').onchange = async e => {
   const f = e.target.files[0]; if (!f) return;

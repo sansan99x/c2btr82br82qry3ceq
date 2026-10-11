@@ -16,7 +16,8 @@ h1{font-size:22px;margin:0}
 .panel{background:var(--panel);border:1px solid var(--garis);border-radius:var(--rad);padding:16px;margin-top:16px}
 .baris{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center}
 label{font-size:13.5px;color:var(--redup);display:flex;align-items:center;gap:8px}
-select,input[type=range]{font:inherit}
+select,input[type=range],input[type=number]{font:inherit}
+input[type=number]{width:100px;border:1px solid var(--garis);background:var(--panel);color:var(--teks);border-radius:8px;padding:6px 10px}
 select{border:1px solid var(--garis);background:var(--panel);color:var(--teks);border-radius:8px;padding:6px 10px}
 input[type=range]{accent-color:var(--aksen);width:130px}
 .nilai{min-width:38px;color:var(--teks);font-variant-numeric:tabular-nums;font-weight:600}
@@ -62,7 +63,7 @@ summary{cursor:pointer;font-size:14px;color:var(--redup)}
 .grp::after{content:"";flex:1;height:1px;background:var(--garis)}
 .grp.L{color:var(--L)}.grp.P{color:var(--P)}
 .catatan{font-size:12.5px;color:var(--redup);margin-top:10px}
-@media (max-width:640px){.p{grid-template-columns:1fr}.aksi{flex-direction:row;flex-wrap:wrap}input[type=range]{width:110px}}
+@media (max-width:640px){.p{grid-template-columns:1fr}.aksi{flex-direction:row;flex-wrap:wrap}input[type=range]{width:110px}input[type=number]{width:90px}}
 </style>
 </head>
 <body>
@@ -73,7 +74,11 @@ summary{cursor:pointer;font-size:14px;color:var(--redup)}
   <div class="panel">
     <div class="baris">
       <label>Jumlah prompt
-        <select id="jumlah"><option>10</option><option>25</option><option selected>50</option><option>100</option><option>200</option></select>
+        <input id="jumlah" type="number" min="1" max="5000" step="1" value="50" inputmode="numeric" aria-label="Jumlah prompt, maksimal 5000">
+        <span class="nilai">/ 5.000</span>
+      </label>
+      <label>Mode prompt
+        <select id="mode"><option value="semua">Semua kategori</option><option value="human-ads">Human Advertising saja</option></select>
       </label>
       <label>Vertikal <input type="range" id="vertikal" min="0" max="100" step="5" value="50"><span class="nilai" id="vV"></span></label>
       <label>Render 3D <input type="range" id="tigaD" min="0" max="60" step="5" value="15"><span class="nilai" id="v3"></span></label>
@@ -90,7 +95,7 @@ summary{cursor:pointer;font-size:14px;color:var(--redup)}
     <details>
       <summary>Resep batch: porsi tiap kelompok</summary>
       <div class="resep" id="resep"></div>
-      <div class="catatan">0 = kelompok tidak dipakai. Dalam satu batch, satu kategori maksimal ±2 prompt dan format tidak pernah sama dua kali berturut-turut.</div>
+      <div class="catatan">Jumlah batch 1–5.000 prompt. Tampilan dibagi menjadi halaman agar browser tetap responsif. Mode Human Advertising hanya mengambil pose model iklan dengan variasi pakaian, ekspresi, properti, warna, framing, dan posisi yang terkontrol.</div>
     </details>
     <div class="stat" id="stat"></div>
   </div>
@@ -204,6 +209,154 @@ const ORANG = {
   asal: ['East Asian', 'Southeast Asian', 'South Asian', 'Middle Eastern', 'Black', 'white', 'Latin American', 'Pacific Islander'],
   gender: ['woman', 'man'],
 };
+
+// Variasi khusus Human Advertising: banyak kombinasi, tetapi tiap elemen tetap saling mendukung.
+const ADS_PALET = [
+  { bg: 'powder blue', outfit: 'warm mustard yellow' },
+  { bg: 'sage green', outfit: 'warm ivory' },
+  { bg: 'coral', outfit: 'deep navy blue' },
+  { bg: 'butter yellow', outfit: 'forest green' },
+  { bg: 'lilac', outfit: 'deep plum' },
+  { bg: 'mint green', outfit: 'burnt orange' },
+  { bg: 'blush pink', outfit: 'charcoal grey' },
+  { bg: 'cobalt blue', outfit: 'warm beige' },
+  { bg: 'tangerine', outfit: 'deep teal' },
+  { bg: 'terracotta', outfit: 'soft cream' },
+  { bg: 'olive green', outfit: 'clean ivory' },
+  { bg: 'dusty rose', outfit: 'midnight blue' },
+  { bg: 'deep teal', outfit: 'soft peach' },
+  { bg: 'pale aqua', outfit: 'rust red' },
+  { bg: 'lavender', outfit: 'deep olive green' },
+  { bg: 'warm cream', outfit: 'burgundy' },
+  { bg: 'cherry red', outfit: 'soft beige' },
+  { bg: 'forest green', outfit: 'camel' },
+  { bg: 'sky blue', outfit: 'brick red' },
+  { bg: 'pistachio', outfit: 'chocolate brown' },
+  { bg: 'mustard yellow', outfit: 'charcoal grey' },
+  { bg: 'peach', outfit: 'deep teal' },
+  { bg: 'plum', outfit: 'pale pink' },
+  { bg: 'sand', outfit: 'cobalt blue' },
+  { bg: 'charcoal grey', outfit: 'mustard yellow' },
+  { bg: 'soft beige', outfit: 'deep forest green' },
+  { bg: 'emerald green', outfit: 'warm cream' },
+  { bg: 'pale aqua', outfit: 'deep navy-blue shirt' },
+  { bg: 'burnt orange', outfit: 'soft ivory' },
+  { bg: 'dusty rose', outfit: 'dark charcoal' },
+];
+const ADS_OUTFITS = [
+  'a cobalt-blue blazer over a plain white crew-neck shirt',
+  'a simple cream knit top',
+  'a clean forest-green blouse',
+  'a mustard-yellow sweater with a simple modern cut',
+  'a charcoal button-up shirt',
+  'a terracotta overshirt over a plain cream top',
+  'a muted-lilac blouse',
+  'a navy-blue casual shirt',
+  'a sage-green top',
+  'a burgundy knit top',
+  'a camel blazer over a plain ivory shirt',
+  'a soft-pink blouse with minimal styling',
+  'a teal button-up shirt',
+  'a rust-orange casual shirt',
+  'a black minimalist top',
+  'a warm-beige cardigan over a plain shirt',
+  'a simple monochrome smart-casual outfit',
+  'a modern business-casual outfit in solid colors',
+  'a clean casual outfit with a plain crew-neck top',
+  'a tasteful creative-professional outfit in complementary solid colors',
+];
+const ADS_GARMENTS = [
+  'minimalist knit top', 'plain crew-neck shirt', 'modern blouse', 'casual button-up shirt',
+  'lightweight overshirt over a plain shirt', 'structured blazer over a plain white crew-neck shirt',
+  'simple cardigan over a plain top', 'short-sleeve shirt', 'long-sleeve top', 'smart-casual polo shirt',
+  'clean turtleneck top', 'relaxed linen shirt', 'tailored jacket over a simple shirt',
+  'plain cotton T-shirt', 'simple sweater', 'minimalist sleeveless top',
+];
+const ADS_EXPRESSIONS = [
+  'a friendly, confident smile', 'a warm, approachable expression',
+  'an upbeat, enthusiastic expression', 'a relaxed, natural smile',
+  'a confident, engaging look toward the camera', 'a playful, inviting expression',
+  'a focused but approachable expression', 'a cheerful expression with lively eyes',
+  'a pleasantly curious look', 'a calm, self-assured expression',
+];
+const ADS_ANGLES = [
+  'standing at a natural three-quarter angle toward the camera',
+  'facing the camera with relaxed shoulders',
+  'turning slightly toward the action while keeping the face clearly visible',
+  'using a relaxed, natural posture with believable body balance',
+];
+const ADS_LIGHT = [
+  'soft, broad studio illumination from outside the frame with gentle fill and natural skin tones',
+  'even diffused studio light with subtle dimensional shading and no harsh facial shadows',
+  'clean commercial key light from camera-left with restrained fill from camera-right',
+  'bright, balanced studio lighting with realistic skin texture and controlled highlights',
+];
+const ADS_ACTION_FULL_BODY = /jumping with joy|arms open|walking confidently|turning back over the shoulder|stretching arms after waking|dancing|high five|holding an umbrella|walking under an umbrella|wearing a winter scarf|wearing a party hat/i;
+const ADS_ACTION_SURPRISE = /looking surprised|covering ears/i;
+const ADS_ACTION_THOUGHTFUL = /thinking with a hand on the chin/i;
+const ADS_ACTION_PLAYFUL = /winking|blowing a kiss|whispering a secret|making a shh gesture|wearing sunglasses|peeking from the side/i;
+
+function rakitHumanAds(x, fmt, r) {
+  let action = x.it.t;
+  const white = fmt.id === 'putih-orang';
+  const palette = white ? null : x.pilih(ADS_PALET);
+  const bg = white ? 'pure white (#FFFFFF)' : palette.bg;
+  let outfit;
+  if (/pajamas/i.test(action)) outfit = x.pilih(['plain cotton pajamas in muted blue', 'simple cream cotton pajamas', 'soft sage-green pajamas with no pattern']);
+  else if (/winter scarf and gloves/i.test(action)) outfit = x.pilih(['a plain winter coat with a coordinated scarf and gloves', 'a warm neutral winter coat with a simple scarf and gloves']);
+  else if (/party hat/i.test(action)) outfit = x.pilih(['a cheerful solid-colour casual outfit suitable for a celebration', 'a simple festive outfit in coordinated solid colours']);
+  else if (palette) outfit = `a ${palette.outfit} ${x.pilih(ADS_GARMENTS)}`;
+  else outfit = x.pilih(ADS_OUTFITS);
+
+  let expressionPool = ADS_EXPRESSIONS;
+  if (ADS_ACTION_SURPRISE.test(action)) expressionPool = ['a genuinely surprised expression with raised eyebrows', 'an excited, astonished expression with naturally widened eyes'];
+  else if (ADS_ACTION_THOUGHTFUL.test(action)) expressionPool = ['a thoughtful, contemplative expression', 'a focused, considering expression with relaxed brows'];
+  else if (ADS_ACTION_PLAYFUL.test(action)) expressionPool = ['a playful, expressive look', 'a friendly, mischievous expression', 'a lively, charismatic expression'];
+  else if (/jumping with joy|laughing with arms open|celebrating with confetti|giving a high five/i.test(action)) expressionPool = ['a joyful, energetic expression', 'a bright, enthusiastic smile', 'a spontaneous, happy expression'];
+  else if (/making a heart shape|holding a red heart pillow|blowing a kiss/i.test(action)) expressionPool = ['a warm, affectionate smile', 'a gentle, cheerful expression', 'a sweet, friendly expression'];
+  else if (/smiling|thumbs up|welcome gesture|waving hello|presenting with an open palm/i.test(action)) expressionPool = ['a friendly, confident smile', 'a warm, welcoming smile', 'a cheerful, approachable expression'];
+  else if (/yawning|stretching arms after waking/i.test(action)) expressionPool = ['a natural sleepy expression during a yawn', 'a relaxed just-woken-up expression'];
+  else if (/eating|biting into|drinking a smoothie/i.test(action)) expressionPool = ['a natural, engaged expression appropriate to tasting food or drink', 'a pleased, relaxed expression while enjoying the food or drink'];
+  const expression = x.pilih(expressionPool);
+  const angle = x.pilih(ADS_ANGLES);
+  const fullBody = ADS_ACTION_FULL_BODY.test(action);
+  const framing = fullBody
+    ? x.pilih(['full-body framing with the complete figure and feet inside the frame', 'three-quarter body framing with all action-critical limbs fully visible'])
+    : x.pilih(['waist-up framing with the face, both hands and any held prop fully visible', 'mid-thigh framing with both arms and the complete held prop visible', 'three-quarter framing with enough room around the hands and prop']);
+  let placement;
+  let copySpace;
+  if (r === 'L') {
+    const side = x.pilih(['left', 'right']);
+    placement = `positioned in the ${side} third of the wide frame, with the entire face, hands, and any essential prop safely inside the frame`;
+    copySpace = `the opposite ${side === 'left' ? 'right' : 'left'} half remains clean, uncluttered copy space`;
+    if (/pointing to the side toward empty space/i.test(action)) action = `pointing clearly toward the empty copy space on the ${side === 'left' ? 'right' : 'left'} side of the frame`;
+    if (/peeking from the side of the frame/i.test(action)) placement = `peeking into the frame from the ${side} edge, with the entire face and both eyes safely visible`;
+  } else {
+    const pointsDown = /pointing down toward the lower corner/i.test(action);
+    const horizontal = x.pilih(['slightly left of center', 'slightly right of center', 'near the center']);
+    const open = pointsDown ? 'lower third' : x.pilih(['upper third', 'upper quarter']);
+    placement = pointsDown
+      ? `positioned in the upper two-thirds, ${horizontal}, while maintaining a natural full action` 
+      : `positioned ${horizontal} in the lower two-thirds of the vertical frame`;
+    copySpace = `keep the ${open} visually calm and uncluttered for optional advertising copy`;
+    if (/pointing to the side toward empty space/i.test(action)) action = `pointing toward clean empty copy space beside the subject`;
+    if (/peeking from the side of the frame/i.test(action)) action = `peeking into the frame from one side, with the full face and both eyes visible`;
+  }
+  const lens = fullBody
+    ? x.pilih(['a 50mm lens at f/5.6 for natural body proportions', 'a 70mm lens at f/5.6 for flattering perspective'])
+    : x.pilih(['an 85mm lens at f/5.6 for natural portrait perspective', 'a 70mm lens at f/5.6 for a clean commercial portrait']);
+  const backdrop = white
+    ? 'A continuous, seamless pure-white studio background (#FFFFFF) fills the entire frame edge to edge, with no gradient, no separate panel, no horizon line, and no cast shadow.'
+    : `A seamless, single-colour ${bg} studio backdrop fills the entire frame edge to edge. The background colour and surface remain continuous, with no hard division, separate blank panel, horizon seam, or gradient.`;
+  const layoutRule = white
+    ? 'Keep the person clearly separated from the white background, with generous clean white space and no floor line or reflection.'
+    : 'Preserve one coherent studio scene and a clear visual hierarchy; the copy space must be part of the same continuous background, never a pasted-on panel.';
+  const actionRule = /holding|presenting|showing|carrying|giving a high five|making a heart shape|pointing|waving|covering|crossing arms/i.test(action)
+    ? 'Show the complete action clearly. Hands must interact naturally with the named prop or gesture, with believable finger placement, grip, wrist angles, and arm joints.'
+    : 'Keep the gesture natural, readable, and physically plausible, with balanced body posture and believable limb placement.';
+  const noUnrequested = 'One person only and only the prop or props explicitly named in the action. No extra hands, extra fingers, duplicated limbs, malformed joints, duplicated props, accidental cropping of the face or action-critical objects, visible studio equipment, backdrop stands, cables, text, letters, numbers, logos, or watermarks.';
+  return `Premium photorealistic commercial stock photograph, ${r === 'L' ? 'wide 16:9 landscape' : 'vertical 9:16'} composition. Feature ${x.orang}, ${angle}, ${framing}. Action: ${action}. Wardrobe: ${outfit}, with realistic fabric folds and no visible branding. Facial expression: ${expression}. ${backdrop} ${placement}; ${copySpace}. ${layoutRule} ${actionRule} ${x.pilih(ADS_LIGHT)}. Photographed with ${lens}; keep the face, eyes, hands, and action-critical prop in crisp focus with natural skin texture, realistic anatomy, accurate proportions, and believable contact between the hands and objects. ${noUnrequested}`.replace(/\s+/g, ' ').replace(/\.\./g, '.');
+}
 
 // ---------- 4. FORMAT ----------
 // untuk: jenis item yang cocok. kecil: boleh untuk item kecil. rasio: 'L' / 'P' / bebas.
@@ -322,18 +475,27 @@ function rakit(it, fmt, r, rnd) {
     const g = x.pilih(ORANG.gender), asal = x.pilih(ORANG.asal);
     x.orang = `a fictional ${x.pilih(ORANG.usia)} ${asal === 'Latin American' ? 'Latin American' : asal} ${g}`;
   }
+  if (isOrang && it.kat.id === 'pose-iklan' && (fmt.id === 'potret-studio' || fmt.id === 'putih-orang')) {
+    return rakitHumanAds(x, fmt, r);
+  }
   const b = fmt.buat(x);
   const ori = r === 'L' ? '16:9 landscape-format' : '9:16 vertical';
   const besar = s => s.charAt(0).toUpperCase() + s.slice(1);
   if (!fmt.foto) {
-    return `A ${ori} 3D render illustration: ${b.adegan}. ${besar(b.komposisi)}. Rendered with ${b.render || x.pilih(CAHAYA.render)}, smooth clean surfaces, high-quality materials and crisp edges. ${x.pilih(['Soft, harmonious color palette.', 'Gentle pastel palette with one accent color.', 'Fresh, cheerful but refined colors.'])} Clean, uncluttered composition. Not a flat vector graphic and not a hand-drawn cartoon. No text, letters, numbers, logos or brand marks anywhere in the image.`.replace(/\s+/g, ' ');
+    return `A ${ori} 3D render illustration: ${b.adegan}. ${besar(b.komposisi)}. Rendered with ${b.render || x.pilih(CAHAYA.render)}, smooth clean surfaces, high-quality materials and crisp edges. ${x.pilih(['Soft, harmonious color palette.', 'Gentle pastel palette with one accent color.', 'Fresh, cheerful but refined colors.'])} One coherent 3D scene with consistent geometry, physically plausible contact and a clear focal subject. Keep the background continuous unless the scene explicitly calls for separate objects. No accidental collage, split-screen, hard background division, duplicate main objects, visible render guides, text, letters, numbers, logos or brand marks anywhere in the image.`.replace(/\s+/g, ' ');
   }
   const tajam = b.blur ? `keeping the main subject tack-sharp with crisp, clean, noise-free detail while the background melts into smooth, creamy blur` : `keeping the main subject in crisp, sharp focus with clean, noise-free detail and accurate exposure${b.tajamTambah ? ', ' + b.tajamTambah : ''}`;
   const penutup = isOrang ? 'The person is a fictional adult with natural, correct anatomy and relaxed, natural hands. No text, letters, numbers, logos or brand marks anywhere in the image.'
     : isTangan ? 'Only adult hands and forearms appear, with natural, correct anatomy and no face visible. No text, letters, numbers, logos or brand marks anywhere in the image.'
     : 'No people. No text, letters, numbers, logos or brand marks anywhere in the image.';
   const akhir = b.akhir ? b.akhir : fmt.wallpaper ? 'Clean, uncluttered wallpaper-style composition.' : fmt.latar ? 'Clean, uncluttered background ready for design use.' : x.pilih(['Clean, uncluttered composition.', 'Clean, uncluttered wallpaper-style composition.']);
-  return `A realistic ${ori} stock photograph of ${b.adegan}. ${besar(b.komposisi)}. ${b.cahaya}. Photographed with ${b.lensa}, ${tajam}. ${b.palet || x.pilih(PALET)} ${b.tekstur || x.pilih(TEKSTUR)} ${akhir} ${penutup}`.replace(/\s+/g, ' ').replace(/\.\./g, '.');
+  const coherence = fmt.latar
+    ? 'The background is one continuous scene from edge to edge, with no accidental panel, split-screen, abrupt vertical division, or unrequested horizon seam.'
+    : 'One coherent photographic scene with consistent perspective, lighting, scale, and believable object placement; no accidental collage or split-screen.';
+  const artifactGuard = isOrang || isTangan
+    ? 'Natural anatomy, plausible joints, and realistic hand structure; keep every action-critical hand and object visible.'
+    : 'Natural object geometry, believable surface contact, and no duplicated or unintentionally cropped main subject.';
+  return `A realistic ${ori} stock photograph of ${b.adegan}. ${besar(b.komposisi)}. ${b.cahaya}. Photographed with ${b.lensa}, ${tajam}. ${b.palet || x.pilih(PALET)} ${b.tekstur || x.pilih(TEKSTUR)} ${akhir} ${coherence} ${artifactGuard} No unrequested studio equipment, random extra props, visible text, letters, numbers, logos, or brand marks. ${penutup}`.replace(/\s+/g, ' ').replace(/\.\./g, '.');
 }
 
 // ---------- 6. PENGACAK ----------
@@ -370,21 +532,23 @@ const KAT_FORMAT = {
   'alat-musik': ['latar-warna', 'hero-gelap', 'minimalis', 'bayangan', 'kontekstual', 'putih'], 'pohon-daun': ['makro', 'closeup-v', 'siluet', 'bayangan', 'minimalis', 'lanskap-tele'],
 };
 
-function buatBatch(opsi, state) {
+async function buatBatch(opsi, state, onProgress = () => {}) {
   const rnd = acakBerbiji((Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0);
   const bulanIni = new Date().getMonth() + 1;
-  const N = opsi.jumlah, hasil = [], hitKat = {}, hitFmt = {};
+  const N = Math.max(1, Math.min(5000, Math.floor(Number(opsi.jumlah) || 50))), hasil = [], hitKat = {}, hitFmt = {};
+  const teksBatch = new Set();
   const capKat = Math.max(2, Math.ceil(N / 30)), capFmt = Math.max(3, Math.ceil(N / 10));
   let lalu = { kat: null, fmt: null };
   for (let i = 0; i < N; i++) {
-    let sisa = ITEM.filter(it => !state.dipakai[it.key] && formatUntuk(it).length);
-    if (!sisa.length) { state.putaran++; state.dipakai = {}; sisa = ITEM.filter(it => formatUntuk(it).length); }
+    const boleh = it => (opsi.mode !== 'human-ads' || it.kat.id === 'pose-iklan');
+    let sisa = ITEM.filter(it => !state.dipakai[it.key] && boleh(it) && formatUntuk(it).length);
+    if (!sisa.length) { state.putaran++; state.dipakai = {}; sisa = ITEM.filter(it => boleh(it) && formatUntuk(it).length); }
     // porsi latar putih: slot ini khusus subjek yang bisa berlatar putih
     const inginPutih = rnd() < (opsi.porsiPutih ?? 0);
     if (inginPutih) { const sp = sisa.filter(it => formatUntuk(it).some(f => f.putih)); if (sp.length) sisa = sp; }
     // pilih grup (sesuai resep), lalu kategori, lalu item
-    const grupAda = Object.keys(GRUP).filter(g => (opsi.resep[g] || 0) > 0 && sisa.some(it => it.kat.grup === g));
-    const g = pilihBobot(rnd, grupAda, g => opsi.resep[g]); if (!g) break;
+    const grupAda = Object.keys(GRUP).filter(g => (opsi.mode === 'human-ads' ? g === 'manusia' : (opsi.resep[g] || 0) > 0) && sisa.some(it => it.kat.grup === g));
+    const g = pilihBobot(rnd, grupAda, g => opsi.mode === 'human-ads' ? 1 : opsi.resep[g]); if (!g) break;
     const katAda = KATEGORI.filter(k => k.grup === g && k !== lalu.kat && (hitKat[k.id] || 0) < capKat && sisa.some(it => it.kat === k));
     const k = pilihBobot(rnd, katAda.length ? katAda : KATEGORI.filter(k => k.grup === g && sisa.some(it => it.kat === k)), k => Math.sqrt(sisa.filter(it => it.kat === k).length));
     const kandidat = sisa.filter(it => it.kat === k);
@@ -399,10 +563,21 @@ function buatBatch(opsi, state) {
     const bobotF = f => nF && n3 ? (f.foto ? (1 - opsi.porsi3d) / nF : opsi.porsi3d / n3) : 1;
     const f = pilihBobot(rnd, fs, bobotF) || fs[Math.floor(rnd() * fs.length)];
     const r = f.rasio || (rnd() < opsi.porsiVertikal ? 'P' : 'L');
-    const teks = rakit(it, f, r, rnd);
+    let teks = rakit(it, f, r, rnd);
+    // Saat kombinasi subjek-format terulang pada batch sangat besar, buat ulang variasi gaya sampai unik bila memungkinkan.
+    let percobaanUnik = 0;
+    while (teksBatch.has(teks) && percobaanUnik < 14) {
+      teks = rakit(it, f, r, rnd);
+      percobaanUnik++;
+    }
+    teksBatch.add(teks);
     state.dipakai[it.key] = state.putaran; state.pasangan[`${it.key}|${f.id}`] = 1;
     hitKat[k.id] = (hitKat[k.id] || 0) + 1; hitFmt[f.id] = (hitFmt[f.id] || 0) + 1; lalu = { kat: k, fmt: f };
     hasil.push({ no: i + 1, key: it.key, item: it.t, kat: k.nama, grup: g, fmt: f.nama, fmtId: f.id, adobe: f.adobe, orang: it.kat.jenis === 'orang' || it.kat.jenis === 'tangan', r, teks, kata: teks.split(/\s+/).length });
+    if ((i + 1) % 100 === 0 || i === N - 1) {
+      onProgress(i + 1, N);
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
   }
   return hasil;
 }
@@ -506,7 +681,7 @@ K('kebugaran', 'Kebugaran & yoga', 'manusia', 'orang', `
 holding a yoga tree pose|holding a warrior pose|in a downward dog pose|in a resting yoga pose on a mat|doing a sun salutation at sunrise|meditating cross-legged|doing pilates on a reformer|stretching hamstrings on a mat|doing push-ups|doing a plank|doing squats with dumbbells|doing lunges outdoors|skipping rope|doing burpees|using a foam roller|doing resistance band exercises|doing a handstand on the beach|tai chi in a park|breathing exercise by the sea|cool down stretch after a run|aqua aerobics in a pool|stretching on a balcony|aerial yoga in silk|barre class at the bar
 `);
 K('pose-iklan', 'Pose model iklan (latar warna)', 'manusia', 'orang', `
-pointing to the side toward empty space|smiling and showing a thumbs up|holding an empty blank card toward the camera|jumping with joy|laughing with arms open|crossing arms confidently|thinking with a hand on the chin|looking surprised with open mouth|whispering a secret toward the side|holding a plain paper shopping bag|holding a gift box|holding a cup of coffee and smiling|holding a bowl of salad|eating a slice of pizza|biting into a burger|drinking a smoothie through a straw|showing a plate of food|holding a plant in a pot|presenting with an open palm|pointing upward at copy space|covering ears with a playful expression|wearing headphones and dancing|holding a megaphone|holding an umbrella|celebrating with confetti|peeking from the side of the frame|holding an empty clipboard|giving a high five toward the side|making a heart shape with hands|holding a ceramic piggy bank|holding a key for a new home|stretching arms after waking up|yawning in pajamas|sitting on a stool posing|walking confidently|turning back over the shoulder|blowing a kiss|winking|making a shh gesture|holding a paper airplane|holding a fresh baguette|holding a basket of vegetables|wearing sunglasses and smiling|holding a beach ball|wearing a winter scarf and gloves@12,1|holding a pumpkin@10|holding a red heart pillow@2|wearing a party hat@12
+pointing to the side toward empty space|smiling and showing a thumbs up|holding an empty blank card toward the camera|jumping with joy|laughing with arms open|crossing arms confidently|thinking with a hand on the chin|looking surprised with open mouth|whispering a secret toward the side|holding a plain paper shopping bag|holding a gift box|holding a cup of coffee and smiling|holding a bowl of salad|eating a slice of pizza|biting into a burger|drinking a smoothie through a straw|showing a plate of food|holding a plant in a pot|presenting with an open palm|pointing upward at copy space|covering ears with a playful expression|wearing headphones and dancing|holding a megaphone|holding an umbrella|celebrating with confetti|peeking from the side of the frame|holding an empty clipboard|giving a high five toward the side|making a heart shape with hands|holding a ceramic piggy bank|holding a key for a new home|stretching arms after waking up|yawning in pajamas|sitting on a stool posing|walking confidently|turning back over the shoulder|blowing a kiss|winking|making a shh gesture|holding a paper airplane|holding a fresh baguette|holding a basket of vegetables|wearing sunglasses and smiling|holding a beach ball|wearing a winter scarf and gloves@12,1|holding a pumpkin@10|holding a red heart pillow@2|wearing a party hat@12|holding an unbranded skincare bottle at chest level|presenting a plain cosmetic jar toward the camera|holding a simple pump dispenser|holding a plain cardboard delivery box|carrying a canvas grocery tote|holding a reusable water bottle with no logo|presenting a plain takeaway coffee cup|holding a small potted succulent|holding a kraft gift box tied with a ribbon|holding a plain picture frame toward the camera|holding a ceramic plate with a prepared meal|showing an open palm toward the viewer|holding a plain reusable lunch container|presenting a simple glass jar|holding a small wrapped present|carrying a stack of plain cardboard boxes|holding a plain white ceramic mug|holding a bouquet of tulips|presenting a single green leaf|holding a plain skincare tube|holding a small unbranded package|holding a plain envelope|holding a paintbrush beside a colour swatch|holding a white ceramic planter|holding a folded blanket|holding a small trophy with a proud smile|holding a watering can beside a potted plant|holding a wooden cooking spoon|holding a plain fabric shopping bag|showing a blank card beside the face|holding a generic glass bottle filled with water|presenting a plain white sneaker without logos|holding a woven basket of fresh produce|holding a handmade ceramic vase|holding a plain gift bag by the handles|holding a single red apple|holding a rolled yoga mat|holding a pair of plain gardening gloves|holding a plain cardboard carton|holding a simple white soap dispenser|holding a paint roller with a relaxed smile|holding a folded plain T-shirt|holding a small potted herb plant|presenting a plain ceramic bowl|holding a generic travel cup|holding a plain candle jar|holding an unbranded lotion bottle|holding a closed blank photo album|holding a plain wooden picture frame|holding a plain reusable shopping bag|displaying a small plain product box|holding a plain glass tumbler|holding a simple bamboo basket|showing a cheerful welcome gesture with both arms|waving hello with one hand|gesturing toward empty space with both hands|counting on fingers with a playful smile|standing with hands on hips confidently|raising both arms in celebration|looking back with a friendly smile|leaning slightly forward with curious interest|standing with one hand on the hip and one palm open|presenting an object with both hands|holding a plain parcel close to the chest|holding a plain roll of wrapping paper|holding a blank gift tag|holding a small bunch of fresh herbs|holding a plain ceramic teapot|holding a plain white shopping bag|showing a simple thumbs-up close to the chest|pointing diagonally toward the upper corner|pointing down toward the lower corner|gesturing toward the space beside the subject|holding a plain product bottle with both hands|holding a small plain box at waist level|holding a folded paper shopping bag|presenting a plain glass skincare bottle|holding a plain jar with a screw-top lid|holding a small bouquet wrapped in kraft paper|holding a plain coffee bag without labels|holding a simple unbranded thermos
 `);
 K('gaya-hidup', 'Gaya hidup sehari-hari', 'manusia', 'orang', `
 cooking breakfast in a sunny kitchen|chopping vegetables on a board|drinking coffee by a window|working from home at a tidy desk with plants|planning the week with a pencil and paper|reading a paperback on a sofa|watering plants on a balcony|folding laundry|cleaning windows|vacuuming the living room|making the bed|unpacking groceries|shopping at a farmers market|choosing fruit at a market stall|carrying a reusable shopping bag|commuting on a train platform|waiting at a bus stop in the rain|walking under an umbrella|walking in autumn leaves|sitting on a park bench|having a picnic|eating ramen at a counter|sharing a meal at a table|toasting with glasses at dinner|celebrating a birthday with a cake|moving into a new apartment with boxes|rolling fresh paint onto a wall at home|assembling furniture|relaxing in a bathtub|applying face cream in a bathroom mirror|brushing teeth|getting dressed in the morning|choosing clothes in a wardrobe|packing a suitcase for travel|walking through an airport|looking out of a plane window|exploring an old town street|taking photos while traveling|resting on a hammock by the sea|watching the sunset on a beach|drinking tea on a porch|stargazing from a rooftop|listening to music with headphones|dancing at home|playing with a dog in a park|cuddling a cat on a sofa|walking a dog on a rainy day|recycling at home|composting kitchen scraps|walking to work along a tree lined street
@@ -877,23 +1052,83 @@ const KUNCI = 'stokAcak.v1';
 const RESEP_AWAL = { makanan: 3, alam: 3, manusia: 2, acara: 2, benda: 2, tempat: 1, konsep: 1, background: 3 };
 let S = { putaran: 1, dipakai: {}, pasangan: {}, batch: [], opsi: null };
 try { const d = JSON.parse(localStorage.getItem(KUNCI)); if (d && d.dipakai) S = Object.assign(S, d); } catch (e) {}
-const simpan = () => { try { localStorage.setItem(KUNCI, JSON.stringify(S)); } catch (e) { toast('Penyimpanan browser penuh. Ekspor riwayat lalu hapus batch lama.'); } };
+let simpanTimer = null;
+const DB_NAMA = 'generator-prompt-stok-db';
+const DB_STORE = 'state';
+function bukaDB() {
+  return new Promise((resolve, reject) => {
+    try {
+      if (!window.indexedDB) return reject(new Error('IndexedDB tidak tersedia'));
+      const req = window.indexedDB.open(DB_NAMA, 1);
+      req.onupgradeneeded = () => { const db = req.result; if (!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE); };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error || new Error('Gagal membuka IndexedDB'));
+      req.onblocked = () => reject(new Error('IndexedDB sedang diblokir'));
+    } catch (e) { reject(e); }
+  });
+}
+function simpanDB(snapshot) {
+  return bukaDB().then(db => new Promise((resolve, reject) => {
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).put({ savedAt: Date.now(), state: snapshot }, 'latest');
+    tx.oncomplete = () => { db.close(); resolve(true); };
+    tx.onerror = () => { const err = tx.error; db.close(); reject(err || new Error('Gagal menyimpan state')); };
+    tx.onabort = () => { const err = tx.error; db.close(); reject(err || new Error('Penyimpanan dibatalkan')); };
+  }));
+}
+function bacaDB() {
+  return bukaDB().then(db => new Promise((resolve, reject) => {
+    const tx = db.transaction(DB_STORE, 'readonly');
+    const req = tx.objectStore(DB_STORE).get('latest');
+    req.onsuccess = () => { const value = req.result || null; db.close(); resolve(value); };
+    req.onerror = () => { const err = req.error; db.close(); reject(err || new Error('Gagal membaca state')); };
+  }));
+}
+function ukuranPromptState() {
+  return S.batch.reduce((total, b) => total + (b.prompt || []).reduce((n, p) => n + String(p.teks || '').length, 0), 0);
+}
+async function simpanSekarang() {
+  const besar = ukuranPromptState() > 1400000;
+  if (!besar) {
+    try { localStorage.setItem(KUNCI, JSON.stringify(S)); return true; }
+    catch (e) { /* jatuh ke IndexedDB */ }
+  }
+  try {
+    await simpanDB(S);
+    const ringkas = { putaran: S.putaran, dipakai: S.dipakai, pasangan: S.pasangan, batch: [], opsi: S.opsi, idbRequired: true };
+    try { localStorage.setItem(KUNCI, JSON.stringify(ringkas)); } catch (e) {}
+    return true;
+  } catch (e) {
+    // Jangan pasang idbRequired bila penyimpanan IDB gagal, agar snapshot lama tidak dipulihkan sebagai batch terbaru.
+    try {
+      const ringkas = { putaran: S.putaran, dipakai: S.dipakai, pasangan: S.pasangan, batch: [], opsi: S.opsi };
+      localStorage.setItem(KUNCI, JSON.stringify(ringkas));
+    } catch (e2) {}
+    toast('Batch besar masih tersedia di sesi ini, tetapi browser tidak dapat menyimpannya. Unduh TXT atau ekspor HTML sebelum menutup halaman.');
+    return false;
+  }
+}
+const simpan = () => {
+  if (simpanTimer) clearTimeout(simpanTimer);
+  simpanTimer = setTimeout(() => { simpanTimer = null; simpanSekarang(); }, 250);
+};
+window.addEventListener('beforeunload', () => { if (simpanTimer) clearTimeout(simpanTimer); simpanSekarang(); });
 const toast = t => { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 1600); };
 async function salin(t) {
   try { await navigator.clipboard.writeText(t); return true; }
   catch (e) { const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (e2) {} a.remove(); return ok; }
 }
 // --- opsi ---
-const opsiAwal = { jumlah: 50, vertikal: 50, tigaD: 15, putih: 15, musim: true, urut: 'P', resep: { ...RESEP_AWAL } };
+const opsiAwal = { jumlah: 50, mode: 'semua', vertikal: 50, tigaD: 15, putih: 15, musim: true, urut: 'P', resep: { ...RESEP_AWAL } };
 const O = Object.assign({}, opsiAwal, S.opsi || {}); O.resep = Object.assign({}, RESEP_AWAL, (S.opsi || {}).resep || {});
-$('#jumlah').value = O.jumlah; $('#vertikal').value = O.vertikal; $('#tigaD').value = O.tigaD; $('#putih').value = O.putih; $('#musim').checked = O.musim;
+$('#jumlah').value = Math.max(1, Math.min(5000, Number(O.jumlah) || 50)); $('#mode').value = O.mode || 'semua'; $('#vertikal').value = O.vertikal; $('#tigaD').value = O.tigaD; $('#putih').value = O.putih; $('#musim').checked = O.musim;
 $('#resep').innerHTML = Object.entries(GRUP).map(([g, n]) => `<label>${esc(n)} <span><input type="range" min="0" max="5" step="1" value="${O.resep[g]}" data-g="${g}"> <span class="nilai" data-v="${g}">${O.resep[g]}</span></span></label>`).join('');
 function bacaOpsi() {
-  O.jumlah = +$('#jumlah').value; O.vertikal = +$('#vertikal').value; O.tigaD = +$('#tigaD').value; O.putih = +$('#putih').value; O.musim = $('#musim').checked;
+  O.jumlah = Math.max(1, Math.min(5000, Math.floor(Number($('#jumlah').value) || 50))); $('#jumlah').value = O.jumlah; O.mode = $('#mode').value || 'semua'; O.vertikal = +$('#vertikal').value; O.tigaD = +$('#tigaD').value; O.putih = +$('#putih').value; O.musim = $('#musim').checked;
   document.querySelectorAll('#resep input').forEach(i => { O.resep[i.dataset.g] = +i.value; $(`[data-v="${i.dataset.g}"]`).textContent = i.value; });
   $('#vV').textContent = O.vertikal + '%'; $('#v3').textContent = O.tigaD + '%'; $('#vP').textContent = O.putih + '%'; S.opsi = O;
 }
-document.querySelectorAll('select, input[type=range], input[type=checkbox]').forEach(el => el.addEventListener('input', () => { bacaOpsi(); simpan(); }));
+document.querySelectorAll('select, input[type=range], input[type=checkbox], input[type=number]').forEach(el => el.addEventListener('input', () => { bacaOpsi(); simpan(); }));
 bacaOpsi();
 // --- urutan tampil: rasio pilihan di atas, supaya tidak bolak-balik ganti ukuran saat generate ---
 const tandaiUrut = () => document.querySelectorAll('#urut button').forEach(b => b.classList.toggle('on', b.dataset.u === O.urut));
@@ -909,34 +1144,56 @@ function urutan(b) {
 // --- statistik ---
 function statistik() {
   const terpakai = ITEM.filter(it => S.dipakai[it.key]).length;
-  $('#sub').textContent = `${ITEM.length.toLocaleString('id-ID')} subjek dalam ${KATEGORI.length} kategori × ${FORMAT.length} gaya foto & 3D. Satu subjek hanya keluar sekali per putaran.`;
+  $('#sub').textContent = `${ITEM.length.toLocaleString('id-ID')} subjek dalam ${KATEGORI.length} kategori × ${FORMAT.length} gaya foto & 3D. Batch hingga 5.000 prompt; Human Advertising memakai detail pose dan komposisi khusus.`;
   $('#stat').innerHTML = [`Putaran ke-${S.putaran}`, `Terpakai ${terpakai.toLocaleString('id-ID')} / ${ITEM.length.toLocaleString('id-ID')}`, `Sisa ${(ITEM.length - terpakai).toLocaleString('id-ID')} subjek`, `Pasangan subjek×gaya dipakai ${Object.keys(S.pasangan).length.toLocaleString('id-ID')}`].map(t => `<span class="chip">${t}</span>`).join('');
   $('#kamus').innerHTML = `<table class="tabel"><tr><th>Kelompok</th><th>Kategori</th><th class="n">Isi</th><th class="n">Sisa putaran ini</th></tr>${KATEGORI.map(k => `<tr><td>${esc(GRUP[k.grup])}</td><td>${esc(k.nama)}</td><td class="n">${k.item.length}</td><td class="n">${k.item.filter(it => !S.dipakai[it.key]).length}</td></tr>`).join('')}</table>`;
 }
 
 // --- daftar batch ---
+const UKURAN_HALAMAN = 100;
 function gambar() {
   if (!S.batch.length) { $('#daftar').innerHTML = '<div class="kosong">Belum ada prompt. Atur jumlah & porsi, lalu klik <b>Acak prompt</b>.</div>'; statistik(); return; }
   $('#daftar').innerHTML = S.batch.map((b, bi) => {
     const dp = b.prompt.filter(p => p.pakai).length;
-    return `<section class="batch" data-b="${bi}"><div class="bkep"><h2>Batch ${b.id} <span class="kecil">· ${esc(b.waktu)} · ${b.prompt.length} prompt (9:16: ${b.prompt.filter(p => p.r === 'P').length} · 16:9: ${b.prompt.filter(p => p.r === 'L').length}) · dipakai ${dp}</span></h2>
-      <div class="baris" style="gap:6px"><button class="btn kecil" data-a="semua">Salin semua</button><button class="btn kecil" data-a="sepuluh">Salin 10 berikutnya</button><button class="btn kecil" data-a="gagal">Salin daftar gagal</button>${bi === 0 ? '<button class="btn kecil bahaya" data-a="batal">Batalkan batch</button>' : ''}<button class="btn kecil" data-a="tutup">Sembunyikan</button></div></div>
-      ${urutan(b).map(({ p, pi }, i, arr) => (O.urut !== 'asli' && (i === 0 || arr[i - 1].p.r !== p.r) ? `<div class="grp ${p.r}">${p.r === 'P' ? '9:16 vertikal' : '16:9 landscape'} · ${arr.filter(x => x.p.r === p.r).length} prompt</div>` : '') + `<div class="p${p.pakai ? ' pakai' : ''}${p.gagal ? ' gagal' : ''}" data-p="${pi}"><div>
+    const semua = urutan(b);
+    const totalHal = Math.max(1, Math.ceil(semua.length / UKURAN_HALAMAN));
+    b.halaman = Math.max(1, Math.min(totalHal, Number(b.halaman) || 1));
+    const halamanAktif = b.halaman;
+    const awal = (halamanAktif - 1) * UKURAN_HALAMAN;
+    const tampil = semua.slice(awal, awal + UKURAN_HALAMAN);
+    const jumlahP = b.prompt.filter(p => p.r === 'P').length;
+    const jumlahL = b.prompt.length - jumlahP;
+    const tombolHalaman = totalHal > 1 ? `<div class="baris" style="gap:6px;margin:8px 0"><button class="btn kecil" data-a="halPrev" ${halamanAktif <= 1 ? 'disabled' : ''}>← Sebelumnya</button><span class="lbl">Halaman ${halamanAktif} / ${totalHal} · menampilkan ${awal + 1}–${Math.min(awal + UKURAN_HALAMAN, semua.length)} dari ${semua.length.toLocaleString('id-ID')}</span><button class="btn kecil" data-a="halNext" ${halamanAktif >= totalHal ? 'disabled' : ''}>Berikutnya →</button></div>` : '';
+    return `<section class="batch" data-b="${bi}"><div class="bkep"><h2>Batch ${b.id} <span class="kecil">· ${esc(b.waktu)} · ${b.prompt.length.toLocaleString('id-ID')} prompt (9:16: ${jumlahP} · 16:9: ${jumlahL}) · dipakai ${dp}</span></h2>
+      <div class="baris" style="gap:6px"><button class="btn kecil" data-a="semua">Salin semua</button><button class="btn kecil" data-a="sepuluh">Salin 10 berikutnya</button><button class="btn kecil" data-a="txt">Unduh TXT</button><button class="btn kecil" data-a="gagal">Salin daftar gagal</button>${bi === 0 ? '<button class="btn kecil bahaya" data-a="batal">Batalkan batch</button>' : ''}<button class="btn kecil" data-a="tutup">Sembunyikan</button></div></div>
+      ${tombolHalaman}
+      ${tampil.map(({ p, pi }, i, arr) => (O.urut !== 'asli' && (i === 0 || arr[i - 1].p.r !== p.r) ? `<div class="grp ${p.r}">${p.r === 'P' ? '9:16 vertikal' : '16:9 landscape'} · ${semua.filter(x => x.p.r === p.r).length} prompt` : '') + `<div class="p${p.pakai ? ' pakai' : ''}${p.gagal ? ' gagal' : ''}" data-p="${pi}"><div>
         <div class="meta"><span class="no">#${p.no}</span><span class="bd ${p.r}">${p.r === 'L' ? '16:9' : '9:16'}</span><span class="bd ${p.adobe === 'Photo' ? 'F' : 'I'}">${p.adobe}</span>${p.orang ? '<span class="bd O">People fictional</span>' : ''}<span>${esc(p.kat)}</span><span>· ${esc(p.fmt)}</span><span>· ${esc(p.item)}</span><span>· ${p.kata} kata</span></div>
         <div class="teks">${esc(p.teks)}</div></div>
-        <div class="aksi"><button class="s">Salin</button><button class="u${p.pakai ? ' on' : ''}">${p.pakai ? '✓ Dipakai' : 'Dipakai'}</button><button class="g${p.gagal ? ' on' : ''}">${p.gagal ? '✗ Gagal' : 'Gagal'}</button></div></div>`).join('')}</section>`;
+        <div class="aksi"><button class="s">Salin</button><button class="u${p.pakai ? ' on' : ''}">${p.pakai ? '✓ Dipakai' : 'Dipakai'}</button><button class="g${p.gagal ? ' on' : ''}">${p.gagal ? '✗ Gagal' : 'Gagal'}</button></div></div>`).join('')}
+      ${tombolHalaman}</section>`;
   }).join('');
   statistik();
 }
-$('#acak').onclick = () => {
+$('#acak').onclick = async () => {
   bacaOpsi();
-  if (!Object.values(O.resep).some(v => v > 0)) return toast('Semua porsi kelompok 0. Naikkan minimal satu.');
-  const prompt = buatBatch({ jumlah: O.jumlah, porsiVertikal: O.vertikal / 100, porsi3d: O.tigaD / 100, porsiPutih: O.putih / 100, musim: O.musim, resep: O.resep }, S);
-  const id = (S.batch[0]?.id || 0) + 1, w = new Date();
-  S.batch.unshift({ id, waktu: w.toLocaleDateString('id-ID') + ' ' + w.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }), prompt });
-  S.batch = S.batch.slice(0, 15);
-  simpan(); gambar(); toast(`${prompt.length} prompt baru`);
-  window.scrollTo({ top: $('#daftar').offsetTop - 10, behavior: 'smooth' });
+  if (O.mode !== 'human-ads' && !Object.values(O.resep).some(v => v > 0)) return toast('Semua porsi kelompok 0. Naikkan minimal satu.');
+  const tombol = $('#acak');
+  tombol.disabled = true; tombol.textContent = 'Membuat prompt…';
+  $('#sub').textContent = `Menyiapkan ${O.jumlah.toLocaleString('id-ID')} prompt…`;
+  try {
+    const prompt = await buatBatch({ jumlah: O.jumlah, mode: O.mode, porsiVertikal: O.vertikal / 100, porsi3d: O.tigaD / 100, porsiPutih: O.putih / 100, musim: O.musim, resep: O.resep }, S,
+      (selesai, total) => { $('#sub').textContent = `Sedang membuat prompt: ${selesai.toLocaleString('id-ID')} / ${total.toLocaleString('id-ID')}`; });
+    const id = (S.batch[0]?.id || 0) + 1, w = new Date();
+    S.batch.unshift({ id, waktu: w.toLocaleDateString('id-ID') + ' ' + w.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }), prompt, halaman: 1 });
+    S.batch = S.batch.slice(0, 15);
+    simpan(); gambar(); toast(`${prompt.length.toLocaleString('id-ID')} prompt baru`);
+    window.scrollTo({ top: $('#daftar').offsetTop - 10, behavior: 'smooth' });
+  } catch (err) {
+    console.error(err); toast('Terjadi kesalahan saat membuat prompt. Coba jumlah yang lebih kecil.');
+  } finally {
+    tombol.disabled = false; tombol.textContent = 'Acak prompt';
+  }
 };
 $('#daftar').addEventListener('click', async e => {
   const btn = e.target.closest('button'); if (!btn) return;
@@ -950,7 +1207,10 @@ $('#daftar').addEventListener('click', async e => {
     simpan(); gambar(); return;
   }
   const a = btn.dataset.a;
+  if (a === 'halPrev') { b.halaman = Math.max(1, (b.halaman || 1) - 1); simpan(); gambar(); return; }
+  if (a === 'halNext') { b.halaman = Math.min(Math.ceil(b.prompt.length / UKURAN_HALAMAN), (b.halaman || 1) + 1); simpan(); gambar(); return; }
   const tampil = urutan(b).map(x => x.p);
+  if (a === 'txt') { const isi = b.prompt.map(p => `#${p.no} | ${p.r === 'P' ? '9:16' : '16:9'} | ${p.kat} | ${p.item}\n${p.teks}`).join('\n\n'); unduh(isi, `prompt-stok-batch${b.id}.txt`, 'text/plain;charset=utf-8'); toast(`Mengunduh ${b.prompt.length.toLocaleString('id-ID')} prompt sebagai TXT`); return; }
   if (a === 'semua') { if (await salin(tampil.map(p => p.teks).join('\n\n'))) { b.prompt.forEach(p => p.pakai = true); toast('Semua prompt tersalin (sesuai urutan tampil)'); } }
   if (a === 'sepuluh') {
     const belum = tampil.filter(p => !p.pakai); if (!belum.length) return toast('Semua sudah dipakai');
@@ -979,7 +1239,7 @@ function htmlBatch(b, stempel) {
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--teks);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}.wrap{max-width:1000px;margin:0 auto;padding:20px 16px 70px}
 h1{font-size:20px;margin:0}.sub{color:var(--redup);font-size:13px;margin:4px 0 14px}.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;position:sticky;top:0;background:var(--bg);padding:10px 0;z-index:2}
 .seg{display:inline-flex;border:1px solid var(--garis);border-radius:9px;overflow:hidden}.seg button,.btn{font:inherit;font-size:13px;border:0;background:var(--panel);color:var(--teks);padding:6px 12px;cursor:pointer}.seg button+button{border-left:1px solid var(--garis)}.seg .on{background:var(--aksen);color:var(--aksen-teks);font-weight:600}
-.btn{border:1px solid var(--garis);border-radius:9px}.btn.u{background:var(--aksen);border-color:var(--aksen);color:var(--aksen-teks);font-weight:600}
+.btn{border:1px solid var(--garis);border-radius:9px}.btn.u{background:var(--aksen);border-color:var(--aksen);color:var(--aksen-teks);font-weight:600}.pager{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin:10px 0;color:var(--redup);font-size:13px}.pager button{font:inherit;border:1px solid var(--garis);background:var(--panel);color:var(--teks);border-radius:7px;padding:5px 10px;cursor:pointer}.pager button:disabled{opacity:.45;cursor:default}
 .grp{display:flex;align-items:center;gap:10px;margin:14px 0 8px;font-size:13px;font-weight:600}.grp:after{content:"";flex:1;height:1px;background:var(--garis)}.grp.L{color:var(--L)}.grp.P{color:var(--P)}
 .p{background:var(--panel);border:1px solid var(--garis);border-radius:10px;padding:11px 13px;margin-bottom:8px;display:grid;grid-template-columns:1fr auto;gap:10px}.p.pakai{opacity:.45}
 .meta{display:flex;flex-wrap:wrap;gap:6px;font-size:12px;color:var(--redup)}.no{font-weight:700;color:var(--teks)}.bd{border:1px solid currentColor;border-radius:5px;padding:0 6px;font-weight:600;font-size:11px}.bd.L{color:var(--L)}.bd.P{color:var(--P)}.bd.I{color:var(--I)}.bd.O{color:var(--O)}.bd.F{color:var(--aksen)}
@@ -988,7 +1248,7 @@ h1{font-size:20px;margin:0}.sub{color:var(--redup);font-size:13px;margin:4px 0 1
 @media (max-width:640px){.p{grid-template-columns:1fr}.aksi{flex-direction:row}}</style></head><body><div class="wrap">
 <h1>Prompt stok · Batch ${b.id}</h1><div class="sub">${esc(b.waktu)} · ${b.prompt.length} prompt (9:16: ${b.prompt.filter(p => p.r === 'P').length} · 16:9: ${b.prompt.filter(p => p.r === 'L').length}) · tanda "Dipakai" tersimpan di browser ini</div>
 <div class="bar"><div class="seg" id="urut"><button data-u="P">9:16 di atas</button><button data-u="L">16:9 di atas</button><button data-u="asli">Campur</button></div><button class="btn u" id="s10">Salin 10 berikutnya</button><button class="btn" id="semua">Salin semua</button><span class="sub" id="info" style="margin:0"></span></div>
-<div id="daftar"></div></div><div class="toast" id="toast"></div>
+<div id="pagesTop"></div><div id="daftar"></div><div id="pagesBottom"></div></div><div class="toast" id="toast"></div>
 <script>const D=${json};const K='stokEkspor.${stempel}';let st={};try{st=JSON.parse(localStorage.getItem(K))||{}}catch(e){}
 if(st.pakai)D.forEach(p=>{if(st.pakai.includes(p.no))p.pakai=true});let U=st.urut||'P';
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -996,10 +1256,15 @@ const simpan=()=>{try{localStorage.setItem(K,JSON.stringify({urut:U,pakai:D.filt
 const toast=t=>{const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),1600)};
 async function salin(t){try{await navigator.clipboard.writeText(t);return true}catch(e){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand('copy')}catch(x){}a.remove();return ok}}
 const urutan=()=>{const l=D.slice();return U==='asli'?l:l.sort((a,b)=>(a.r===U?0:1)-(b.r===U?0:1)||a.no-b.no)};
-function gambar(){document.querySelectorAll('#urut button').forEach(b=>b.classList.toggle('on',b.dataset.u===U));const l=urutan();
-$('#daftar').innerHTML=l.map((p,i)=>(U!=='asli'&&(i===0||l[i-1].r!==p.r)?'<div class="grp '+p.r+'">'+(p.r==='P'?'9:16 vertikal':'16:9 landscape')+' · '+l.filter(x=>x.r===p.r).length+' prompt</div>':'')+'<div class="p'+(p.pakai?' pakai':'')+'" data-no="'+p.no+'"><div><div class="meta"><span class="no">#'+p.no+'</span><span class="bd '+p.r+'">'+(p.r==='L'?'16:9':'9:16')+'</span><span class="bd '+(p.adobe==='Photo'?'F':'I')+'">'+p.adobe+'</span>'+(p.orang?'<span class="bd O">People fictional</span>':'')+'<span>'+esc(p.kat)+'</span><span>· '+esc(p.fmt)+'</span><span>· '+esc(p.item)+'</span></div><div class="teks">'+esc(p.teks)+'</div></div><div class="aksi"><button class="s">Salin</button><button class="d'+(p.pakai?' on':'')+'">'+(p.pakai?'✓ Dipakai':'Dipakai')+'</button></div></div>').join('');
-$('#info').textContent='Dipakai '+D.filter(p=>p.pakai).length+' / '+D.length}
-$('#urut').onclick=e=>{const b=e.target.closest('button');if(!b)return;U=b.dataset.u;simpan();gambar()};
+const UKURAN_HALAMAN=100;let PAGE_NO=1;
+function buatPager(id,totalHal,total){const el=$('#'+id);if(totalHal<=1){el.innerHTML='';return}const awal=(PAGE_NO-1)*UKURAN_HALAMAN+1;const akhir=Math.min(PAGE_NO*UKURAN_HALAMAN,total);el.innerHTML='<div class="pager"><button data-page="prev" '+(PAGE_NO<=1?'disabled':'')+'>← Sebelumnya</button><span>Halaman '+PAGE_NO+' / '+totalHal+' · menampilkan '+awal+'–'+akhir+' dari '+total+'</span><button data-page="next" '+(PAGE_NO>=totalHal?'disabled':'')+'>Berikutnya →</button></div>'}
+function gambar(){document.querySelectorAll('#urut button').forEach(b=>b.classList.toggle('on',b.dataset.u===U));const all=urutan();const totalHal=Math.max(1,Math.ceil(all.length/UKURAN_HALAMAN));PAGE_NO=Math.max(1,Math.min(totalHal,PAGE_NO));const l=all.slice((PAGE_NO-1)*UKURAN_HALAMAN,PAGE_NO*UKURAN_HALAMAN);
+buatPager('pagesTop',totalHal,all.length);buatPager('pagesBottom',totalHal,all.length);
+$('#daftar').innerHTML=l.map((p,i)=>(U!=='asli'&&(i===0||l[i-1].r!==p.r)?'<div class="grp '+p.r+'">'+(p.r==='P'?'9:16 vertikal':'16:9 landscape')+' · '+all.filter(x=>x.r===p.r).length+' prompt</div>':'')+'<div class="p'+(p.pakai?' pakai':'')+'" data-no="'+p.no+'"><div><div class="meta"><span class="no">#'+p.no+'</span><span class="bd '+p.r+'">'+(p.r==='L'?'16:9':'9:16')+'</span><span class="bd '+(p.adobe==='Photo'?'F':'I')+'">'+p.adobe+'</span>'+(p.orang?'<span class="bd O">People fictional</span>':'')+'<span>'+esc(p.kat)+'</span><span>· '+esc(p.fmt)+'</span><span>· '+esc(p.item)+'</span></div><div class="teks">'+esc(p.teks)+'</div></div><div class="aksi"><button class="s">Salin</button><button class="d'+(p.pakai?' on':'')+'">'+(p.pakai?'✓ Dipakai':'Dipakai')+'</button></div></div>').join('');
+$('#info').textContent='Dipakai '+D.filter(p=>p.pakai).length+' / '+D.length+' · Halaman '+PAGE_NO+' / '+totalHal}
+function pasangPager(id){$('#'+id).onclick=e=>{const b=e.target.closest('button[data-page]');if(!b)return;PAGE_NO+=b.dataset.page==='prev'?-1:1;gambar()}}
+pasangPager('pagesTop');pasangPager('pagesBottom');
+$('#urut').onclick=e=>{const b=e.target.closest('button');if(!b)return;U=b.dataset.u;PAGE_NO=1;simpan();gambar()};
 $('#daftar').onclick=async e=>{const b=e.target.closest('button');if(!b)return;const p=D.find(x=>x.no==b.closest('.p').dataset.no);
 if(b.classList.contains('s')){if(await salin(p.teks)){p.pakai=true;toast('#'+p.no+' tersalin')}}else p.pakai=!p.pakai;simpan();gambar()};
 $('#s10').onclick=async()=>{const belum=urutan().filter(p=>!p.pakai);if(!belum.length)return toast('Semua sudah dipakai');const l=belum.filter(p=>p.r===belum[0].r).slice(0,10);
@@ -1026,6 +1291,25 @@ $('#reset').onclick = e => {
   S = { putaran: 1, dipakai: {}, pasangan: {}, batch: [], opsi: O }; simpan(); gambar(); toast('Riwayat dihapus'); b.dataset.yakin = ''; b.textContent = 'Reset riwayat';
 };
 gambar();
+async function pulihkanBatchBesar() {
+  if (!S.idbRequired) return;
+  try {
+    const record = await bacaDB();
+    if (!record || !record.state || !Array.isArray(record.state.batch)) throw new Error('Snapshot besar tidak ditemukan');
+    S = record.state;
+    delete S.idbRequired;
+    const opsiPulih = Object.assign({}, opsiAwal, S.opsi || {});
+    opsiPulih.resep = Object.assign({}, RESEP_AWAL, (S.opsi || {}).resep || {});
+    Object.assign(O, opsiPulih); O.resep = opsiPulih.resep;
+    $('#jumlah').value = O.jumlah; $('#mode').value = O.mode || 'semua'; $('#vertikal').value = O.vertikal; $('#tigaD').value = O.tigaD; $('#putih').value = O.putih; $('#musim').checked = O.musim;
+    document.querySelectorAll('#resep input').forEach(i => { i.value = O.resep[i.dataset.g] ?? 0; const v = document.querySelector(`[data-v="${i.dataset.g}"]`); if (v) v.textContent = i.value; });
+    bacaOpsi(); tandaiUrut(); gambar();
+    toast('Batch besar berhasil dipulihkan');
+  } catch (e) {
+    toast('Batch besar tidak bisa dipulihkan dari browser ini. Jika halaman lama masih terbuka, unduh TXT sebelum menutupnya.');
+  }
+}
+pulihkanBatchBesar();
 
 </script>
 </body>

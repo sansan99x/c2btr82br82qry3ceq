@@ -1271,6 +1271,9 @@ function msReplaceLighting(text, light) {
   return re.test(text) ? text.replace(re, `. ${light.promptText}. Photographed using`) : text;
 }
 function msHumanAdvertisingLayer(text, it, mode, tags, rnd) {
+  // Define before any conditional uses: a temporal-dead-zone bug here broke batches
+  // whenever the selected subject came from the Human Advertising category.
+  const whiteMode = mode.id === 'studio-white';
   const H = MS_DB.humanAdvertising || {};
   const compatible = key => (H[key] || []).filter(x => (!x.compatibleModes || x.compatibleModes.includes(mode.id)) && (!x.subjectTypes || x.subjectTypes.some(t => tags.has(t))));
   const action = it.t.toLowerCase();
@@ -1317,7 +1320,6 @@ function msHumanAdvertisingLayer(text, it, mode, tags, rnd) {
     }
   }
 
-  const whiteMode = mode.id === 'studio-white';
   if (!whiteMode && rnd() < 0.27) {
     const setting = msPick(compatible('settings'), rnd);
     if (setting) {
@@ -1610,7 +1612,9 @@ $('#acak').onclick = async () => {
     simpan(); gambar(); toast(`${prompt.length.toLocaleString('id-ID')} prompt baru`);
     window.scrollTo({ top: $('#daftar').offsetTop - 10, behavior: 'smooth' });
   } catch (err) {
-    console.error(err); toast('Terjadi kesalahan saat membuat prompt. Coba jumlah yang lebih kecil.');
+    console.error('Gagal membuat prompt:', err);
+    const pesan = err && err.message ? String(err.message) : 'Periksa konsol browser untuk detail.';
+    toast(`Gagal membuat prompt: ${pesan.slice(0, 140)}`);
   } finally {
     tombol.disabled = false; tombol.textContent = 'Acak prompt';
   }

@@ -404,7 +404,13 @@ select:focus,input[type=text]:focus,textarea:focus{outline:2px solid var(--accen
         <button class="btn sm" data-exp="svg">SVG</button>
         <button class="btn sm" data-exp="pngt" title="Objek saja, latar transparan">PNG transp.</button>
         <button class="btn sm" data-exp="svgt" title="Objek saja, latar transparan">SVG transp.</button>
-        <button class="btn sm" data-exp="preview" title="Contoh pola diulang 3×3 untuk foto listing">Pratinjau 3×3</button>
+      </div>
+      <div class="flabel" style="margin-top:14px">Pratinjau 3×3 <span class="sub" style="margin:0">pola diulang 3×3</span></div>
+      <div class="btnrow four">
+        <button class="btn sm" data-exp="preview" title="JPG 2400×2400 px dengan warna latar">JPG</button>
+        <button class="btn sm" data-exp="previewPng" title="PNG 2400×2400 px dengan warna latar, tanpa kompresi">PNG</button>
+        <button class="btn sm" data-exp="previewPngT" title="PNG objek saja, latar transparan">PNG transp.</button>
+        <button class="btn sm" data-exp="previewSvg" title="SVG vektor 3×3, bisa diedit di Illustrator">SVG</button>
       </div>
       <div class="flabel" style="margin-top:16px">Vertikal untuk thumbnail <span class="sub" style="margin:0">2 tile atas-bawah</span></div>
       <div class="field" style="margin-bottom:8px">
@@ -1512,10 +1518,16 @@ async function renderExport(size, bg, placements){
 }
 async function makeJPG(size, bg){ const cv = await renderExport(size, bg); const bl = await canvasBlob(cv, 'image/jpeg', 0.95); return new Blob([jfifDpi(await bl.arrayBuffer(), 300)], { type: 'image/jpeg' }); }
 async function makePNG(size, bg){ const cv = await renderExport(size, bg); const bl = await canvasBlob(cv, 'image/png'); return new Blob([pngDpi(await bl.arrayBuffer(), 300)], { type: 'image/png' }); }
-async function makePreview(bg){
+async function previewCanvas(bg){
   const T = 800, n = 3; const tile = await renderExport(T, bg); const cv = document.createElement('canvas'); cv.width = cv.height = T * n;
   const c = cv.getContext('2d'); for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) c.drawImage(tile, i * T, j * T);
-  const bl = await canvasBlob(cv, 'image/jpeg', 0.9); return new Blob([jfifDpi(await bl.arrayBuffer(), 300)], { type: 'image/jpeg' });
+  return cv;
+}
+async function makePreview(bg){
+  const bl = await canvasBlob(await previewCanvas(bg), 'image/jpeg', 0.9); return new Blob([jfifDpi(await bl.arrayBuffer(), 300)], { type: 'image/jpeg' });
+}
+async function makePreviewPNG(bg){
+  const bl = await canvasBlob(await previewCanvas(bg), 'image/png'); return new Blob([pngDpi(await bl.arrayBuffer(), 300)], { type: 'image/png' });
 }
 async function stripCanvas(W, bg, placements){
   const tile = await renderExport(W, bg, placements); const cv = document.createElement('canvas'); cv.width = W; cv.height = W * 2;
@@ -1542,7 +1554,7 @@ async function doStrips(){
   } catch (e) { console.error(e); toast('Gagal: ' + e.message, 4000); }
   busy(false);
 }
-function makeSVG(size, bg){
+function makeSVG(size, bg, rep = 1){
   const used = [...new Set(S.placements.map(p => p.obj))].map(objById).filter(Boolean);
   const srcs = [...new Set(used.filter(o => o.kind === 'svg').map(o => o.src))];
   let defs = srcs.map(s => (S.sources[s] || {}).defs || '').join('');
@@ -1557,8 +1569,15 @@ function makeSVG(size, bg){
     const o = objById(p.obj); if (!o) continue; const k = p.s * size, cx = o.vb.x + o.vb.w / 2, cy = o.vb.y + o.vb.h / 2;
     for (const [dx, dy] of wrapOffsets(p, o)) body += `<use href="#${o.id}" xlink:href="#${o.id}" transform="translate(${f((p.x + dx) * size)} ${f((p.y + dy) * size)}) rotate(${p.rot}) scale(${f(k * p.fx)} ${f(k * p.fy)}) translate(${f(-cx)} ${f(-cy)})"/>`;
   }
+  const tileContent = `${bg ? `<rect width="${size}" height="${size}" fill="${bg}"/>` : ''}<g clip-path="url(#twTile)">${body}</g>`;
+  if (rep > 1){
+    defs += `<g id="twTileG">${tileContent}</g>`;
+    let uses = ''; for (let j = 0; j < rep; j++) for (let i = 0; i < rep; i++) uses += `<use href="#twTileG" xlink:href="#twTileG" x="${i * size}" y="${j * size}"/>`;
+    const inchR = +(size * rep / 300).toFixed(2);
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${inchR}in" height="${inchR}in" viewBox="0 0 ${size * rep} ${size * rep}"><defs>${defs}</defs>${uses}</svg>`;
+  }
   const inch = +(size / 300).toFixed(2);
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${inch}in" height="${inch}in" viewBox="0 0 ${size} ${size}"><defs>${defs}</defs>${bg ? `<rect width="${size}" height="${size}" fill="${bg}"/>` : ''}<g clip-path="url(#twTile)">${body}</g></svg>`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${inch}in" height="${inch}in" viewBox="0 0 ${size} ${size}"><defs>${defs}</defs>${tileContent}</svg>`;
 }
 function zip(files){
   const enc = new TextEncoder(); const parts = [], cen = []; let off = 0;
@@ -1587,6 +1606,9 @@ async function doExport(kind){
     if (kind === 'svg') download(new Blob([makeSVG(size, S.bg)], { type: 'image/svg+xml' }), `${nm}_${colorName(S.bg)}.svg`);
     if (kind === 'svgt') download(new Blob([makeSVG(size, null)], { type: 'image/svg+xml' }), `${nm}_transparan.svg`);
     if (kind === 'preview') download(await makePreview(S.bg), `${nm}_pratinjau-3x3.jpg`);
+    if (kind === 'previewPng') download(await makePreviewPNG(S.bg), `${nm}_pratinjau-3x3.png`);
+    if (kind === 'previewPngT') download(await makePreviewPNG(null), `${nm}_pratinjau-3x3_transparan.png`);
+    if (kind === 'previewSvg') download(new Blob([makeSVG(800, S.bg, 3)], { type: 'image/svg+xml' }), `${nm}_pratinjau-3x3.svg`);
     if (kind === 'strip'){ const W = +S.set.stripW || 1200; download(await jpgBlob(await stripCanvas(W, S.bg, S.placements)), `${nm}_${colorName(S.bg)}_vertikal-${W}x${W * 2}.jpg`); }
     S.exported = true; updateSteps();
   } catch (e) { console.error(e); toast('Gagal ekspor: ' + e.message, 4000); }

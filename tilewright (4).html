@@ -1,0 +1,1836 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tilewright — Seamless Pattern Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F1EB; --panel:#FFFFFF; --panel2:#FAF8F4; --ink:#25222C; --ink2:#4A4653; --muted:#8C8794;
+  --line:#E7E2D9; --line2:#D9D3C8; --accent:#E0644A; --accent-d:#C8533B; --accent-s:#FCEAE4;
+  --sage:#4E7D6B; --sage-s:#E5F0EA; --plum:#7B5EA7; --plum-s:#EFE9F7;
+  --r:12px; --r-s:8px; --sh:0 1px 2px rgba(37,34,44,.05),0 6px 22px rgba(37,34,44,.06);
+  --font:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+h3{margin:0 0 12px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:8px}
+h3 .count{letter-spacing:0;text-transform:none;font-weight:600;color:var(--ink2);font-size:12px}
+
+/* top bar */
+.top{height:58px;display:flex;align-items:center;gap:18px;padding:0 18px;background:var(--panel);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;min-width:250px}
+.brand b{font-size:16px;letter-spacing:-.01em}
+.brand span{color:var(--muted);font-size:12px;font-weight:500}
+.logo{width:30px;height:30px;border-radius:9px;background:var(--ink);display:grid;place-items:center}
+.steps{display:flex;gap:4px;margin:0 auto;background:var(--panel2);border:1px solid var(--line);padding:3px;border-radius:999px}
+.steps span{padding:5px 13px;border-radius:999px;color:var(--muted);font-weight:600;font-size:12px;display:flex;align-items:center;gap:6px}
+.steps span i{font-style:normal;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:10px;background:var(--line);color:var(--ink2)}
+.steps span.on{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.steps span.on i{background:var(--accent);color:#fff}
+.steps span.done i{background:var(--sage);color:#fff}
+.actions{display:flex;gap:6px;min-width:250px;justify-content:flex-end}
+
+.btn{border:1px solid var(--line2);background:var(--panel);padding:7px 12px;border-radius:var(--r-s);font-weight:600;font-size:12.5px;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:.15s;white-space:nowrap}
+.btn:hover{border-color:var(--ink2);background:var(--panel2)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.ghost:hover{background:var(--panel2);border-color:var(--line)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent-d);border-color:var(--accent-d)}
+.btn.magic{background:linear-gradient(135deg,#E0644A,#C2569B 55%,#7B5EA7);border:0;color:#fff;box-shadow:0 6px 18px rgba(194,86,155,.28)}
+.btn.magic:hover{filter:brightness(1.06);box-shadow:0 8px 22px rgba(194,86,155,.36)}
+.btn.dark{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.dark:hover{background:#000}
+.btn.big{width:100%;padding:11px 14px;font-size:13.5px;border-radius:10px}
+.btn.sm{padding:5px 9px;font-size:12px}
+.btn.icon{padding:6px;width:32px;height:32px}
+.link{border:0;background:none;padding:0;color:var(--accent-d);font-weight:600;font-size:12.5px}
+.link:hover{text-decoration:underline}
+.link.muted{color:var(--muted)}
+
+/* layout */
+.app{display:grid;grid-template-columns:292px 1fr 312px;height:calc(100% - 58px)}
+.panel{background:var(--panel);overflow:auto;scrollbar-width:thin}
+.left{border-right:1px solid var(--line)}
+.right{border-left:1px solid var(--line)}
+.panel section{padding:18px 18px 20px;border-bottom:1px solid var(--line)}
+.panel section:last-child{border-bottom:0}
+
+/* drop */
+.drop{display:block;border:1.5px dashed var(--line2);border-radius:var(--r);padding:18px 12px;text-align:center;cursor:pointer;background:var(--panel2);transition:.15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-s)}
+.drop input{display:none}
+.drop b{display:block;font-size:13px;margin:6px 0 2px}
+.drop small{color:var(--muted)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px}
+
+.objgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.obj{position:relative;border:1px solid var(--line);border-radius:10px;background:var(--panel2);aspect-ratio:1;overflow:hidden;transition:.15s}
+.obj:hover{border-color:var(--line2)}
+.obj canvas{position:absolute;inset:8px 8px 20px 8px;width:calc(100% - 16px);height:calc(100% - 28px)}
+.obj.off canvas{opacity:.22}
+.obj .role{position:absolute;left:4px;right:4px;bottom:4px;border:0;border-radius:6px;font-size:10px;font-weight:700;padding:2px 0;text-align:center}
+.obj .role.hero{background:var(--plum-s);color:var(--plum)}
+.obj .role.filler{background:var(--sage-s);color:var(--sage)}
+.obj .tools{position:absolute;top:3px;right:3px;display:flex;gap:2px;opacity:0;transition:.15s}
+.obj:hover .tools{opacity:1}
+.obj .tools button{width:22px;height:22px;border-radius:6px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;padding:0;font-size:12px;line-height:1}
+.obj .tools button:hover{border-color:var(--ink2)}
+.hint{color:var(--muted);font-size:12px;margin:12px 0 0}
+.empty-lib{grid-column:1/-1;color:var(--muted);font-size:12px;text-align:center;padding:10px 0 2px}
+
+details.adv{margin-top:14px;border:1px solid var(--line);border-radius:10px;padding:0 12px}
+details.adv summary{cursor:pointer;padding:10px 0;font-weight:600;font-size:12.5px;color:var(--ink2);list-style:none;display:flex;justify-content:space-between}
+details.adv summary::after{content:"+";color:var(--muted)}
+details.adv[open] summary::after{content:"–"}
+details.adv[open]{padding-bottom:12px}
+
+/* controls */
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field>label,.flabel{display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:12.5px;margin-bottom:7px;color:var(--ink2)}
+.flabel output,.field>label output{font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.seg{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:2px;gap:2px}
+.seg button{flex:1;border:0;background:transparent;padding:6px 4px;border-radius:7px;font-weight:600;font-size:12px;color:var(--muted)}
+.seg button:hover{color:var(--ink)}
+.seg button.on{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:18px;margin:0;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:999px;background:var(--line)}
+input[type=range]::-moz-range-track{height:4px;border-radius:999px;background:var(--line)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--accent);margin-top:-6px;box-shadow:0 1px 3px rgba(0,0,0,.15);transition:transform .12s}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid var(--accent)}
+input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.12)}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:600;font-size:12.5px;color:var(--ink2);cursor:pointer;margin-bottom:12px}
+.toggle input{display:none}
+.toggle .sw{width:34px;height:20px;border-radius:999px;background:var(--line2);position:relative;transition:.15s;flex:none}
+.toggle .sw::after{content:"";position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:2px;left:2px;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.toggle input:checked+.sw{background:var(--accent)}
+.toggle input:checked+.sw::after{left:16px}
+.sub{color:var(--muted);font-size:11.5px;font-weight:500;margin-top:5px}
+.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.btnrow.three{grid-template-columns:repeat(3,1fr)}
+.btnrow.four{grid-template-columns:repeat(4,1fr)}
+.mt{margin-top:10px}
+select,input[type=text],textarea{width:100%;border:1px solid var(--line2);border-radius:var(--r-s);padding:7px 9px;background:var(--panel)}
+select:focus,input[type=text]:focus,textarea:focus{outline:2px solid var(--accent-s);border-color:var(--accent)}
+
+/* center */
+.center{display:flex;flex-direction:column;min-width:0;min-height:0}
+.cands{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:10px;padding:14px 18px 0;align-items:stretch;min-height:0}
+.cands:empty{display:none}
+.cand{min-width:0;border:1.5px solid var(--line);background:var(--panel);border-radius:var(--r);padding:7px;display:flex;gap:9px;align-items:center;cursor:pointer;transition:.15s;text-align:left}
+.cand>div{min-width:0}
+.cand:hover{border-color:var(--line2);box-shadow:var(--sh)}
+.cand.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-s)}
+.cand canvas{width:56px;height:56px;border-radius:7px;flex:none;border:1px solid var(--line)}
+.cand b{display:block;font-size:12.5px}
+.cand small{color:var(--muted);font-size:11px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.score{display:inline-block;margin-top:3px;font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;background:var(--sage-s);color:var(--sage)}
+.candbtns{display:flex;flex-direction:column;gap:6px;justify-content:center}
+.candbtns .btn{justify-content:flex-start}
+.stagewrap{flex:1;position:relative;overflow:auto;min-height:0;display:grid;place-items:center;padding:18px}
+.stagewrap canvas{display:block;border-radius:4px;box-shadow:0 2px 6px rgba(37,34,44,.08),0 18px 40px rgba(37,34,44,.10);touch-action:none}
+.stagewrap.has canvas{cursor:default}
+.emptystate{position:absolute;inset:0;display:grid;place-items:center;text-align:center;pointer-events:none;padding:30px}
+.emptystate .card{pointer-events:auto;max-width:440px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:28px 28px 24px;box-shadow:var(--sh)}
+.emptystate h2{margin:12px 0 6px;font-size:19px;letter-spacing:-.01em}
+.emptystate p{margin:0 0 16px;color:var(--muted)}
+.flow{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:18px}
+.flow span{font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);color:var(--ink2)}
+.viewbar{display:flex;align-items:center;gap:14px;padding:10px 18px;border-top:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+.viewbar .grp{display:flex;align-items:center;gap:8px;color:var(--muted);font-weight:600;font-size:12px}
+.viewbar .seg{min-width:150px}
+.viewbar input[type=range]{width:110px}
+.viewbar .sp{flex:1}
+.kbd{font-size:11px;color:var(--muted)}
+.kbd b{font-weight:600;color:var(--ink2);border:1px solid var(--line2);border-bottom-width:2px;border-radius:4px;padding:0 4px;font-size:10.5px;background:var(--panel2)}
+
+/* busy */
+.busy{position:absolute;inset:0;background:rgba(244,241,235,.72);backdrop-filter:blur(2px);display:none;place-items:center;z-index:5}
+.busy.on{display:grid}
+.busy .box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 22px;min-width:260px;box-shadow:var(--sh);text-align:center}
+.busy .bar{height:6px;background:var(--line);border-radius:999px;overflow:hidden;margin-top:12px}
+.busy .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+
+/* selection panel */
+.selhead{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+.selhead canvas{width:44px;height:44px;border:1px solid var(--line);border-radius:8px;background:var(--panel2)}
+.selhead b{display:block;font-size:13px}
+.selhead small{color:var(--muted)}
+.swaprow{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.swaprow button{flex:none;width:40px;height:40px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);padding:3px}
+.swaprow button:hover{border-color:var(--accent)}
+.swaprow canvas{width:100%;height:100%}
+
+/* swatches */
+.swatches{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.swatch{position:relative;aspect-ratio:1;border-radius:10px;border:1px solid rgba(0,0,0,.08);cursor:pointer;transition:.12s}
+.swatch:hover{transform:translateY(-1px)}
+.swatch.on{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--ink)}
+.swatch .pk{position:absolute;right:-5px;top:-5px;width:17px;height:17px;border-radius:50%;border:1.5px solid var(--line2);background:#fff;display:grid;place-items:center;font-size:10px;font-weight:800;color:transparent;padding:0;line-height:1}
+.swatch .pk.in{background:var(--sage);border-color:var(--sage);color:#fff}
+.custom{display:flex;gap:8px;align-items:center;margin-top:12px}
+.custom input[type=color]{width:38px;height:32px;border:1px solid var(--line2);border-radius:8px;padding:2px;background:#fff;cursor:pointer}
+.custom input[type=text]{flex:1;font-family:ui-monospace,Menlo,monospace;font-size:12px}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(30,28,36,.35);display:none;place-items:center;z-index:20;padding:20px}
+.modal.on{display:grid}
+.modal .dlg{background:var(--panel);border-radius:18px;width:min(640px,100%);max-height:90vh;overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.25)}
+.modal .hd{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line)}
+.modal .hd b{font-size:15px}
+.modal .bd{padding:18px 22px 22px}
+.modal .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal textarea{min-height:170px;font-size:12.5px;line-height:1.5;resize:vertical;background:var(--panel2)}
+.tipbox{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:14px;font-size:12.5px;color:var(--ink2)}
+.tipbox ol{margin:6px 0 0;padding-left:18px}
+.tipbox li{margin:3px 0}
+
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-weight:600;font-size:12.5px;opacity:0;pointer-events:none;transition:.2s;z-index:30;max-width:80vw}
+#toast.on{opacity:1;transform:translateX(-50%)}
+#svgHost{position:fixed;left:-30000px;top:0;width:1000px;height:1000px;overflow:hidden;opacity:0;pointer-events:none}
+
+@media (max-width:1100px){
+  body{overflow:auto}
+  .app{grid-template-columns:1fr;height:auto}
+  .center{min-height:70vh}
+  .left,.right{border:0}
+  .steps{display:none}
+  .brand,.actions{min-width:0}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <div class="logo"><svg width="18" height="18" viewBox="0 0 18 18"><rect x="1" y="1" width="7" height="7" rx="2" fill="#E0644A"/><rect x="10" y="1" width="7" height="7" rx="3.5" fill="#fff"/><rect x="1" y="10" width="7" height="7" rx="3.5" fill="#fff"/><rect x="10" y="10" width="7" height="7" rx="2" fill="#E0644A"/></svg></div>
+    <div><b>Tilewright</b><br><span>Seamless Pattern Studio</span></div>
+  </div>
+  <nav class="steps" id="steps">
+    <span data-s="1"><i>1</i>Objek</span>
+    <span data-s="2"><i>2</i>Pilih susunan</span>
+    <span data-s="3"><i>3</i>Rapikan</span>
+    <span data-s="4"><i>4</i>Ekspor</span>
+  </nav>
+  <div class="actions">
+    <button class="btn ghost" id="btnPrompt">✦ Prompt AI</button>
+    <button class="btn ghost" id="btnOpen">Buka proyek</button>
+    <button class="btn" id="btnSave">Simpan proyek</button>
+  </div>
+</header>
+
+<main class="app">
+  <!-- LEFT: objects -->
+  <aside class="panel left">
+    <section>
+      <h3>Objek <span class="count" id="objCount"></span></h3>
+      <label class="drop" id="drop">
+        <input type="file" id="fileIn" multiple accept=".svg,image/svg+xml,image/png,image/jpeg,image/webp">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8C8794" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        <b>Tarik file SVG ke sini</b>
+        <small>atau klik untuk memilih · PNG transparan juga bisa</small>
+      </label>
+      <div class="row">
+        <button class="link" id="btnDemo">Coba dengan objek contoh</button>
+        <button class="link muted" id="btnClear">Kosongkan</button>
+      </div>
+      <div class="objgrid" id="objGrid"></div>
+      <p class="hint" id="libHint">Peran objek ditentukan otomatis. Klik label <b>Utama</b>/<b>Pengisi</b> untuk menukar, ikon mata untuk menyembunyikan.</p>
+      <details class="adv">
+        <summary>Pengaturan impor</summary>
+        <label class="toggle">Buang latar putih otomatis<input type="checkbox" data-set="removeWhite"><span class="sw"></span></label>
+        <div class="field">
+          <label>Jarak gabung bagian objek <output id="joinOut"></output></label>
+          <input type="range" min="0.1" max="3" step="0.1" data-set="joinGap">
+          <div class="sub">Naikkan jika satu objek terpecah jadi beberapa. Turunkan jika dua objek tergabung.</div>
+        </div>
+        <button class="btn sm" id="btnResplit" style="width:100%">Pisahkan ulang semua file</button>
+      </details>
+    </section>
+  </aside>
+
+  <!-- CENTER: stage -->
+  <section class="center">
+    <div class="cands" id="cands"></div>
+    <div class="stagewrap" id="stageWrap">
+      <canvas id="stage" width="10" height="10"></canvas>
+      <div class="emptystate" id="empty">
+        <div class="card">
+          <svg width="54" height="54" viewBox="0 0 54 54"><rect width="54" height="54" rx="14" fill="#FCEAE4"/><circle cx="17" cy="18" r="6" fill="#E0644A"/><rect x="30" y="12" width="13" height="13" rx="3" transform="rotate(18 36 18)" fill="#7B5EA7"/><path d="M14 40l6-10 6 10z" fill="#4E7D6B"/><circle cx="37" cy="37" r="3" fill="#E0644A"/><circle cx="29" cy="28" r="2" fill="#4E7D6B"/></svg>
+          <h2>Pola seamless otomatis</h2>
+          <p>Masukkan objek SVG hasil vektor, tool menyusun dan menilai puluhan susunan, lalu menampilkan 4 varian terbaik untuk kamu pilih.</p>
+          <div class="flow"><span>1 · Masukkan SVG</span><span>2 · ✨ Bikin bagus</span><span>3 · Klik yang disukai</span><span>4 · Unduh</span></div>
+          <button class="btn primary" id="btnDemo2">Coba dengan objek contoh</button>
+        </div>
+      </div>
+      <div class="busy" id="busy"><div class="box"><b id="busyTxt">Menyusun pola…</b><div class="bar"><i id="busyBar"></i></div></div></div>
+    </div>
+    <div class="viewbar">
+      <div class="grp">Tampilan
+        <div class="seg" id="viewSeg"><button data-v="1">1 tile</button><button data-v="2">2×2</button><button data-v="3">3×3</button></div>
+      </div>
+      <div class="grp">Perbesar <input type="range" id="zoom" min="0.5" max="3" step="0.05" value="1"><span id="zoomOut" style="min-width:36px">100%</span></div>
+      <label class="toggle" style="margin:0;gap:8px">Garis tile<input type="checkbox" id="gridT" checked><span class="sw"></span></label>
+      <div class="sp"></div>
+      <button class="btn icon ghost" id="btnUndo" title="Batalkan (Ctrl+Z)">↶</button>
+      <button class="btn icon ghost" id="btnRedo" title="Ulangi (Ctrl+Y)">↷</button>
+    </div>
+  </section>
+
+  <!-- RIGHT: settings -->
+  <aside class="panel right">
+    <section id="secSel" hidden>
+      <h3>Objek terpilih <button class="link muted" id="btnDesel">Tutup</button></h3>
+      <div class="selhead"><canvas id="selThumb" width="88" height="88"></canvas><div><b id="selName">—</b><small id="selInfo"></small></div></div>
+      <div class="field">
+        <label>Rotasi <output id="rotOut">0°</output></label>
+        <input type="range" id="selRot" min="-180" max="180" step="1">
+        <div class="btnrow four mt">
+          <button class="btn sm" data-act="rot-15" title="Putar kiri 15° (Shift+R)">⟲ 15°</button>
+          <button class="btn sm" data-act="rot15" title="Putar kanan 15° (R)">⟳ 15°</button>
+          <button class="btn sm" data-act="flipx" title="Cermin horizontal (M)">⇋ Cermin</button>
+          <button class="btn sm" data-act="flipy" title="Cermin vertikal (V)">⇵ Balik</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Ukuran <output id="sizeOut">100%</output></label>
+        <input type="range" id="selSize" min="25" max="300" step="1">
+      </div>
+      <div class="btnrow three">
+        <button class="btn sm" data-act="front" title="Ke depan (])">Ke depan</button>
+        <button class="btn sm" data-act="back" title="Ke belakang ([)">Ke belakang</button>
+        <button class="btn sm" data-act="dup" title="Duplikat (D)">Duplikat</button>
+      </div>
+      <div class="flabel mt" style="margin-top:14px">Tukar dengan objek lain</div>
+      <div class="swaprow" id="swapRow"></div>
+      <button class="btn sm mt" data-act="del" style="width:100%;color:var(--accent-d)">Hapus objek ini (Del)</button>
+    </section>
+
+    <section>
+      <h3>Susunan</h3>
+      <div class="field">
+        <div class="flabel">Gaya susunan</div>
+        <div class="seg" data-seg="style"><button data-v="rapi">Rapi</button><button data-v="alami">Acak alami</button></div>
+        <div class="sub" id="styleSub"></div>
+        <div id="jitterWrap" class="mt">
+          <label class="flabel" style="margin-bottom:4px">Keacakan grid <output id="o_gridJitter"></output></label>
+          <input type="range" min="0" max="1" step="0.01" data-set="gridJitter">
+          <div class="sub">Kecil = sangat rapi berbaris. Besar = lebih natural, jarak tetap rata.</div>
+        </div>
+      </div>
+      <div class="field">
+        <div class="flabel">Kepadatan</div>
+        <div class="seg" data-seg="density"><button data-v="longgar">Longgar</button><button data-v="sedang">Sedang</button><button data-v="rapat">Rapat</button></div>
+      </div>
+      <div class="field">
+        <div class="flabel">Salinan tiap objek per tile</div>
+        <div class="seg" data-seg="copies"><button data-v="1">1×</button><button data-v="2">2×</button><button data-v="3">3×</button><button data-v="4">4×</button></div>
+        <div class="sub">Makin banyak salinan, objek makin kecil dan pola makin ramai.</div>
+      </div>
+      <div class="field">
+        <label>Ukuran objek <output id="o_size"></output></label>
+        <input type="range" min="0.6" max="1.4" step="0.01" data-set="size">
+      </div>
+      <div class="field">
+        <label>Variasi ukuran <output id="o_sizeVar"></output></label>
+        <input type="range" min="0" max="0.35" step="0.01" data-set="sizeVar">
+      </div>
+      <div class="field">
+        <div class="flabel">Rotasi</div>
+        <div class="seg" data-seg="rotMode"><button data-v="none">Tegak</button><button data-v="tilt">Miring</button><button data-v="quarter">4 arah</button><button data-v="free">Bebas</button></div>
+        <div id="rotRangeWrap" class="mt">
+          <label class="flabel" style="margin-bottom:4px">Batas miring <output id="o_rotRange"></output></label>
+          <input type="range" min="5" max="90" step="1" data-set="rotRange">
+        </div>
+      </div>
+      <label class="toggle">Cermin acak<input type="checkbox" data-set="mirror"><span class="sw"></span></label>
+      <label class="toggle">Isi celah dengan objek pengisi<input type="checkbox" data-set="fillers"><span class="sw"></span></label>
+      <div class="field" id="fillerSizeWrap">
+        <label>Ukuran pengisi <output id="o_fillerSize"></output></label>
+        <input type="range" min="0.2" max="0.6" step="0.01" data-set="fillerSize">
+      </div>
+      <div class="field">
+        <div class="flabel">Ukuran antar objek</div>
+        <div class="seg" data-seg="sizing"><button data-v="uniform">Seragam</button><button data-v="original">Sesuai gambar asal</button></div>
+      </div>
+      <button class="btn big magic" id="btnMagic" title="Satu klik: tool memilih aturan terbaik, menyusun 20 versi, lalu menampilkan 4 terbaik">✨ Bikin bagus otomatis</button>
+      <button class="btn big mt" id="btnGen">Buat 4 varian</button>
+      <button class="btn big mt" id="btnMix" title="Setiap varian memakai kombinasi aturan acak yang berbeda">🎲 Acak kombinasi aturan</button>
+      <label class="toggle mt" style="margin-bottom:4px">Acak warna latar juga<input type="checkbox" data-set="mixBg"><span class="sw"></span></label>
+      <div class="sub" style="margin-bottom:12px">Tiap varian dapat kepadatan, salinan, rotasi & ukuran berbeda. Pilih satu varian, lalu “Buat 4 varian” untuk mencari susunan lain dengan aturan yang sama.</div>
+      <button class="btn sm mt" id="btnEven" style="width:100%" title="Geser semua objek agar jarak antar objek sama rata dan tidak bertumpuk">⇔ Ratakan jarak</button>
+      <div class="btnrow" style="margin-top:6px">
+        <button class="btn sm" id="btnRefill" title="Hapus pengisi lalu isi ulang celah">↻ Isi ulang celah</button>
+        <button class="btn sm" id="btnRerot" title="Acak ulang rotasi & cermin semua objek">↻ Acak rotasi</button>
+      </div>
+    </section>
+
+    <section>
+      <h3>Warna latar <span class="count" id="packCount"></span></h3>
+      <div class="swatches" id="swatches"></div>
+      <div class="custom">
+        <input type="color" id="bgPick">
+        <input type="text" id="bgHex" maxlength="7" spellcheck="false">
+        <button class="btn sm" id="btnAddSw" title="Tambahkan ke daftar">＋</button>
+      </div>
+      <div class="sub" style="margin-top:8px">Klik warna untuk pratinjau. Tanda <b style="color:var(--sage)">✓</b> di pojok = ikut dalam paket ZIP.</div>
+    </section>
+
+    <section>
+      <h3>Ekspor</h3>
+      <div class="field">
+        <div class="flabel">Nama file</div>
+        <input type="text" data-set="name" spellcheck="false">
+      </div>
+      <div class="field">
+        <div class="flabel">Ukuran tile</div>
+        <select data-set="exportSize">
+          <option value="2400">2400 px · 8 inci</option>
+          <option value="3600">3600 px · 12 inci (standar Etsy)</option>
+          <option value="4800">4800 px · 16 inci</option>
+          <option value="6000">6000 px · 20 inci</option>
+        </select>
+        <div class="sub">Semua file 300 DPI.</div>
+      </div>
+      <div class="btnrow three">
+        <button class="btn sm" data-exp="jpg">JPG</button>
+        <button class="btn sm" data-exp="png">PNG</button>
+        <button class="btn sm" data-exp="svg">SVG</button>
+        <button class="btn sm" data-exp="pngt" title="Objek saja, latar transparan">PNG transp.</button>
+        <button class="btn sm" data-exp="svgt" title="Objek saja, latar transparan">SVG transp.</button>
+        <button class="btn sm" data-exp="preview" title="Contoh pola diulang 3×3 untuk foto listing">Pratinjau 3×3</button>
+      </div>
+      <div class="flabel" style="margin-top:16px">Vertikal untuk thumbnail <span class="sub" style="margin:0">2 tile atas-bawah</span></div>
+      <div class="field" style="margin-bottom:8px">
+        <select data-set="stripW">
+          <option value="800">800 × 1600 px</option>
+          <option value="1200">1200 × 2400 px</option>
+          <option value="1800">1800 × 3600 px</option>
+          <option value="2400">2400 × 4800 px</option>
+        </select>
+      </div>
+      <div class="btnrow">
+        <button class="btn sm" data-exp="strip" title="Pola yang sedang tampil, 2 tile atas-bawah">Vertikal pola ini</button>
+        <button class="btn sm" id="btnStrips" title="4 varian vertikal + gambar gabungan berjejer, dalam ZIP">4 varian (ZIP)</button>
+      </div>
+      <button class="btn dark big mt" id="btnZip">Unduh paket lengkap (ZIP)</button>
+      <div class="sub" id="zipInfo"></div>
+    </section>
+  </aside>
+</main>
+
+<!-- prompt modal -->
+<div class="modal" id="promptModal">
+  <div class="dlg">
+    <div class="hd"><b>✦ Prompt untuk generate objek</b><button class="btn icon ghost" data-close>✕</button></div>
+    <div class="bd">
+      <div class="grid2">
+        <div class="field"><div class="flabel">Tema</div><input type="text" id="pTheme" value="back to school stationery"></div>
+        <div class="field"><div class="flabel">Gaya</div>
+          <select id="pStyle">
+            <option value="doodle">Doodle lucu, outline tebal</option>
+            <option value="kawaii">Kawaii pastel</option>
+            <option value="flat">Flat minimalis tanpa outline</option>
+            <option value="retro">Retro groovy 70-an</option>
+            <option value="boho">Boho earthy</option>
+            <option value="line">Line art satu warna</option>
+            <option value="watercolor">Watercolor clipart</option>
+          </select></div>
+        <div class="field"><div class="flabel">Objek utama</div><select id="pHero"><option>6</option><option>8</option><option selected>10</option><option>12</option></select></div>
+        <div class="field"><div class="flabel">Objek pengisi kecil</div><select id="pFill"><option>0</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
+      </div>
+      <div class="field"><div class="flabel">Palet warna <span class="sub" style="margin:0">opsional</span></div><input type="text" id="pPal" value="soft pink, lilac purple, mint green, butter yellow, red accents"></div>
+      <div class="field"><div class="flabel">Prompt (bahasa Inggris, siap tempel)</div><textarea id="pOut" readonly></textarea></div>
+      <button class="btn primary" id="btnCopyPrompt">Salin prompt</button>
+      <div class="tipbox"><b>Langkah setelah generate</b>
+        <ol>
+          <li>Pastikan objek tidak saling menempel di gambar.</li>
+          <li>Vektorkan, misalnya dengan Vectorizer.ai, atau Illustrator Image Trace dengan opsi <i>Ignore White</i>.</li>
+          <li>Simpan sebagai satu file SVG, lalu tarik ke panel Objek. Tool memisahkan objek dan membuang latar putih otomatis.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="projIn" accept=".json,application/json" hidden>
+<div id="toast"></div>
+<div id="svgHost" aria-hidden="true"></div>
+
+<script>
+'use strict';
+/* ================= utilities ================= */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const PI = Math.PI, SQ2 = Math.SQRT2;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const mod1 = v => ((v % 1) + 1) % 1;
+const uid = (() => { let n = Date.now() % 100000; return p => (p || 'id') + (++n).toString(36); })();
+function mulberry32(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const torus = (ax, ay, bx, by) => { let dx = Math.abs(ax - bx), dy = Math.abs(ay - by); dx = Math.min(dx, 1 - dx); dy = Math.min(dy, 1 - dy); return Math.hypot(dx, dy); };
+function toast(msg, ms = 2600){ const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), ms); }
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+function hexToRgb(h){ h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); const n = parseInt(h, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+const rgbToHex = (r, g, b) => '#' + [r, g, b].map(v => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0')).join('').toUpperCase();
+function hslToHex(h, s, l){ s /= 100; l /= 100; const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l); const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1)); return rgbToHex(f(0) * 255, f(8) * 255, f(4) * 255); }
+function rgbToHsl(r, g, b){ r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b); let h = 0, s = 0; const l = (mx + mn) / 2; if (mx !== mn){ const d = mx - mn; s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; } return [h, s, l]; }
+function parseColor(str){ if (!str || str === 'none') return null; let m = /rgba?\(([^)]+)\)/.exec(str); if (m){ const p = m[1].split(/[ ,/]+/).filter(Boolean).map(parseFloat); return [p[0], p[1], p[2], p[3] === undefined ? 1 : p[3]]; } if (str[0] === '#'){ const c = hexToRgb(str); return [c[0], c[1], c[2], 1]; } return null; }
+function download(blob, name){ const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
+const canvasBlob = (cv, type, q) => new Promise(res => cv.toBlob(res, type, q));
+function loadImage(src){ return new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(new Error('Gambar gagal dimuat')); im.src = src; }); }
+
+/* ================= state ================= */
+const DEF = { style: 'rapi', gridJitter: 0.5, density: 'sedang', copies: 1, size: 1, sizeVar: 0.12, rotMode: 'tilt', rotRange: 40, mirror: true, fillers: true, fillerSize: 0.36, sizing: 'uniform', removeWhite: true, joinGap: 1, exportSize: 3600, name: 'pattern', mixBg: true, stripW: 1200 };
+const DENS = { longgar: { cov: 0.25, gap: 0.30, hole: 2.4 }, sedang: { cov: 0.33, gap: 0.16, hole: 1.55 }, rapat: { cov: 0.41, gap: 0.08, hole: 1.0 } };
+const S = {
+  set: Object.assign({}, DEF),
+  objects: [], sources: {}, // sources[srcId] = {name, kind, text|dataURL, defs}
+  placements: [], meta: null, candidates: [], candIdx: -1,
+  sel: -1, view: 2, zoom: 1, grid: true,
+  bg: '#FBF5EC', swatches: [], pack: new Set(), customSw: [],
+  hist: [], fut: []
+};
+try { const sv = JSON.parse(localStorage.getItem('tilewright.set') || 'null'); if (sv) Object.assign(S.set, sv); } catch (e) {}
+const saveSet = () => { try { localStorage.setItem('tilewright.set', JSON.stringify(S.set)); } catch (e) {} };
+const objById = id => S.objects.find(o => o.id === id);
+
+/* ================= SVG path parsing ================= */
+function arcPts(x1, y1, rx, ry, phi, fa, fs, x2, y2, out){
+  rx = Math.abs(rx); ry = Math.abs(ry); if (!rx || !ry){ out.push(x2, y2); return; }
+  const p = phi * PI / 180, cp = Math.cos(p), sp = Math.sin(p);
+  const dx = (x1 - x2) / 2, dy = (y1 - y2) / 2, x1p = cp * dx + sp * dy, y1p = -sp * dx + cp * dy;
+  const lam = x1p * x1p / (rx * rx) + y1p * y1p / (ry * ry); if (lam > 1){ const s = Math.sqrt(lam); rx *= s; ry *= s; }
+  const num = rx * rx * ry * ry - rx * rx * y1p * y1p - ry * ry * x1p * x1p, den = rx * rx * y1p * y1p + ry * ry * x1p * x1p;
+  let co = den ? Math.sqrt(Math.max(0, num / den)) : 0; if (fa === fs) co = -co;
+  const cxp = co * rx * y1p / ry, cyp = -co * ry * x1p / rx;
+  const cx = cp * cxp - sp * cyp + (x1 + x2) / 2, cy = sp * cxp + cp * cyp + (y1 + y2) / 2;
+  const ang = (ux, uy, vx, vy) => Math.atan2(ux * vy - uy * vx, ux * vx + uy * vy);
+  const t1 = ang(1, 0, (x1p - cxp) / rx, (y1p - cyp) / ry);
+  let dt = ang((x1p - cxp) / rx, (y1p - cyp) / ry, (-x1p - cxp) / rx, (-y1p - cyp) / ry);
+  if (!fs && dt > 0) dt -= 2 * PI; if (fs && dt < 0) dt += 2 * PI;
+  for (let k = 1; k <= 12; k++){ const t = t1 + dt * k / 12, c = Math.cos(t), s = Math.sin(t); out.push(cx + rx * c * cp - ry * s * sp, cy + rx * c * sp + ry * s * cp); }
+}
+/* Converts any path data to absolute subpaths [{d, pts}] */
+function parsePath(d){
+  const subs = []; let cur = null, x = 0, y = 0, sx = 0, sy = 0, cpx = null, cpy = null, qpx = null, qpy = null;
+  const re = /[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/y; let i = 0; const n = d.length;
+  const ws = () => { while (i < n){ const c = d.charCodeAt(i); if (c === 32 || c === 44 || c === 9 || c === 10 || c === 13 || c === 12) i++; else break; } };
+  const num = () => { ws(); re.lastIndex = i; const m = re.exec(d); if (!m) throw new Error('path'); i = re.lastIndex; return +m[0]; };
+  const flag = () => { ws(); const c = d[i++]; if (c !== '0' && c !== '1') throw new Error('flag'); return c === '1' ? 1 : 0; };
+  const hasNum = () => { ws(); if (i >= n) return false; const c = d[i]; return (c >= '0' && c <= '9') || c === '.' || c === '-' || c === '+'; };
+  const f = v => Math.round(v * 1000) / 1000;
+  const start = (X, Y) => { cur = { d: 'M' + f(X) + ' ' + f(Y), pts: [X, Y] }; subs.push(cur); };
+  let cmd = '';
+  while (true){
+    ws(); if (i >= n) break;
+    const ch = d[i];
+    if (/[a-zA-Z]/.test(ch)){ cmd = ch; i++; } else if (!cmd) throw new Error('path');
+    let C = cmd.toUpperCase(); const rel = cmd !== C;
+    if (C === 'Z'){ if (cur) cur.d += 'Z'; x = sx; y = sy; cur = null; cpx = qpx = null; continue; }
+    do {
+      if (C === 'M'){ let X = num(), Y = num(); if (rel){ X += x; Y += y; } x = sx = X; y = sy = Y; start(X, Y); C = 'L'; cmd = rel ? 'l' : 'L'; cpx = qpx = null; continue; }
+      if (!cur) start(x, y);
+      let lastC = false, lastQ = false;
+      if (C === 'L'){ let X = num(), Y = num(); if (rel){ X += x; Y += y; } cur.d += 'L' + f(X) + ' ' + f(Y); cur.pts.push(X, Y); x = X; y = Y; }
+      else if (C === 'H'){ let X = num(); if (rel) X += x; cur.d += 'L' + f(X) + ' ' + f(y); cur.pts.push(X, y); x = X; }
+      else if (C === 'V'){ let Y = num(); if (rel) Y += y; cur.d += 'L' + f(x) + ' ' + f(Y); cur.pts.push(x, Y); y = Y; }
+      else if (C === 'C' || C === 'S'){
+        let x1, y1;
+        if (C === 'C'){ x1 = num(); y1 = num(); if (rel){ x1 += x; y1 += y; } } else { x1 = cpx !== null ? 2 * x - cpx : x; y1 = cpy !== null ? 2 * y - cpy : y; }
+        let x2 = num(), y2 = num(), X = num(), Y = num(); if (rel){ x2 += x; y2 += y; X += x; Y += y; }
+        cur.d += 'C' + f(x1) + ' ' + f(y1) + ' ' + f(x2) + ' ' + f(y2) + ' ' + f(X) + ' ' + f(Y); cur.pts.push(x1, y1, x2, y2, X, Y);
+        cpx = x2; cpy = y2; x = X; y = Y; lastC = true;
+      }
+      else if (C === 'Q' || C === 'T'){
+        let x1, y1;
+        if (C === 'Q'){ x1 = num(); y1 = num(); if (rel){ x1 += x; y1 += y; } } else { x1 = qpx !== null ? 2 * x - qpx : x; y1 = qpy !== null ? 2 * y - qpy : y; }
+        let X = num(), Y = num(); if (rel){ X += x; Y += y; }
+        cur.d += 'Q' + f(x1) + ' ' + f(y1) + ' ' + f(X) + ' ' + f(Y); cur.pts.push(x1, y1, X, Y);
+        qpx = x1; qpy = y1; x = X; y = Y; lastQ = true;
+      }
+      else if (C === 'A'){
+        const rx = num(), ry = num(), rot = num(), fa = flag(), fs = flag(); let X = num(), Y = num(); if (rel){ X += x; Y += y; }
+        cur.d += 'A' + f(rx) + ' ' + f(ry) + ' ' + f(rot) + ' ' + fa + ' ' + fs + ' ' + f(X) + ' ' + f(Y);
+        arcPts(x, y, rx, ry, rot, fa, fs, X, Y, cur.pts); x = X; y = Y;
+      } else throw new Error('cmd ' + C);
+      if (!lastC) cpx = cpy = null; if (!lastQ) qpx = qpy = null;
+    } while (hasNum());
+  }
+  return subs;
+}
+const ptsBox = pts => { let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity; for (let k = 0; k < pts.length; k += 2){ const X = pts[k], Y = pts[k + 1]; if (X < a) a = X; if (X > c) c = X; if (Y < b) b = Y; if (Y > d) d = Y; } return [a, b, c, d]; };
+function xfBox(m, b){ const cs = [[b[0], b[1]], [b[2], b[1]], [b[0], b[3]], [b[2], b[3]]]; let a = Infinity, bb = Infinity, c = -Infinity, d = -Infinity; for (const [X, Y] of cs){ const x = m.a * X + m.c * Y + m.e, y = m.b * X + m.d * Y + m.f; if (x < a) a = x; if (x > c) c = x; if (y < bb) bb = y; if (y > d) d = y; } return [a, bb, c, d]; }
+
+/* ================= SVG splitting ================= */
+const STYLE_PROPS = ['fill', 'fill-opacity', 'fill-rule', 'stroke', 'stroke-width', 'stroke-opacity', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit', 'stroke-dasharray', 'stroke-dashoffset', 'clip-rule', 'paint-order', 'mix-blend-mode'];
+const DEFAULT_STYLE = { 'fill-opacity': '1', 'fill-rule': 'nonzero', 'stroke-opacity': '1', 'stroke-linecap': 'butt', 'stroke-linejoin': 'miter', 'stroke-miterlimit': '4', 'stroke-dasharray': 'none', 'stroke-dashoffset': '0px', 'clip-rule': 'nonzero', 'paint-order': 'normal', 'mix-blend-mode': 'normal', 'stroke-width': '1px' };
+const TEXT_PROPS = ['font-family', 'font-size', 'font-weight', 'font-style', 'letter-spacing', 'text-anchor', 'dominant-baseline'];
+const GEO = { path: ['d'], rect: ['x', 'y', 'width', 'height', 'rx', 'ry'], circle: ['cx', 'cy', 'r'], ellipse: ['cx', 'cy', 'rx', 'ry'], line: ['x1', 'y1', 'x2', 'y2'], polyline: ['points'], polygon: ['points'], image: ['x', 'y', 'width', 'height', 'preserveAspectRatio', 'href'], use: ['x', 'y', 'width', 'height', 'href'] };
+const SKIP_ANC = 'defs,clipPath,mask,symbol,pattern,marker,linearGradient,radialGradient,filter';
+
+function splitSVG(text, srcId, opts){
+  const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+  const root = doc.documentElement;
+  if (!root || root.nodeName.toLowerCase() !== 'svg' || doc.querySelector('parsererror')) throw new Error('File SVG tidak valid');
+  const host = $('#svgHost'); host.innerHTML = '';
+  const live = document.importNode(root, true);
+  live.querySelectorAll('script,foreignObject').forEach(e => e.remove());
+  // canvas size
+  let vx = 0, vy = 0, W = 0, H = 0;
+  const vbA = live.getAttribute('viewBox');
+  if (vbA){ const p = vbA.trim().split(/[\s,]+/).map(parseFloat); [vx, vy, W, H] = p; }
+  if (!(W > 0 && H > 0)){ W = parseFloat(live.getAttribute('width')) || 1000; H = parseFloat(live.getAttribute('height')) || 1000; live.setAttribute('viewBox', `0 0 ${W} ${H}`); }
+  live.setAttribute('width', 1000); live.setAttribute('height', Math.max(1, Math.round(1000 * H / W)));
+  live.setAttribute('preserveAspectRatio', 'none');
+  host.appendChild(live);
+  const pre = 'tw' + srcId + '_';
+  // prefix ids
+  const fixRefs = s => s.replace(/url\(\s*['"]?#([^'")\s]+)['"]?\s*\)/g, (m, id) => `url(#${pre}${id})`);
+  // defs
+  const defEls = Array.from(live.querySelectorAll('linearGradient,radialGradient,pattern,clipPath,mask,filter,symbol,marker')).filter(e => !e.parentElement.closest('linearGradient,radialGradient,pattern,clipPath,mask,filter,symbol,marker'));
+  let defs = defEls.map(e => new XMLSerializer().serializeToString(e)).join('');
+  defs = fixRefs(defs).replace(/\bid="([^"]+)"/g, (m, id) => `id="${pre}${id}"`).replace(/(xlink:href|href)="#([^"]+)"/g, (m, a, id) => `${a}="#${pre}${id}"`).replace(/ xmlns(:\w+)?="[^"]*"/g, '');
+  const rootCTM = live.getScreenCTM(); if (!rootCTM) throw new Error('SVG tidak bisa dibaca');
+  const rootInv = rootCTM.inverse();
+  const els = Array.from(live.querySelectorAll('path,rect,circle,ellipse,line,polyline,polygon,text,image,use')).filter(e => !e.closest(SKIP_ANC) && !(e.parentElement && e.parentElement.closest('text')));
+  const pieces = []; const elInfo = [];
+  const area = W * H;
+  els.forEach((el, ei) => {
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility === 'hidden') return;
+    let op = 1; for (let p = el; p && p !== live; p = p.parentElement){ const o = parseFloat(getComputedStyle(p).opacity); if (!isNaN(o)) op *= o; }
+    if (op <= 0.001) return;
+    const sc = el.getScreenCTM(); if (!sc) return;
+    const m = rootInv.multiply(sc);
+    const tag = el.tagName.toLowerCase();
+    const noStroke = !parseColor(cs.stroke) && !/url/.test(cs.stroke);
+    let style = STYLE_PROPS.map(k => { let v = cs.getPropertyValue(k); if (!v || DEFAULT_STYLE[k] === v || (noStroke && k.startsWith('stroke') && k !== 'stroke')) return ''; return k + ':' + fixRefs(v.replace(/"/g, "'")); }).filter(Boolean);
+    if (tag === 'text') style = style.concat(TEXT_PROPS.map(k => k + ':' + cs.getPropertyValue(k).replace(/"/g, "'")));
+    if (op < 0.999) style.push('opacity:' + op.toFixed(3));
+    const fillC = parseColor(cs.fill), strokeC = parseColor(cs.stroke);
+    const sw = strokeC && strokeC[3] > 0 ? (parseFloat(cs.strokeWidth) || 0) : 0;
+    const scale = Math.sqrt(Math.abs(m.a * m.d - m.b * m.c)) || 1;
+    const pad = sw * scale / 2;
+    const info = { el, tag, m, style: style.join(';'), ei, subs: null };
+    let local = [];
+    if (tag === 'path'){
+      try { info.subs = parsePath(el.getAttribute('d') || ''); } catch (e) { info.subs = null; }
+      if (info.subs && info.subs.length) info.subs.forEach((s, si) => { if (s.pts.length >= 2) local.push({ si, box: ptsBox(s.pts) }); });
+      else info.subs = null;
+    }
+    if (!local.length){ let bb; try { bb = el.getBBox(); } catch (e) { return; } if (!bb || (!bb.width && !bb.height)) return; local.push({ si: -1, box: [bb.x, bb.y, bb.x + bb.width, bb.y + bb.height] }); }
+    const ps = local.map(l => { const b = xfBox(m, l.box); return { info, si: l.si, box: [b[0] - pad, b[1] - pad, b[2] + pad, b[3] + pad] }; });
+    // background detection
+    const ub = ps.reduce((a, p) => [Math.min(a[0], p.box[0]), Math.min(a[1], p.box[1]), Math.max(a[2], p.box[2]), Math.max(a[3], p.box[3])], [Infinity, Infinity, -Infinity, -Infinity]);
+    const cw = (ub[2] - ub[0]) / W, ch = (ub[3] - ub[1]) / H;
+    const whitish = fillC && fillC[3] > 0 && (0.2126 * fillC[0] + 0.7152 * fillC[1] + 0.0722 * fillC[2]) / 255 > 0.9;
+    const isBg = opts.removeWhite && ((whitish && cw > 0.85 && ch > 0.85) || (elInfo.length === 0 && cw > 0.97 && ch > 0.97));
+    if (isBg){
+      if (info.subs && ps.length > 1){
+        // keep only islands nested at depth >= 2 (e.g. white parts inside objects)
+        const inside = (a, b) => a.box[0] >= b.box[0] - 1e-6 && a.box[1] >= b.box[1] - 1e-6 && a.box[2] <= b.box[2] + 1e-6 && a.box[3] <= b.box[3] + 1e-6 && a !== b;
+        ps.forEach(p => { p.depth = ps.reduce((n, q) => n + (inside(p, q) && !inside(q, p) ? 1 : 0), 0); });
+        ps.filter(p => p.depth >= 2).forEach(p => pieces.push(p));
+      }
+      elInfo.push(info); return;
+    }
+    elInfo.push(info);
+    ps.forEach(p => pieces.push(p));
+  });
+  if (!pieces.length) throw new Error('Tidak ada objek yang ditemukan di file ini');
+  // cluster
+  const maxDim = Math.max(W, H), gap = opts.joinGap / 100 * maxDim;
+  const par = pieces.map((_, i) => i);
+  const find = i => { while (par[i] !== i){ par[i] = par[par[i]]; i = par[i]; } return i; };
+  const order = pieces.map((p, i) => i).sort((a, b) => pieces[a].box[0] - pieces[b].box[0]);
+  const active = [];
+  for (const i of order){
+    const b = pieces[i].box;
+    for (let k = active.length - 1; k >= 0; k--){ if (pieces[active[k]].box[2] + gap < b[0]) active.splice(k, 1); }
+    for (const j of active){ const c = pieces[j].box; if (c[0] - gap <= b[2] && b[0] - gap <= c[2] && c[1] - gap <= b[3] && b[1] - gap <= c[3]){ const ri = find(i), rj = find(j); if (ri !== rj) par[ri] = rj; } }
+    active.push(i);
+  }
+  const groups = new Map();
+  pieces.forEach((p, i) => { const r = find(i); if (!groups.has(r)) groups.set(r, []); groups.get(r).push(p); });
+  let clusters = Array.from(groups.values()).map(ps => { const b = ps.reduce((a, p) => [Math.min(a[0], p.box[0]), Math.min(a[1], p.box[1]), Math.max(a[2], p.box[2]), Math.max(a[3], p.box[3])], [Infinity, Infinity, -Infinity, -Infinity]); return { ps, b }; });
+  clusters = clusters.filter(c => Math.max(c.b[2] - c.b[0], c.b[3] - c.b[1]) >= 0.012 * maxDim);
+  // reading order
+  const rowH = maxDim * 0.12;
+  clusters.sort((a, b) => { const ay = Math.round(((a.b[1] + a.b[3]) / 2) / rowH), by = Math.round(((b.b[1] + b.b[3]) / 2) / rowH); return ay - by || a.b[0] - b.b[0]; });
+  const ser = new XMLSerializer();
+  const out = clusters.map((c, ci) => {
+    c.ps.sort((a, b) => a.info.ei - b.info.ei || a.si - b.si);
+    let inner = ''; let k = 0;
+    while (k < c.ps.length){
+      const info = c.ps[k].info; const grp = []; while (k < c.ps.length && c.ps[k].info === info){ grp.push(c.ps[k]); k++; }
+      const m = info.m, mt = `matrix(${[m.a, m.b, m.c, m.d, m.e, m.f].map(v => +v.toFixed(5)).join(' ')})`;
+      let elStr;
+      if (info.tag === 'path' && info.subs && grp[0].si >= 0){
+        elStr = `<path d="${grp.map(g => info.subs[g.si].d).join('')}" style="${esc(info.style)}"/>`;
+      } else if (info.tag === 'text'){
+        const cl = info.el.cloneNode(true); ['class', 'style', 'transform', 'id'].forEach(a => cl.removeAttribute(a));
+        cl.setAttribute('style', info.style);
+        elStr = ser.serializeToString(cl).replace(/ xmlns(:\w+)?="[^"]*"/g, '');
+      } else {
+        const attrs = (GEO[info.tag] || []).map(a => {
+          let v = a === 'href' ? (info.el.getAttribute('href') || info.el.getAttributeNS('http://www.w3.org/1999/xlink', 'href')) : info.el.getAttribute(a);
+          if (v == null) return ''; if (a === 'href' && v[0] === '#') v = '#' + pre + v.slice(1);
+          return ` ${a}="${esc(v)}"`;
+        }).join('');
+        elStr = `<${info.tag}${attrs} style="${esc(info.style)}"/>`;
+      }
+      inner += `<g transform="${mt}">${elStr}</g>`;
+    }
+    const pd = 0.006 * maxDim;
+    const vb = { x: c.b[0] - pd, y: c.b[1] - pd, w: c.b[2] - c.b[0] + 2 * pd, h: c.b[3] - c.b[1] + 2 * pd };
+    return { inner, vb };
+  });
+  host.innerHTML = '';
+  return { defs, items: out };
+}
+
+/* ================= raster import ================= */
+async function splitRaster(dataURL, opts){
+  const img = await loadImage(dataURL);
+  let w = img.naturalWidth, h = img.naturalHeight; const sc = Math.min(1, 2400 / Math.max(w, h)); w = Math.round(w * sc); h = Math.round(h * sc);
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const cx = cv.getContext('2d', { willReadFrequently: true });
+  cx.drawImage(img, 0, 0, w, h);
+  const id = cx.getImageData(0, 0, w, h), px = id.data, N = w * h;
+  const fg = new Uint8Array(N);
+  const cornersT = [0, w - 1, (h - 1) * w, N - 1].filter(i => px[i * 4 + 3] < 16).length;
+  if (cornersT >= 3){ for (let i = 0; i < N; i++) fg[i] = px[i * 4 + 3] > 24 ? 1 : 0; }
+  else {
+    // flood fill near-white background from borders
+    const bg = new Uint8Array(N), st = new Int32Array(N); let sp = 0;
+    const near = i => { const r = px[i * 4], g = px[i * 4 + 1], b = px[i * 4 + 2]; return (255 - r) + (255 - g) + (255 - b) < 60 && Math.max(r, g, b) - Math.min(r, g, b) < 26; };
+    const push = i => { if (!bg[i] && near(i)){ bg[i] = 1; st[sp++] = i; } };
+    for (let x = 0; x < w; x++){ push(x); push((h - 1) * w + x); } for (let y = 0; y < h; y++){ push(y * w); push(y * w + w - 1); }
+    while (sp){ const i = st[--sp], x = i % w; if (x > 0) push(i - 1); if (x < w - 1) push(i + 1); if (i >= w) push(i - w); if (i < N - w) push(i + w); }
+    for (let i = 0; i < N; i++){ fg[i] = bg[i] ? 0 : 1; if (bg[i]) px[i * 4 + 3] = 0; }
+  }
+  // components on a coarse grid
+  const f = Math.max(1, Math.ceil(Math.max(w, h) / 600)), gw = Math.ceil(w / f), gh = Math.ceil(h / f);
+  const g = new Uint8Array(gw * gh);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (fg[y * w + x]) g[((y / f) | 0) * gw + ((x / f) | 0)] = 1;
+  const rad = Math.max(1, Math.round(opts.joinGap / 100 * Math.max(gw, gh)));
+  const dil = new Uint8Array(gw * gh);
+  for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) if (g[y * gw + x]) for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++){ const X = x + dx, Y = y + dy; if (X >= 0 && Y >= 0 && X < gw && Y < gh) dil[Y * gw + X] = 1; }
+  const lab = new Int32Array(gw * gh).fill(-1); let nl = 0; const st = new Int32Array(gw * gh);
+  for (let s = 0; s < gw * gh; s++){ if (!dil[s] || lab[s] >= 0) continue; let sp = 0; st[sp++] = s; lab[s] = nl; while (sp){ const i = st[--sp], x = i % gw; const nb = [x > 0 ? i - 1 : -1, x < gw - 1 ? i + 1 : -1, i - gw, i + gw]; for (const j of nb){ if (j >= 0 && j < gw * gh && dil[j] && lab[j] < 0){ lab[j] = nl; st[sp++] = j; } } } nl++; }
+  const bb = Array.from({ length: nl }, () => [Infinity, Infinity, -Infinity, -Infinity]);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (fg[y * w + x]){ const l = lab[((y / f) | 0) * gw + ((x / f) | 0)]; const b = bb[l]; if (x < b[0]) b[0] = x; if (y < b[1]) b[1] = y; if (x > b[2]) b[2] = x; if (y > b[3]) b[3] = y; }
+  cx.putImageData(id, 0, 0);
+  const md = Math.max(w, h); const items = [];
+  const order = bb.map((b, l) => ({ b, l })).filter(o => o.b[2] >= o.b[0] && Math.max(o.b[2] - o.b[0], o.b[3] - o.b[1]) >= 0.012 * md);
+  const rowH = md * 0.12; order.sort((a, b) => Math.round((a.b[1] + a.b[3]) / 2 / rowH) - Math.round((b.b[1] + b.b[3]) / 2 / rowH) || a.b[0] - b.b[0]);
+  for (const { b, l } of order){
+    const pad = 2, x0 = Math.max(0, b[0] - pad), y0 = Math.max(0, b[1] - pad), x1 = Math.min(w - 1, b[2] + pad), y1 = Math.min(h - 1, b[3] + pad);
+    const ow = x1 - x0 + 1, oh = y1 - y0 + 1; const oc = document.createElement('canvas'); oc.width = ow; oc.height = oh; const ox = oc.getContext('2d');
+    const od = ox.createImageData(ow, oh);
+    for (let y = 0; y < oh; y++) for (let x = 0; x < ow; x++){ const si = (y + y0) * w + (x + x0); if (lab[(((y + y0) / f) | 0) * gw + (((x + x0) / f) | 0)] !== l) continue; const di = (y * ow + x) * 4; od.data[di] = px[si * 4]; od.data[di + 1] = px[si * 4 + 1]; od.data[di + 2] = px[si * 4 + 2]; od.data[di + 3] = px[si * 4 + 3]; }
+    ox.putImageData(od, 0, 0);
+    items.push({ dataURL: oc.toDataURL('image/png'), vb: { x: 0, y: 0, w: ow, h: oh } });
+  }
+  return items;
+}
+
+/* ================= object preparation ================= */
+const MASK_R = 128;
+function objSVG(o, defs, longest){
+  const vb = o.vb, k = longest / Math.max(vb.w, vb.h);
+  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="${vb.x} ${vb.y} ${vb.w} ${vb.h}" width="${Math.round(vb.w * k)}" height="${Math.round(vb.h * k)}"><defs>${defs || ''}</defs>${o.inner}</svg>`;
+}
+async function prepareObject(o){
+  if (o.kind === 'svg'){
+    const blob = new Blob([objSVG(o, (S.sources[o.src] || {}).defs, 1600)], { type: 'image/svg+xml' });
+    o.img = await loadImage(URL.createObjectURL(blob));
+  } else o.img = await loadImage(o.dataURL);
+  try { await o.img.decode(); } catch (e) {}
+  const vb = o.vb, mx = Math.max(vb.w, vb.h);
+  // preview bitmap
+  const B = 512, bw = Math.max(1, Math.round(vb.w / mx * B)), bh = Math.max(1, Math.round(vb.h / mx * B));
+  const bc = document.createElement('canvas'); bc.width = bw; bc.height = bh; const bx = bc.getContext('2d', { willReadFrequently: true });
+  bx.drawImage(o.img, 0, 0, bw, bh); o.bmp = bc;
+  const bd = bx.getImageData(0, 0, bw, bh).data;
+  o.alpha = new Uint8Array(bw * bh); for (let i = 0; i < bw * bh; i++) o.alpha[i] = bd[i * 4 + 3];
+  // color stats
+  let r = 0, g = 0, b = 0, n = 0; const hue = new Float32Array(24);
+  for (let i = 0; i < bw * bh; i += 2){ const a = bd[i * 4 + 3]; if (a < 128) continue; const R = bd[i * 4], G = bd[i * 4 + 1], Bb = bd[i * 4 + 2]; r += R; g += G; b += Bb; n++; const [hh, ss, ll] = rgbToHsl(R, G, Bb); if (ss > 0.25 && ll > 0.2 && ll < 0.9) hue[Math.floor(hh / 15) % 24] += ss; }
+  o.color = n ? [r / n, g / n, b / n] : [128, 128, 128]; o.hue = hue;
+  // mask
+  const mw = Math.max(1, Math.round(vb.w / mx * MASK_R)), mh = Math.max(1, Math.round(vb.h / mx * MASK_R));
+  const mc = document.createElement('canvas'); mc.width = mw; mc.height = mh; const mxc = mc.getContext('2d', { willReadFrequently: true });
+  mxc.drawImage(o.img, 0, 0, mw, mh);
+  const md = mxc.getImageData(0, 0, mw, mh).data; const raw = new Uint8Array(mw * mh); let area = 0, x0 = mw, y0 = mh, x1 = -1, y1 = -1;
+  for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++){ if (md[(y * mw + x) * 4 + 3] > 40){ raw[y * mw + x] = 1; area++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
+  const dil = new Uint8Array(mw * mh);
+  for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) if (raw[y * mw + x]) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++){ const X = x + dx, Y = y + dy; if (X >= 0 && Y >= 0 && X < mw && Y < mh) dil[Y * mw + X] = 1; }
+  { let sx = 0, sy = 0, n = 0; for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) if (raw[y * mw + x]){ sx += x; sy += y; n++; }
+    const mxx = n ? sx / n : 0, myy = n ? sy / n : 0; let a = 0, b = 0, c = 0;
+    for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) if (raw[y * mw + x]){ const dx = x - mxx, dy = y - myy; a += dx * dx; b += dy * dy; c += dx * dy; }
+    const tr = a + b, det = a * b - c * c, l1 = tr / 2 + Math.sqrt(Math.max(0, tr * tr / 4 - det)), l2 = tr / 2 - Math.sqrt(Math.max(0, tr * tr / 4 - det));
+    o.axis = 0.5 * Math.atan2(2 * c, a - b) * 180 / PI; o.elong = l2 > 0 ? l1 / l2 : 10; }
+  o.mask = { w: mw, h: mh, data: dil, unit: mx / MASK_R, area: Math.max(1, area), eqPx: Math.sqrt(4 * Math.max(1, area) / PI), maxPx: Math.max(1, Math.max(x1 - x0 + 1, y1 - y0 + 1)) };
+  o.eqUnits = o.mask.eqPx * o.mask.unit;
+  return o;
+}
+function autoRoles(list){
+  const sizes = list.map(o => o.eqUnits).sort((a, b) => a - b);
+  if (!sizes.length) return;
+  const top = sizes.slice(Math.floor(sizes.length / 2)); const med = top[Math.floor(top.length / 2)];
+  list.forEach(o => { o.role = o.eqUnits < 0.6 * med ? 'filler' : 'hero'; });
+}
+
+/* ================= import flow ================= */
+let srcCounter = 0;
+async function importFiles(files){
+  const list = Array.from(files); if (!list.length) return;
+  busy(true, 'Memisahkan objek…', 0);
+  let added = 0, fail = [];
+  for (let fi = 0; fi < list.length; fi++){
+    const f = list[fi];
+    try {
+      const isSvg = /svg/i.test(f.type) || /\.svg$/i.test(f.name);
+      if (isSvg) added += await addSource({ name: f.name, kind: 'svg', text: await f.text() });
+      else { const du = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); }); added += await addSource({ name: f.name, kind: 'raster', dataURL: du }); }
+    } catch (e) { console.error(e); fail.push(f.name); }
+    busy(true, 'Memisahkan objek…', (fi + 1) / list.length);
+  }
+  busy(false);
+  renderLib(); updatePalette(); updateUI();
+  if (fail.length) toast('Gagal membaca: ' + fail.join(', '), 4000);
+  else if (added) toast(added + ' objek ditambahkan');
+}
+async function addSource(src){
+  const id = (++srcCounter) + '' + Math.floor(Math.random() * 1000);
+  src.id = id; S.sources[id] = src;
+  return await splitSource(src);
+}
+async function splitSource(src){
+  const opts = { removeWhite: S.set.removeWhite, joinGap: S.set.joinGap };
+  const base = src.name.replace(/\.[^.]+$/, '');
+  let objs = [];
+  if (src.kind === 'svg'){
+    const r = splitSVG(src.text, src.id, opts); src.defs = r.defs;
+    objs = r.items.map((it, i) => ({ id: uid('o'), name: base + ' ' + (i + 1), kind: 'svg', src: src.id, inner: it.inner, vb: it.vb, enabled: true }));
+  } else {
+    const items = await splitRaster(src.dataURL, opts);
+    objs = items.map((it, i) => ({ id: uid('o'), name: base + ' ' + (i + 1), kind: 'raster', src: src.id, dataURL: it.dataURL, vb: it.vb, enabled: true }));
+  }
+  for (const o of objs) await prepareObject(o);
+  autoRoles(objs);
+  S.objects.push(...objs);
+  return objs.length;
+}
+async function resplitAll(){
+  const srcs = Object.values(S.sources).filter(s => s.text || s.dataURL);
+  if (!srcs.length){ toast('Belum ada file untuk dipisahkan ulang'); return; }
+  busy(true, 'Memisahkan ulang…', 0.3);
+  const ids = new Set(srcs.map(s => s.id));
+  S.objects = S.objects.filter(o => !ids.has(o.src));
+  try { for (const s of srcs) await splitSource(s); } catch (e) { toast('Gagal: ' + e.message); }
+  S.placements = S.placements.filter(p => objById(p.obj)); S.sel = -1;
+  busy(false); renderLib(); updatePalette(); updateUI(); draw();
+  toast('Sekarang ada ' + S.objects.length + ' objek');
+}
+
+/* ================= layout engine ================= */
+const G = 200, CELL = 1 / G;
+function makeEngine(objs, set, seed){
+  const R = mulberry32(seed);
+  const E = { R, occ: new Uint8Array(G * G), dt: new Float32Array(G * G), set, placements: [] };
+  let heroes = objs.filter(o => o.enabled && o.role === 'hero'), fillers = objs.filter(o => o.enabled && o.role === 'filler');
+  if (!heroes.length){ heroes = fillers; fillers = []; }
+  E.heroes = heroes; E.fillers = fillers.length ? fillers : heroes; E.fillerIsHero = !fillers.length;
+  const dens = DENS[set.density] || DENS.sedang; E.dens = dens;
+  const N = Math.max(1, heroes.length * set.copies);
+  E.Dh = Math.min(0.6, Math.sqrt(dens.cov * 4 / (PI * N)) * set.size);
+  E.gap = E.Dh * dens.gap; E.gapC = Math.max(0.6, E.gap / CELL);
+  E.Df = E.Dh * (E.fillerIsHero ? Math.min(0.5, set.fillerSize + 0.08) : set.fillerSize);
+  const eqs = heroes.map(o => o.eqUnits).sort((a, b) => a - b); E.medEq = eqs[Math.floor(eqs.length / 2)] || 1; E.sizeNorm = sizeNorm(heroes);
+  return E;
+}
+const visSize = o => Math.sqrt(o.mask.eqPx * o.mask.maxPx) * o.mask.unit;   // perceived size: area AND length
+function sizeNorm(list){ const r = list.filter(o => o.role === 'hero' && o.mask).map(o => visSize(o) / o.eqUnits).sort((a, b) => a - b); return r.length ? r[Math.floor(r.length / 2)] : 1; }
+function baseScale(E, o, D){
+  const m = o.mask;
+  if (E.set.sizing === 'original') return E.Dh / E.medEq * (D / E.Dh);
+  const k = E.sizeNorm || sizeNorm(S.objects);
+  return Math.min(D * k / visSize(o), 1.7 * D / (m.maxPx * m.unit));
+}
+function randRot(E){ const s = E.set, R = E.R; if (s.rotMode === 'none') return 0; if (s.rotMode === 'free') return Math.round(R() * 360 - 180); if (s.rotMode === 'quarter') return [0, 90, 180, -90][Math.floor(R() * 4)]; return Math.round((R() * 2 - 1) * s.rotRange); }
+function footprint(o, s, rot, fx, fy){
+  const m = o.mask, p = s * m.unit, th = rot * PI / 180, co = Math.cos(th), si = Math.sin(th);
+  const hw = m.w * p / 2, hh = m.h * p / 2, rad = Math.hypot(hw, hh), Rc = Math.min(G / 2 - 1, Math.ceil(rad / CELL) + 1);
+  const out = [];
+  for (let oj = -Rc; oj <= Rc; oj++) for (let oi = -Rc; oi <= Rc; oi++){
+    const X = oi * CELL, Y = oj * CELL;
+    const xr = (X * co + Y * si) * fx, yr = (-X * si + Y * co) * fy;
+    const mx = Math.floor(xr / p + m.w / 2), my = Math.floor(yr / p + m.h / 2);
+    if (mx < 0 || my < 0 || mx >= m.w || my >= m.h) continue;
+    if (m.data[my * m.w + mx]) out.push(oi, oj);
+  }
+  return { offs: Int16Array.from(out), rad };
+}
+function fits(E, f, ci, cj){ const o = f.offs, dt = E.dt, g = E.gapC; for (let k = 0; k < o.length; k += 2){ const x = (ci + o[k] + G) % G, y = (cj + o[k + 1] + G) % G; if (dt[y * G + x] <= g) return false; } return true; }
+function stamp(E, f, ci, cj){ const o = f.offs; for (let k = 0; k < o.length; k += 2){ const x = (ci + o[k] + G) % G, y = (cj + o[k + 1] + G) % G; E.occ[y * G + x] = 1; } }
+function computeDT(E){
+  const dt = E.dt, occ = E.occ;
+  for (let i = 0; i < G * G; i++) dt[i] = occ[i] ? 0 : 1e6;
+  for (let it = 0; it < 2; it++){
+    for (let y = 0; y < G; y++){ const ym = ((y - 1 + G) % G) * G, yr = y * G; for (let x = 0; x < G; x++){ const i = yr + x; let v = dt[i]; if (v === 0) continue; const xm = (x - 1 + G) % G, xp = (x + 1) % G; let t;
+      t = dt[yr + xm] + 1; if (t < v) v = t; t = dt[ym + x] + 1; if (t < v) v = t; t = dt[ym + xm] + SQ2; if (t < v) v = t; t = dt[ym + xp] + SQ2; if (t < v) v = t; dt[i] = v; } }
+    for (let y = G - 1; y >= 0; y--){ const yp = ((y + 1) % G) * G, yr = y * G; for (let x = G - 1; x >= 0; x--){ const i = yr + x; let v = dt[i]; if (v === 0) continue; const xm = (x - 1 + G) % G, xp = (x + 1) % G; let t;
+      t = dt[yr + xp] + 1; if (t < v) v = t; t = dt[yp + x] + 1; if (t < v) v = t; t = dt[yp + xp] + SQ2; if (t < v) v = t; t = dt[yp + xm] + SQ2; if (t < v) v = t; dt[i] = v; } }
+  }
+}
+const colorDist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+function penalty(E, o, x, y){
+  let pen = 0; const D = E.Dh;
+  for (const p of E.placements){
+    const d = torus(x, y, p.x, p.y);
+    if (p.obj === o.id && d < 2.4 * D) pen += (2.4 * D - d) * 0.9;
+    else if (o.role === 'hero' && p.role === 'hero' && d < 1.5 * D && colorDist(o.color, objById(p.obj).color) < 70) pen += (1.5 * D - d) * 0.3;
+  }
+  return pen;
+}
+function addPlacement(E, o, s, rot, fx, fy, ci, cj, role){ const p = { id: uid('p'), obj: o.id, x: (ci + 0.5) * CELL, y: (cj + 0.5) * CELL, s, rot, fx, fy, role }; E.placements.push(p); return p; }
+function placeHero(E, o, mul){
+  const R = E.R; let best = null;
+  for (let pose = 0; pose < 4; pose++){
+    const s = baseScale(E, o, E.Dh) * mul * (1 + (R() * 2 - 1) * E.set.sizeVar);
+    const rot = randRot(E), fx = E.set.mirror && R() < 0.5 ? -1 : 1;
+    const f = footprint(o, s, rot, fx, 1);
+    const cands = [];
+    for (let k = 0; k < 70; k++){
+      const ci = Math.floor(R() * G), cj = Math.floor(R() * G), d = E.dt[cj * G + ci];
+      if (d <= E.gapC) continue;
+      const x = (ci + 0.5) * CELL, y = (cj + 0.5) * CELL;
+      cands.push([Math.min(d * CELL, 2 * E.Dh) + (R() - 0.5) * 0.25 * E.Dh - penalty(E, o, x, y), ci, cj]);
+    }
+    cands.sort((a, b) => b[0] - a[0]);
+    for (let k = 0; k < Math.min(28, cands.length); k++){ const c = cands[k]; if (best && c[0] <= best.sc) break; if (fits(E, f, c[1], c[2])){ best = { sc: c[0], s, rot, fx, f, ci: c[1], cj: c[2] }; break; } }
+  }
+  if (!best) return false;
+  stamp(E, best.f, best.ci, best.cj); addPlacement(E, o, best.s, best.rot, best.fx, 1, best.ci, best.cj, 'hero'); computeDT(E);
+  return true;
+}
+function fillGaps(E){
+  const R = E.R, ign = new Uint8Array(G * G), cnt = new Map();
+  const minD = E.Df * 0.55, stopR = (minD / 2) * E.dens.hole + E.gap;
+  for (let guard = 0; guard < 500; guard++){
+    let bi = -1, bv = -1; const dt = E.dt;
+    for (let i = 0; i < G * G; i++) if (!ign[i] && dt[i] > bv){ bv = dt[i]; bi = i; }
+    if (bi < 0 || bv * CELL < stopR) break;
+    const ci = bi % G, cj = (bi / G) | 0, x = (ci + 0.5) * CELL, y = (cj + 0.5) * CELL;
+    const avail = bv * CELL - E.gap;
+    const opts = E.fillers.map(o => { let near = 0; for (const p of E.placements) if (p.obj === o.id){ const d = torus(x, y, p.x, p.y); if (d < 3 * E.Dh) near += (3 * E.Dh - d) / E.Dh; } return { o, sc: (cnt.get(o.id) || 0) * 0.6 + near * 2 + R() * 0.8 }; }).sort((a, b) => a.sc - b.sc);
+    let done = false;
+    for (const { o } of opts.slice(0, 3)){
+      const target = Math.min(E.Df * (1 + (R() * 2 - 1) * E.set.sizeVar), avail * 2.1);
+      for (const mul of [1, 0.86, 0.74, 0.64]){
+        const D = target * mul; if (D < minD) break;
+        const s = baseScale(E, o, D), rot = randRot(E), fx = E.set.mirror && R() < 0.5 ? -1 : 1;
+        const f = footprint(o, s, rot, fx, 1);
+        for (const [jx, jy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [2, 2], [-2, -2], [2, -2], [-2, 2]]){
+          const a = (ci + jx + G) % G, b = (cj + jy + G) % G;
+          if (fits(E, f, a, b)){ stamp(E, f, a, b); addPlacement(E, o, s, rot, fx, 1, a, b, 'filler'); cnt.set(o.id, (cnt.get(o.id) || 0) + 1); computeDT(E); done = true; break; }
+        }
+        if (done) break;
+      }
+      if (done) break;
+    }
+    if (!done){ const rr = Math.max(2, Math.round(bv * 0.6)); for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) if (dx * dx + dy * dy <= rr * rr) ign[((cj + dy + G) % G) * G + ((ci + dx + G) % G)] = 1; }
+  }
+}
+function scoreLayout(E, failed){
+  computeDT(E);
+  let maxd = 0; for (let i = 0; i < G * G; i++) if (E.dt[i] > maxd) maxd = E.dt[i];
+  const hole = maxd * CELL / E.Dh;
+  const B = 5, bs = G / B, cov = new Float32Array(B * B);
+  for (let y = 0; y < G; y++) for (let x = 0; x < G; x++) if (E.occ[y * G + x]) cov[Math.floor(y / bs) * B + Math.floor(x / bs)]++;
+  let mean = 0; cov.forEach(v => mean += v); mean /= cov.length; let vr = 0; cov.forEach(v => vr += (v - mean) ** 2); const cv = mean ? Math.sqrt(vr / cov.length) / mean : 1;
+  let same = 0, col = 0; const H = E.placements.filter(p => p.role === 'hero');
+  for (let i = 0; i < H.length; i++) for (let j = i + 1; j < H.length; j++){
+    const a = H[i], b = H[j], d = torus(a.x, a.y, b.x, b.y);
+    if (a.obj === b.obj && d < 2 * E.Dh) same += (2 * E.Dh - d) / E.Dh;
+    else if (d < 1.3 * E.Dh && colorDist(objById(a.obj).color, objById(b.obj).color) < 60) col += (1.3 * E.Dh - d) / E.Dh;
+  }
+  // neighbours leaning the same way, and how evenly the main objects are spaced
+  let tilt = 0; const nn = [];
+  for (let i = 0; i < H.length; i++){
+    let m = 1;
+    for (let j = 0; j < H.length; j++){ if (i === j) continue; const d = torus(H[i].x, H[i].y, H[j].x, H[j].y); if (d < m) m = d;
+      if (j > i && d < 1.8 * E.Dh && (E.set.rotMode === 'tilt' || E.set.rotMode === 'free')){ const oa = objById(H[i].obj), ob = objById(H[j].obj); if (oa.elong > 1.8 && ob.elong > 1.8 && adiff(percAngle(H[i], oa), percAngle(H[j], ob)) < 26) tilt++; } }
+    nn.push(m);
+  }
+  let nm = 0; nn.forEach(v => nm += v); nm /= nn.length || 1; let nv = 0; nn.forEach(v => nv += (v - nm) ** 2); const ncv = nm ? Math.sqrt(nv / (nn.length || 1)) / nm : 0;
+  const nF = E.placements.length - H.length, fillPen = Math.max(0, nF / Math.max(1, H.length) - 1.3) * 14;
+  const sc = 100 - fillPen - cv * 45 - Math.max(0, hole - 0.5) * 40 - same * 7 - col * 3 - failed * 12 - tilt * 2.5 - ncv * 35;
+  return Math.round(clamp(sc, 1, 100));
+}
+/* ---------- "Rapi" style: hidden staggered grid + gap-centre fillers + spacing relaxation ---------- */
+function pickFiller(E, x, y, cnt){
+  const R = E.R;
+  return E.fillers.map(o => { let near = 0; for (const p of E.placements) if (p.obj === o.id){ const d = torus(x, y, p.x, p.y); if (d < 3 * E.Dh) near += (3 * E.Dh - d) / E.Dh; } return { o, sc: (cnt.get(o.id) || 0) * 0.6 + near * 2 + R() * 0.8 }; }).sort((a, b) => a.sc - b.sc).map(a => a.o);
+}
+function tryFiller(E, o, ci, cj, avail, cnt, minK){
+  const R = E.R, minD = E.Df * (minK || 0.5);
+  const target = Math.min(E.Df * (1 + (R() * 2 - 1) * E.set.sizeVar * 0.6), avail * 2 * 0.95);
+  for (const mul of [1, 0.86, 0.74]){
+    const D = target * mul; if (D < minD) return false;
+    const s = baseScale(E, o, D), rot = randRot(E), fx = E.set.mirror && R() < 0.5 ? -1 : 1;
+    const f = footprint(o, s, rot, fx, 1);
+    for (const [jx, jy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]){
+      const a = (ci + jx + G) % G, b = (cj + jy + G) % G;
+      if (fits(E, f, a, b)){ stamp(E, f, a, b); addPlacement(E, o, s, rot, fx, 1, a, b, 'filler'); cnt.set(o.id, (cnt.get(o.id) || 0) + 1); computeDT(E); return true; }
+    }
+  }
+  return false;
+}
+function rapiFillers(E){
+  if (!E.set.fillers) return;
+  const cnt = new Map(), minD = E.Df * 0.5;
+  const passes = E.set.density === 'rapat' ? 2 : 1;
+  for (let pass = 0; pass < passes; pass++){
+    computeDT(E);
+    const dt = E.dt, pts = [], rad = 3;
+    for (let cj = 0; cj < G; cj++) for (let ci = 0; ci < G; ci++){
+      const v = dt[cj * G + ci]; if (v * CELL - E.gap < minD / 2) continue;
+      let mx = true;
+      for (let dy = -rad; dy <= rad && mx; dy++) for (let dx = -rad; dx <= rad; dx++){ if (!dx && !dy) continue; if (dt[((cj + dy + G) % G) * G + ((ci + dx + G) % G)] > v){ mx = false; break; } }
+      if (mx) pts.push([v, ci, cj]);
+    }
+    pts.sort((a, b) => b[0] - a[0]);
+    const kept = [], sep = pass ? E.Df * 1.7 : Math.max(E.Df * 1.6, E.Dh * 0.62);
+    for (const pt of pts){ const x = (pt[1] + 0.5) * CELL, y = (pt[2] + 0.5) * CELL; if (kept.every(k => torus(x, y, k[0], k[1]) > sep)) kept.push([x, y, pt[1], pt[2]]); }
+    const stop = pass ? (minD / 2) * E.dens.hole + E.gap : minD / 2 + E.gap;
+    for (const [x, y, ci, cj] of kept){
+      const v = E.dt[cj * G + ci]; if (v * CELL < stop) continue;
+      for (const o of pickFiller(E, x, y, cnt).slice(0, 3)) if (tryFiller(E, o, ci, cj, v * CELL - E.gap, cnt, pass ? 0.5 : 0.78)) break;
+    }
+  }
+}
+/* push every object toward the middle of its free space so all gaps even out */
+function relax(E, placements, passes, maxShift){
+  const fps = placements.map(p => { const o = objById(p.obj); return o ? footprint(o, p.s, p.rot, p.fx, p.fy) : null; });
+  const R = Math.max(2, maxShift), step = Math.max(1, Math.round(R / 5));
+  const clear = (f, ci, cj) => { let m = 1e9; const o = f.offs, dt = E.dt; for (let k = 0; k < o.length; k += 2){ const v = dt[((cj + o[k + 1] + G) % G) * G + ((ci + o[k] + G) % G)]; if (v < m){ m = v; if (m === 0) return 0; } } return m; };
+  for (let pass = 0; pass < passes; pass++){
+    const order = placements.map((_, i) => i); for (let i = order.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+    for (const i of order){
+      if (!fps[i]) continue;
+      E.occ.fill(0);
+      placements.forEach((q, j) => { if (j !== i && fps[j]) stamp(E, fps[j], Math.floor(q.x * G), Math.floor(q.y * G)); });
+      computeDT(E);
+      const p = placements[i], ci = Math.floor(p.x * G), cj = Math.floor(p.y * G);
+      let best = clear(fps[i], ci, cj), bx = 0, by = 0;
+      for (let dy = -R; dy <= R; dy += step) for (let dx = -R; dx <= R; dx += step){
+        if (!dx && !dy) continue; const d = Math.hypot(dx, dy); if (d > R) continue;
+        const c = clear(fps[i], ci + dx, cj + dy) - d * 0.03;
+        if (c > best + 0.05){ best = c; bx = dx; by = dy; }
+      }
+      if (bx || by){ p.x = mod1((ci + bx + 0.5) * CELL); p.y = mod1((cj + by + 0.5) * CELL); }
+    }
+  }
+  E.occ.fill(0); placements.forEach((q, j) => { if (fps[j]) stamp(E, fps[j], Math.floor(q.x * G), Math.floor(q.y * G)); }); computeDT(E);
+}
+/* neighbouring elongated objects should not all lean the same way */
+function percAngle(p, o){ const a = (o.axis || 0) * PI / 180; let t = Math.atan2(p.fy * Math.sin(a), p.fx * Math.cos(a)) * 180 / PI + p.rot; t = ((t % 180) + 180) % 180; if (t > 90) t -= 180; return t; }
+const adiff = (a, b) => { const d = Math.abs(a - b) % 180; return Math.min(d, 180 - d); };
+function balanceTilts(E, placements){
+  if (E.set.rotMode !== 'tilt' && E.set.rotMode !== 'free') return;
+  const items = placements.filter(p => { const o = objById(p.obj); return p.role === 'hero' && o && o.elong > 1.8; });
+  if (items.length < 2) return;
+  const fp = new Map(placements.map(p => { const o = objById(p.obj); return [p, o ? footprint(o, p.s, p.rot, p.fx, p.fy) : null]; }));
+  const RAD = 1.8 * E.Dh;
+  const pen = (p, t) => { let n = 0; for (const q of items){ if (q === p || torus(p.x, p.y, q.x, q.y) > RAD) continue; if (adiff(t, percAngle(q, objById(q.obj))) < 26) n++; } return n; };
+  for (let pass = 0; pass < 2; pass++){
+    const order = items.slice(); for (let i = order.length - 1; i > 0; i--){ const j = Math.floor(E.R() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+    for (const p of order){
+      const o = objById(p.obj), cur = pen(p, percAngle(p, o)); if (!cur) continue;
+      E.occ.fill(0); for (const q of placements){ const f = fp.get(q); if (q !== p && f) stamp(E, f, Math.floor(q.x * G), Math.floor(q.y * G)); } computeDT(E);
+      const cands = [{ rot: -p.rot, fx: p.fx }, { rot: -p.rot, fx: -p.fx }];
+      for (let k = 0; k < 10; k++) cands.push({ rot: randRot(E), fx: E.set.mirror && E.R() < 0.5 ? -1 : p.fx });
+      let best = null;
+      for (const c of cands){
+        const t = percAngle({ rot: c.rot, fx: c.fx, fy: p.fy }, o), pn = pen(p, t);
+        if (pn >= cur || (best && pn >= best.pn)) continue;
+        const f = footprint(o, p.s, c.rot, c.fx, p.fy);
+        if (fits(E, f, Math.floor(p.x * G), Math.floor(p.y * G))) best = { pn, c, f };
+      }
+      if (best){ p.rot = norm180(best.c.rot); p.fx = best.c.fx; fp.set(p, best.f); }
+    }
+  }
+  E.occ.fill(0); for (const q of placements){ const f = fp.get(q); if (f) stamp(E, f, Math.floor(q.x * G), Math.floor(q.y * G)); } computeDT(E);
+}
+function generateRapi(E){
+  const set = E.set, H = E.heroes, N = Math.max(1, H.length * set.copies), Rn = E.R;
+  // hidden staggered (brick) lattice; rows even so the half-offset wraps seamlessly
+  let best = null;
+  for (let r = 2; r <= 2 * N + 2; r += 2) for (let c = 1; c <= N + 1; c++){
+    const n = r * c; if (n < N) continue;
+    const cost = (n - N) / N * 3 + Math.abs(Math.log(r / (1.155 * c)));
+    if (!best || cost < best.cost) best = { r, c, cost };
+  }
+  const { r: rows, c: cols } = best, cw = 1 / cols, rh = 1 / rows;
+  const nd = Math.min(cw, Math.hypot(cw / 2, rh));
+  const K = { longgar: 0.52, sedang: 0.62, rapat: 0.72 }[set.density] || 0.62;
+  E.Dh = nd * K * set.size; E.gap = E.Dh * E.dens.gap * 0.6; E.gapC = Math.max(0.6, E.gap / CELL);
+  E.Df = E.Dh * (E.fillerIsHero ? Math.min(0.5, set.fillerSize + 0.08) : set.fillerSize);
+  const gj = set.gridJitter == null ? 0.5 : set.gridJitter, J = 0.06 + gj * 0.6;
+  const rowShift = Array.from({ length: rows }, () => (Rn() - 0.5) * gj * 0.5 * cw);
+  const ox = Rn() * cw, oy = Rn() * rh, slots = [];
+  for (let row = 0; row < rows; row++) for (let col = 0; col < cols; col++)
+    slots.push({ x: mod1(ox + rowShift[row] + (col + 0.5 + (row % 2) * 0.5) * cw + (Rn() - 0.5) * J * cw), y: mod1(oy + (row + 0.5) * rh + (Rn() - 0.5) * J * rh) });
+  // fill slots: each hero `copies` times, extra slots get the least-used heroes
+  const list = []; for (let k = 0; k < set.copies; k++) list.push(...H);
+  while (list.length < slots.length) list.push(H[Math.floor(Rn() * H.length)]);
+  for (let i = list.length - 1; i > 0; i--){ const j = Math.floor(Rn() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
+  // keep identical / similar-coloured objects apart
+  const dd = slots.map(a => slots.map(b => torus(a.x, a.y, b.x, b.y)));
+  const pen = i => { let t = 0; for (let j = 0; j < slots.length; j++){ if (j === i) continue; const d = dd[i][j]; if (list[i] === list[j] && d < nd * 2.3) t += 10 * (nd * 2.3 - d) / nd; else if (d < nd * 1.35 && colorDist(list[i].color, list[j].color) < 70) t += 2; } return t; };
+  for (let t = 0; t < 600; t++){
+    const a = Math.floor(Rn() * slots.length), b = Math.floor(Rn() * slots.length); if (a === b) continue;
+    const before = pen(a) + pen(b); [list[a], list[b]] = [list[b], list[a]];
+    if (pen(a) + pen(b) > before) [list[a], list[b]] = [list[b], list[a]];
+  }
+  // place heroes at their slots (search outward if a pose does not fit)
+  const Rs = Math.round((0.3 + 0.25 * gj) * nd / CELL), spiral = [];
+  for (let dy = -Rs; dy <= Rs; dy++) for (let dx = -Rs; dx <= Rs; dx++) if (dx * dx + dy * dy <= Rs * Rs) spiral.push([dx, dy]);
+  spiral.sort((a, b) => (a[0] ** 2 + a[1] ** 2) - (b[0] ** 2 + b[1] ** 2));
+  computeDT(E); let failed = 0;
+  slots.forEach((sl, i) => {
+    const o = list[i], ci = Math.floor(sl.x * G), cj = Math.floor(sl.y * G); let ok = false;
+    for (const mul of [1, 0.9, 0.8, 0.7]){
+      for (let pose = 0; pose < 3 && !ok; pose++){
+        const sc = baseScale(E, o, E.Dh) * mul * (1 + (Rn() * 2 - 1) * set.sizeVar * 0.5);
+        const rot = randRot(E), fx = set.mirror && Rn() < 0.5 ? -1 : 1, f = footprint(o, sc, rot, fx, 1);
+        for (const [dx, dy] of spiral){ const a = (ci + dx + G) % G, b = (cj + dy + G) % G; if (fits(E, f, a, b)){ stamp(E, f, a, b); addPlacement(E, o, sc, rot, fx, 1, a, b, 'hero'); computeDT(E); ok = true; break; } }
+      }
+      if (ok) break;
+    }
+    if (!ok) failed++;
+  });
+  balanceTilts(E, E.placements);
+  rapiFillers(E);
+  relax(E, E.placements, gj > 0.5 ? 2 : 1, Math.round((0.18 + 0.15 * gj) * E.Dh / CELL));
+  return failed;
+}
+function generateOne(objs, set, seed){
+  const E = makeEngine(objs, set, seed);
+  if (!E.heroes.length) return null;
+  computeDT(E);
+  let failed = 0;
+  if (set.style === 'rapi'){
+    failed = generateRapi(E);
+  } else {
+  for (let r = 0; r < set.copies; r++){
+    const order = E.heroes.slice(); for (let i = order.length - 1; i > 0; i--){ const j = Math.floor(E.R() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+    for (const o of order){ if (!placeHero(E, o, 1) && !placeHero(E, o, 0.82) && !placeHero(E, o, 0.68)) failed++; }
+  }
+  balanceTilts(E, E.placements);
+  if (set.fillers) fillGaps(E);
+  }
+  const score = scoreLayout(E, failed);
+  return { seed, score, placements: E.placements, meta: { Dh: E.Dh, gap: E.gap, Df: E.Df, set: Object.assign({}, set) } };
+}
+function rebuildEngine(placements, meta){
+  const set = Object.assign({}, S.set, { fillerSize: S.set.fillerSize });
+  const E = makeEngine(S.objects, set, (Math.random() * 1e9) | 0);
+  if (meta){ E.Dh = meta.Dh; E.gap = meta.gap; E.gapC = Math.max(0.6, E.gap / CELL); E.Df = E.Dh * (E.fillerIsHero ? Math.min(0.5, set.fillerSize + 0.08) : set.fillerSize); }
+  for (const p of placements){ const o = objById(p.obj); if (!o) continue; const f = footprint(o, p.s, p.rot, p.fx, p.fy); stamp(E, f, Math.floor(p.x * G), Math.floor(p.y * G)); E.placements.push(p); }
+  computeDT(E); return E;
+}
+
+const LAYOUT_KEYS = ['style', 'density', 'copies', 'size', 'sizeVar', 'rotMode', 'rotRange', 'mirror', 'fillers', 'fillerSize', 'sizing', 'gridJitter'];
+const ROT_NAME = { none: 'Tegak', tilt: 'Miring', quarter: '4 arah', free: 'Bebas' };
+const DENS_NAME = { longgar: 'Longgar', sedang: 'Sedang', rapat: 'Rapat' };
+const ruleLabel = s => `${s.style === 'rapi' ? 'Rapi' : 'Alami'} · ${DENS_NAME[s.density]} · ${s.copies}× · ${ROT_NAME[s.rotMode]}${s.fillers ? '' : ' · tanpa pengisi'}`;
+function randomRuleSets(n){
+  const R = Math.random, pick = a => a[Math.floor(R() * a.length)];
+  const key = a => [a.density, a.copies, a.rotMode];
+  const out = [];
+  for (let guard = 0; out.length < n && guard < 800; guard++){
+    const s = Object.assign({}, S.set, {
+      style: R() < 0.75 ? 'rapi' : 'alami', density: pick(['longgar', 'sedang', 'sedang', 'rapat']), copies: pick([1, 1, 2, 2, 3]),
+      size: +(0.85 + R() * 0.35).toFixed(2), sizeVar: +(R() * 0.28).toFixed(2),
+      rotMode: pick(['none', 'tilt', 'tilt', 'quarter', 'free']), rotRange: Math.round(15 + R() * 45), gridJitter: +(0.25 + R() * 0.55).toFixed(2),
+      mirror: R() < 0.6, fillers: R() < 0.92, fillerSize: +(0.26 + R() * 0.22).toFixed(2), sizing: R() < 0.8 ? 'uniform' : 'original'
+    });
+    // every variant must differ from the others in at least 2 of: density, copies, rotation
+    if (guard > 600 || out.every(o => { const A = key(o), B = key(s); return A.filter((v, i) => v !== B[i]).length >= 2; })) out.push(s);
+  }
+  return out;
+}
+function pickBgs(n){
+  const lum = c => { const [r, g, b] = hexToRgb(c); return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255; };
+  let pool = S.swatches.map(x => x.c).filter(c => lum(c) > 0.55); if (pool.length < 2) pool = S.swatches.map(x => x.c); for (let i = pool.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  return Array.from({ length: n }, (_, i) => pool[i % pool.length] || S.bg);
+}
+function magicSets(){
+  const n = S.objects.filter(o => o.enabled && o.role === 'hero').length || 1;
+  const copies = n >= 12 ? 1 : n >= 7 ? 2 : 3;
+  const base = Object.assign({}, S.set, { style: 'rapi', mirror: true, fillers: true, sizing: 'uniform', rotMode: 'tilt', sizeVar: 0.1, size: 1, copies });
+  return [
+    Object.assign({}, base, { density: 'sedang', rotRange: 35, gridJitter: 0.55, fillerSize: 0.28 }),
+    Object.assign({}, base, { density: 'sedang', rotRange: 45, gridJitter: 0.7, fillerSize: 0.26 }),
+    Object.assign({}, base, { density: 'sedang', rotRange: 30, gridJitter: 0.4, fillerSize: 0.3, size: 1.06 }),
+    Object.assign({}, base, { density: 'longgar', rotRange: 40, gridJitter: 0.65, fillerSize: 0.3, size: 1.05 })
+  ];
+}
+async function generate(mode){
+  if (!S.objects.some(o => o.enabled)){ toast('Masukkan objek dulu'); return; }
+  const base = (Math.random() * 1e9) | 0; let res = [];
+  if (mode === 'magic' || mode === 'mix'){
+    const magic = mode === 'magic';
+    const sets = magic ? magicSets() : randomRuleSets(4), bgs = !magic && S.set.mixBg ? pickBgs(4) : [], PER = magic ? 5 : 4, total = sets.length * PER; let k = 0;
+    const msg = magic ? 'Meracik pola terbaik…' : 'Mengacak 4 kombinasi aturan…';
+    busy(true, msg, 0);
+    for (let v = 0; v < sets.length; v++){
+      let best = null;
+      for (let t = 0; t < PER; t++){
+        const r = generateOne(S.objects, sets[v], base + (v * PER + t) * 7919); if (r && (!best || r.score > best.score)) best = r;
+        busy(true, msg, ++k / total); await sleep(0);
+      }
+      if (best){ best.label = (magic ? '✨ ' : '') + ruleLabel(sets[v]); if (bgs[v]) best.bg = bgs[v]; res.push(best); }
+    }
+    if (magic) res.sort((a, b) => b.score - a.score);
+  } else {
+    const TRIES = S.set.style === 'rapi' ? 12 : 20;
+    busy(true, 'Menyusun & menilai ' + TRIES + ' susunan…', 0);
+    for (let t = 0; t < TRIES; t++){
+      const r = generateOne(S.objects, S.set, base + t * 7919); if (r) res.push(r);
+      busy(true, 'Menyusun & menilai ' + TRIES + ' susunan…', (t + 1) / TRIES); await sleep(0);
+    }
+    res.sort((a, b) => b.score - a.score); res = res.slice(0, 4);
+    res.forEach(r => { r.label = r.placements.length + ' objek'; });
+  }
+  busy(false);
+  S.candidates = res; S.candIdx = -1;
+  pickCandidate(0, true);
+}
+function syncActive(){ const c = S.candidates[S.candIdx]; if (c){ c.placements = S.placements.map(p => Object.assign({}, p)); c.bg = S.bg; } }
+function pickCandidate(i, fresh){
+  const c = S.candidates[i]; if (!c) return;
+  if (!fresh) syncActive();
+  S.hist = []; S.fut = [];
+  S.candIdx = i; S.placements = c.placements.map(p => Object.assign({}, p)); S.meta = c.meta; S.sel = -1;
+  if (c.meta && c.meta.set){ LAYOUT_KEYS.forEach(k => { if (k in c.meta.set) S.set[k] = c.meta.set[k]; }); saveSet(); bindSettings(); }
+  if (c.bg) setBg(c.bg);
+  renderCands(); draw(); updateUI();
+}
+
+/* ================= rendering ================= */
+function wrapOffsets(p, o){ const r = 0.5 * Math.hypot(o.vb.w, o.vb.h) * p.s; const out = []; for (const dx of [-1, 0, 1]) for (const dy of [-1, 0, 1]){ if (p.x + dx + r < 0 || p.x + dx - r > 1 || p.y + dy + r < 0 || p.y + dy - r > 1) continue; out.push([dx, dy]); } return out; }
+function drawPlacement(ctx, p, T, ox, oy, vector){
+  const o = objById(p.obj); if (!o) return;
+  const W = o.vb.w * p.s * T, H = o.vb.h * p.s * T;
+  ctx.save(); ctx.translate(ox + p.x * T, oy + p.y * T); ctx.rotate(p.rot * PI / 180); ctx.scale(p.fx, p.fy);
+  ctx.drawImage(vector ? o.img : o.bmp, -W / 2, -H / 2, W, H); ctx.restore();
+}
+function renderTile(ctx, T, opt = {}){
+  if (opt.bg){ ctx.fillStyle = opt.bg; ctx.fillRect(0, 0, T, T); }
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, T, T); ctx.clip();
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  const list = opt.placements || S.placements;
+  for (const p of list){ const o = objById(p.obj); if (!o) continue; for (const [dx, dy] of wrapOffsets(p, o)) drawPlacement(ctx, p, T, dx * T, dy * T, opt.vector); }
+  ctx.restore();
+}
+const stage = $('#stage'), sctx = stage.getContext('2d');
+let tileCache = null, stageT = 100;
+function draw(){
+  const wrap = $('#stageWrap');
+  const has = S.placements.length > 0;
+  $('#empty').style.display = S.objects.length || has ? 'none' : '';
+  wrap.classList.toggle('has', has);
+  const dpr = window.devicePixelRatio || 1;
+  const avail = Math.max(120, Math.min(wrap.clientWidth, wrap.clientHeight) - 40);
+  const n = S.view; stageT = Math.floor(avail / n * S.zoom);
+  const size = stageT * n;
+  stage.style.width = size + 'px'; stage.style.height = size + 'px';
+  stage.width = Math.round(size * dpr); stage.height = Math.round(size * dpr);
+  const T = stageT * dpr;
+  sctx.setTransform(1, 0, 0, 1, 0, 0);
+  if (!has){
+    sctx.fillStyle = S.bg; sctx.fillRect(0, 0, stage.width, stage.height);
+    if (S.objects.length){ sctx.fillStyle = '#8C8794'; sctx.font = `600 ${14 * dpr}px ${getComputedStyle(document.body).fontFamily}`; sctx.textAlign = 'center'; sctx.fillText('Tekan “✨ Bikin bagus otomatis” untuk mulai', stage.width / 2, stage.height / 2); }
+    return;
+  }
+  const tc = document.createElement('canvas'); tc.width = tc.height = Math.max(1, Math.round(T));
+  renderTile(tc.getContext('2d'), tc.width, { bg: S.bg });
+  tileCache = tc;
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) sctx.drawImage(tc, i * T, j * T, T, T);
+  if (S.grid && n > 1){
+    sctx.save(); sctx.strokeStyle = 'rgba(37,34,44,.35)'; sctx.lineWidth = 1 * dpr; sctx.setLineDash([5 * dpr, 5 * dpr]);
+    for (let i = 1; i < n; i++){ sctx.beginPath(); sctx.moveTo(i * T, 0); sctx.lineTo(i * T, n * T); sctx.stroke(); sctx.beginPath(); sctx.moveTo(0, i * T); sctx.lineTo(n * T, i * T); sctx.stroke(); }
+    sctx.restore();
+  }
+  // selection
+  const p = S.placements[S.sel];
+  if (p){
+    const o = objById(p.obj);
+    sctx.save();
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, 1], [-1, 1], [1, -1]]){
+      const cx = (i + dx + p.x) * T, cy = (j + dy + p.y) * T, W = o.vb.w * p.s * T, H = o.vb.h * p.s * T;
+      if (cx + W < 0 || cy + H < 0 || cx - W > n * T || cy - H > n * T) continue;
+      sctx.save(); sctx.translate(cx, cy); sctx.rotate(p.rot * PI / 180);
+      sctx.strokeStyle = '#E0644A'; sctx.lineWidth = 1.5 * dpr; sctx.setLineDash([4 * dpr, 3 * dpr]); sctx.strokeRect(-W / 2, -H / 2, W, H);
+      sctx.setLineDash([]); sctx.fillStyle = '#fff';
+      for (const [qx, qy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]){ sctx.beginPath(); sctx.arc(qx * W / 2, qy * H / 2, 3.5 * dpr, 0, 2 * PI); sctx.fill(); sctx.stroke(); }
+      sctx.restore();
+    }
+    sctx.restore();
+  }
+}
+function thumbCanvas(cv, o, size){
+  cv.width = cv.height = size; const c = cv.getContext('2d'); c.clearRect(0, 0, size, size);
+  const k = size * 0.86 / Math.max(o.bmp.width, o.bmp.height), w = o.bmp.width * k, h = o.bmp.height * k;
+  c.imageSmoothingQuality = 'high'; c.drawImage(o.bmp, (size - w) / 2, (size - h) / 2, w, h);
+}
+
+/* ================= library UI ================= */
+function renderLib(){
+  const g = $('#objGrid'); g.innerHTML = '';
+  if (!S.objects.length){ g.innerHTML = '<div class="empty-lib">Belum ada objek</div>'; }
+  for (const o of S.objects){
+    const d = document.createElement('div'); d.className = 'obj' + (o.enabled ? '' : ' off'); d.title = o.name;
+    const cv = document.createElement('canvas'); thumbCanvas(cv, o, 160); d.appendChild(cv);
+    const tools = document.createElement('div'); tools.className = 'tools';
+    tools.innerHTML = `<button data-a="add" title="Tambahkan ke pola">＋</button><button data-a="eye" title="${o.enabled ? 'Sembunyikan' : 'Tampilkan'}">${o.enabled ? '◉' : '○'}</button><button data-a="del" title="Hapus">✕</button>`;
+    d.appendChild(tools);
+    const rb = document.createElement('button'); rb.className = 'role ' + o.role; rb.textContent = o.role === 'hero' ? 'Utama' : 'Pengisi'; rb.title = 'Klik untuk menukar peran'; d.appendChild(rb);
+    rb.onclick = () => { o.role = o.role === 'hero' ? 'filler' : 'hero'; renderLib(); updateUI(); };
+    tools.onclick = e => {
+      const a = e.target.closest('button'); if (!a) return; const act = a.dataset.a;
+      if (act === 'eye'){ o.enabled = !o.enabled; renderLib(); updateUI(); }
+      if (act === 'del'){ S.objects = S.objects.filter(x => x !== o); if (S.placements.some(p => p.obj === o.id)){ pushHist(); S.placements = S.placements.filter(p => p.obj !== o.id); S.sel = -1; } renderLib(); updatePalette(); updateUI(); draw(); }
+      if (act === 'add') addToPattern(o);
+    };
+    g.appendChild(d);
+  }
+  const h = S.objects.filter(o => o.role === 'hero').length, f = S.objects.length - h;
+  $('#objCount').textContent = S.objects.length ? `${h} utama · ${f} pengisi` : '';
+}
+function addToPattern(o){
+  if (!S.placements.length){ toast('Buat pola dulu, lalu objek bisa ditambahkan'); return; }
+  pushHist();
+  const E = rebuildEngine(S.placements, S.meta);
+  let bi = 0, bv = -1; for (let i = 0; i < G * G; i++) if (E.dt[i] > bv){ bv = E.dt[i]; bi = i; }
+  const D = o.role === 'hero' ? E.Dh : E.Df;
+  const p = { id: uid('p'), obj: o.id, x: (bi % G + 0.5) * CELL, y: (((bi / G) | 0) + 0.5) * CELL, s: baseScale(E, o, D), rot: randRot(E), fx: 1, fy: 1, role: o.role };
+  S.placements.push(p); S.sel = S.placements.length - 1; draw(); updateUI();
+}
+
+/* ================= candidates UI ================= */
+function renderCands(){
+  const box = $('#cands'); box.innerHTML = '';
+  if (!S.candidates.length) return;
+  S.candidates.forEach((c, i) => {
+    const b = document.createElement('button'); b.className = 'cand' + (i === S.candIdx ? ' on' : '');
+    const cv = document.createElement('canvas'); const t = 64; cv.width = cv.height = t * 2;
+    const act = i === S.candIdx;
+    const tc = document.createElement('canvas'); tc.width = tc.height = t; renderTile(tc.getContext('2d'), t, { bg: act ? S.bg : (c.bg || S.bg), placements: act ? S.placements : c.placements });
+    const cx = cv.getContext('2d'); for (let a = 0; a < 2; a++) for (let d = 0; d < 2; d++) cx.drawImage(tc, a * t, d * t);
+    b.appendChild(cv);
+    const txt = document.createElement('div'); txt.innerHTML = `<b>Varian ${i + 1}</b><small title="${esc(c.label || '')}">${esc(c.label || (c.placements.length + ' objek'))}</small><span class="score">Skor ${c.score}</span>`;
+    b.appendChild(txt); b.onclick = () => pickCandidate(i, false); box.appendChild(b);
+  });
+  const bw = document.createElement('div'); bw.className = 'candbtns';
+  bw.innerHTML = '<button class="btn sm" data-g="same" title="4 susunan baru dengan aturan yang sedang dipakai">↻ Acak ulang</button><button class="btn sm" data-g="mix" title="4 varian dengan kombinasi aturan acak yang berbeda-beda">🎲 Acak aturan</button><button class="btn sm" data-g="magic" title="Pilih aturan terbaik otomatis">✨ Bikin bagus</button>';
+  bw.onclick = e => { const b = e.target.closest('button'); if (b) generate(b.dataset.g); };
+  box.appendChild(bw);
+}
+
+/* ================= selection & editing ================= */
+function pushHist(){ S.hist.push(JSON.stringify(S.placements)); if (S.hist.length > 80) S.hist.shift(); S.fut = []; }
+function undo(){ if (!S.hist.length) return; S.fut.push(JSON.stringify(S.placements)); S.placements = JSON.parse(S.hist.pop()); S.sel = -1; draw(); updateUI(); }
+function redo(){ if (!S.fut.length) return; S.hist.push(JSON.stringify(S.placements)); S.placements = JSON.parse(S.fut.pop()); S.sel = -1; draw(); updateUI(); }
+function hitTest(u, v){
+  for (let i = S.placements.length - 1; i >= 0; i--){
+    const p = S.placements[i], o = objById(p.obj); if (!o) continue;
+    for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, 1], [-1, 1], [1, -1]]){
+      const X = u - (p.x + dx), Y = v - (p.y + dy); const th = p.rot * PI / 180, co = Math.cos(th), si = Math.sin(th);
+      let lx = (X * co + Y * si) * p.fx / p.s, ly = (-X * si + Y * co) * p.fy / p.s;
+      const bx = Math.floor((lx / o.vb.w + 0.5) * o.bmp.width), by = Math.floor((ly / o.vb.h + 0.5) * o.bmp.height);
+      if (bx < 0 || by < 0 || bx >= o.bmp.width || by >= o.bmp.height) continue;
+      if (o.alpha[by * o.bmp.width + bx] > 30) return i;
+    }
+  }
+  return -1;
+}
+let drag = null;
+stage.addEventListener('pointerdown', e => {
+  if (!S.placements.length) return;
+  const r = stage.getBoundingClientRect(); const px = (e.clientX - r.left) / stageT, py = (e.clientY - r.top) / stageT;
+  const i = hitTest(mod1(px), mod1(py));
+  S.sel = i; updateSel(); draw();
+  if (i >= 0){ drag = { px, py, x0: S.placements[i].x, y0: S.placements[i].y, moved: false, snap: JSON.stringify(S.placements) }; stage.setPointerCapture(e.pointerId); stage.style.cursor = 'grabbing'; }
+});
+stage.addEventListener('pointermove', e => {
+  const r = stage.getBoundingClientRect(); const px = (e.clientX - r.left) / stageT, py = (e.clientY - r.top) / stageT;
+  if (drag && S.sel >= 0){
+    const p = S.placements[S.sel];
+    if (!drag.moved && Math.hypot(px - drag.px, py - drag.py) * stageT > 3){ drag.moved = true; S.hist.push(drag.snap); S.fut = []; }
+    if (drag.moved){ p.x = mod1(drag.x0 + px - drag.px); p.y = mod1(drag.y0 + py - drag.py); draw(); }
+    return;
+  }
+  if (S.placements.length) stage.style.cursor = hitTest(mod1(px), mod1(py)) >= 0 ? 'grab' : 'default';
+});
+const endDrag = () => { if (drag){ drag = null; stage.style.cursor = 'grab'; updateUI(); } };
+stage.addEventListener('pointerup', endDrag); stage.addEventListener('pointercancel', endDrag);
+stage.addEventListener('wheel', e => {
+  if (S.sel < 0 || !(e.altKey || e.shiftKey)) return; e.preventDefault();
+  const p = S.placements[S.sel];
+  if (e.shiftKey){ editSel(() => { p.rot = norm180(p.rot + (e.deltaY > 0 ? 5 : -5)); }, true); }
+  else editSel(() => { p.s *= e.deltaY > 0 ? 0.96 : 1.04; }, true);
+}, { passive: false });
+const norm180 = a => { a = ((a + 180) % 360 + 360) % 360 - 180; return Math.round(a); };
+let lastEditT = 0;
+function editSel(fn, coalesce){
+  const p = S.placements[S.sel]; if (!p) return;
+  const now = Date.now(); if (!coalesce || now - lastEditT > 600) pushHist(); lastEditT = now;
+  fn(p); draw(); updateSel(); updateSteps();
+}
+function selAction(act){
+  const i = S.sel, p = S.placements[i]; if (!p) return;
+  if (act === 'rot15') editSel(p => p.rot = norm180(p.rot + 15));
+  if (act === 'rot-15') editSel(p => p.rot = norm180(p.rot - 15));
+  if (act === 'flipx') editSel(p => p.fx *= -1);
+  if (act === 'flipy') editSel(p => p.fy *= -1);
+  if (act === 'front'){ pushHist(); S.placements.splice(i, 1); S.placements.push(p); S.sel = S.placements.length - 1; draw(); }
+  if (act === 'back'){ pushHist(); S.placements.splice(i, 1); S.placements.unshift(p); S.sel = 0; draw(); }
+  if (act === 'dup'){ pushHist(); const q = Object.assign({}, p, { id: uid('p'), x: mod1(p.x + 0.06), y: mod1(p.y + 0.06) }); S.placements.push(q); S.sel = S.placements.length - 1; draw(); }
+  if (act === 'del'){ pushHist(); S.placements.splice(i, 1); S.sel = -1; draw(); }
+  updateSel(); updateUI();
+}
+function updateSel(){
+  const sec = $('#secSel'); const p = S.placements[S.sel];
+  if (!p){ sec.hidden = true; return; }
+  sec.hidden = false; const o = objById(p.obj);
+  thumbCanvas($('#selThumb'), o, 88);
+  $('#selName').textContent = o.name; $('#selInfo').textContent = (p.role === 'hero' ? 'Objek utama' : 'Pengisi') + (p.fx < 0 ? ' · dicermin' : '') + (p.fy < 0 ? ' · dibalik' : '');
+  $('#selRot').value = p.rot; $('#rotOut').textContent = p.rot + '°';
+  const base = selBase(p, o); const pct = Math.round(p.s / base * 100);
+  $('#selSize').value = clamp(pct, 25, 300); $('#sizeOut').textContent = pct + '%';
+  const row = $('#swapRow');
+  if (row.dataset.for !== p.obj + ':' + S.objects.length){
+    row.dataset.for = p.obj + ':' + S.objects.length; row.innerHTML = '';
+    for (const q of S.objects){ if (q.id === p.obj) continue; const b = document.createElement('button'); b.title = 'Tukar dengan ' + q.name; const cv = document.createElement('canvas'); thumbCanvas(cv, q, 68); b.appendChild(cv);
+      b.onclick = () => editSel(pp => { const old = objById(pp.obj); const k = pp.s * old.eqUnits; pp.obj = q.id; pp.s = k / q.eqUnits; pp.role = q.role; row.dataset.for = ''; }); row.appendChild(b); }
+  }
+}
+function selBase(p, o){ const D = S.meta ? (p.role === 'hero' ? S.meta.Dh : S.meta.Df) : 0.2; const E = { set: S.set, Dh: S.meta ? S.meta.Dh : 0.2, medEq: medianHeroEq() }; return baseScale(E, o, D); }
+function medianHeroEq(){ const e = S.objects.filter(o => o.role === 'hero').map(o => o.eqUnits).sort((a, b) => a - b); return e[Math.floor(e.length / 2)] || 1; }
+
+/* global tools */
+function refill(){
+  if (!S.placements.length) return;
+  pushHist();
+  const heroes = S.placements.filter(p => p.role !== 'filler');
+  const E = rebuildEngine(heroes, S.meta);
+  if (S.set.fillers){ if (S.set.style === 'rapi'){ rapiFillers(E); relax(E, E.placements, 1, Math.round(0.15 * E.Dh / CELL)); } else fillGaps(E); }
+  S.placements = E.placements; S.sel = -1; draw(); updateUI(); toast('Celah diisi ulang');
+}
+function evenOut(){
+  if (!S.placements.length) return;
+  pushHist();
+  busy(true, 'Meratakan jarak…', 0.5);
+  setTimeout(() => {
+    const E = rebuildEngine([], S.meta);
+    E.R = Math.random; E.placements = S.placements; balanceTilts(E, S.placements);
+    relax(E, S.placements, 3, Math.round(0.35 * E.Dh / CELL));
+    busy(false); draw(); updateUI(); toast('Jarak antar objek diratakan');
+  }, 30);
+}
+function rerotate(){
+  if (!S.placements.length) return;
+  pushHist();
+  const E = rebuildEngine([], S.meta); E.R = Math.random;
+  const order = S.placements.slice().sort((a, b) => (a.role === 'filler') - (b.role === 'filler'));
+  for (const p of order){
+    const o = objById(p.obj); if (!o) continue; const ci = Math.floor(p.x * G), cj = Math.floor(p.y * G);
+    let ok = null;
+    for (let t = 0; t < 10 && !ok; t++){ const rot = randRot(E), fx = S.set.mirror && Math.random() < 0.5 ? -1 : 1; const f = footprint(o, p.s, rot, fx, 1); if (fits(E, f, ci, cj)) ok = { rot, fx, f }; }
+    if (ok){ p.rot = ok.rot; p.fx = ok.fx; p.fy = 1; stamp(E, ok.f, ci, cj); }
+    else stamp(E, footprint(o, p.s, p.rot, p.fx, p.fy), ci, cj);
+    computeDT(E);
+  }
+  draw(); updateSel(); toast('Rotasi & cermin diacak ulang');
+}
+
+/* ================= palette ================= */
+const BASE_SW = [{ c: '#FFFFFF', n: 'Putih' }, { c: '#FBF5EC', n: 'Krem' }];
+function updatePalette(){
+  const hue = new Float32Array(24);
+  S.objects.filter(o => o.enabled).forEach(o => o.hue && o.hue.forEach((v, i) => hue[i] += v));
+  const idx = Array.from(hue.keys()).filter(i => hue[i] > 0).sort((a, b) => hue[b] - hue[a]);
+  const picks = []; for (const i of idx){ if (picks.every(p => Math.min(Math.abs(p - i), 24 - Math.abs(p - i)) >= 3)) picks.push(i); if (picks.length >= 3) break; }
+  const sw = BASE_SW.slice();
+  picks.forEach((i, k) => { const h = i * 15 + 7; sw.push({ c: hslToHex(h, 62, 93), n: 'Pastel' }); if (k === 0) sw.push({ c: hslToHex(h, 45, 80), n: 'Lembut' }); });
+  if (picks.length) sw.push({ c: hslToHex(picks[0] * 15 + 7, 32, 17), n: 'Gelap' });
+  sw.push({ c: '#25232B', n: 'Arang' });
+  S.customSw.forEach(c => { if (!sw.some(s => s.c === c)) sw.push({ c, n: 'Kustom' }); });
+  S.swatches = sw.slice(0, 15);
+  if (!S.pack.size) S.pack.add(S.bg);
+  renderSwatches();
+}
+function renderSwatches(){
+  const box = $('#swatches'); box.innerHTML = '';
+  for (const s of S.swatches){
+    const d = document.createElement('div'); d.className = 'swatch' + (s.c.toUpperCase() === S.bg.toUpperCase() ? ' on' : ''); d.style.background = s.c; d.title = s.n + ' ' + s.c;
+    const pk = document.createElement('button'); pk.className = 'pk' + (S.pack.has(s.c) ? ' in' : ''); pk.textContent = '✓'; pk.title = 'Masukkan/keluarkan dari paket';
+    pk.onclick = e => { e.stopPropagation(); if (S.pack.has(s.c)) S.pack.delete(s.c); else S.pack.add(s.c); renderSwatches(); };
+    d.appendChild(pk); d.onclick = () => setBg(s.c); box.appendChild(d);
+  }
+  $('#packCount').textContent = S.pack.size ? S.pack.size + ' warna di paket' : '';
+  $('#zipInfo').textContent = `Isi: JPG + SVG untuk ${S.pack.size || 1} warna latar, PNG & SVG transparan, pratinjau 3×3.`;
+}
+function setBg(c){ S.bg = c.toUpperCase(); $('#bgPick').value = S.bg; $('#bgHex').value = S.bg; renderSwatches(); renderCands(); draw(); }
+
+/* ================= export ================= */
+function jfifDpi(buf, dpi){ const b = new Uint8Array(buf); if (b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF && b[3] === 0xE0 && b[6] === 0x4A && b[7] === 0x46){ b[13] = 1; b[14] = dpi >> 8; b[15] = dpi & 255; b[16] = dpi >> 8; b[17] = dpi & 255; } return b; }
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++){ let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(b, s = 0, e = b.length){ let c = 0xFFFFFFFF; for (let i = s; i < e; i++) c = CRC[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function pngDpi(buf, dpi){
+  const b = new Uint8Array(buf); const ppm = Math.round(dpi / 0.0254);
+  const ch = new Uint8Array(21); const dv = new DataView(ch.buffer);
+  dv.setUint32(0, 9); ch.set([0x70, 0x48, 0x59, 0x73], 4); dv.setUint32(8, ppm); dv.setUint32(12, ppm); ch[16] = 1; dv.setUint32(17, crc32(ch, 4, 17));
+  const out = new Uint8Array(b.length + 21); out.set(b.subarray(0, 33)); out.set(ch, 33); out.set(b.subarray(33), 54); return out;
+}
+async function renderExport(size, bg, placements){
+  const cv = document.createElement('canvas'); cv.width = cv.height = size;
+  renderTile(cv.getContext('2d'), size, { bg, vector: true, placements });
+  return cv;
+}
+async function makeJPG(size, bg){ const cv = await renderExport(size, bg); const bl = await canvasBlob(cv, 'image/jpeg', 0.95); return new Blob([jfifDpi(await bl.arrayBuffer(), 300)], { type: 'image/jpeg' }); }
+async function makePNG(size, bg){ const cv = await renderExport(size, bg); const bl = await canvasBlob(cv, 'image/png'); return new Blob([pngDpi(await bl.arrayBuffer(), 300)], { type: 'image/png' }); }
+async function makePreview(bg){
+  const T = 800, n = 3; const tile = await renderExport(T, bg); const cv = document.createElement('canvas'); cv.width = cv.height = T * n;
+  const c = cv.getContext('2d'); for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) c.drawImage(tile, i * T, j * T);
+  const bl = await canvasBlob(cv, 'image/jpeg', 0.9); return new Blob([jfifDpi(await bl.arrayBuffer(), 300)], { type: 'image/jpeg' });
+}
+async function stripCanvas(W, bg, placements){
+  const tile = await renderExport(W, bg, placements); const cv = document.createElement('canvas'); cv.width = W; cv.height = W * 2;
+  const c = cv.getContext('2d'); c.drawImage(tile, 0, 0); c.drawImage(tile, 0, W); return cv;
+}
+const jpgBlob = async (cv, q = 0.95) => new Blob([jfifDpi(await (await canvasBlob(cv, 'image/jpeg', q)).arrayBuffer(), 300)], { type: 'image/jpeg' });
+async function doStrips(){
+  if (!S.candidates.length){ toast('Buat varian dulu'); return; }
+  syncActive();
+  const W = +S.set.stripW || 1200, nm = safeName(), files = [], strips = [];
+  busy(true, 'Membuat 4 varian vertikal…', 0); await sleep(30);
+  try {
+    for (let i = 0; i < S.candidates.length; i++){
+      const c = S.candidates[i]; const cv = await stripCanvas(W, c.bg || S.bg, c.placements); strips.push(cv);
+      files.push({ name: `${nm}_varian-${i + 1}_vertikal.jpg`, data: new Uint8Array(await (await jpgBlob(cv)).arrayBuffer()) });
+      busy(true, 'Membuat 4 varian vertikal…', (i + 1) / (S.candidates.length + 1)); await sleep(0);
+    }
+    const gap = Math.round(W * 0.04), cw = strips.length * W + (strips.length + 1) * gap, ch = 2 * W + 2 * gap;
+    const all = document.createElement('canvas'); all.width = cw; all.height = ch; const ax = all.getContext('2d');
+    ax.fillStyle = '#FFFFFF'; ax.fillRect(0, 0, cw, ch); strips.forEach((cv, i) => ax.drawImage(cv, gap + i * (W + gap), gap));
+    files.push({ name: `${nm}_4-varian_gabungan.jpg`, data: new Uint8Array(await (await jpgBlob(all, 0.92)).arrayBuffer()) });
+    download(zip(files), `${nm}_4-varian-vertikal.zip`);
+    S.exported = true; updateSteps(); toast('4 varian vertikal + 1 gambar gabungan');
+  } catch (e) { console.error(e); toast('Gagal: ' + e.message, 4000); }
+  busy(false);
+}
+function makeSVG(size, bg){
+  const used = [...new Set(S.placements.map(p => p.obj))].map(objById).filter(Boolean);
+  const srcs = [...new Set(used.filter(o => o.kind === 'svg').map(o => o.src))];
+  let defs = srcs.map(s => (S.sources[s] || {}).defs || '').join('');
+  for (const o of used){
+    const content = o.kind === 'svg' ? o.inner : `<image width="${o.vb.w}" height="${o.vb.h}" href="${o.dataURL}"/>`;
+    defs += `<g id="${o.id}">${content}</g>`;
+  }
+  defs += `<clipPath id="twTile"><rect width="${size}" height="${size}"/></clipPath>`;
+  const f = v => +v.toFixed(3);
+  let body = '';
+  for (const p of S.placements){
+    const o = objById(p.obj); if (!o) continue; const k = p.s * size, cx = o.vb.x + o.vb.w / 2, cy = o.vb.y + o.vb.h / 2;
+    for (const [dx, dy] of wrapOffsets(p, o)) body += `<use href="#${o.id}" xlink:href="#${o.id}" transform="translate(${f((p.x + dx) * size)} ${f((p.y + dy) * size)}) rotate(${p.rot}) scale(${f(k * p.fx)} ${f(k * p.fy)}) translate(${f(-cx)} ${f(-cy)})"/>`;
+  }
+  const inch = +(size / 300).toFixed(2);
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${inch}in" height="${inch}in" viewBox="0 0 ${size} ${size}"><defs>${defs}</defs>${bg ? `<rect width="${size}" height="${size}" fill="${bg}"/>` : ''}<g clip-path="url(#twTile)">${body}</g></svg>`;
+}
+function zip(files){
+  const enc = new TextEncoder(); const parts = [], cen = []; let off = 0;
+  const now = new Date(), dt = ((now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1)), dd = (((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate());
+  for (const f of files){
+    const name = enc.encode(f.name), data = f.data, crc = crc32(data);
+    const h = new DataView(new ArrayBuffer(30)); h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true); h.setUint16(10, dt, true); h.setUint16(12, dd, true); h.setUint32(14, crc, true); h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, name.length, true); h.setUint16(28, 0, true);
+    parts.push(new Uint8Array(h.buffer), name, data);
+    const c = new DataView(new ArrayBuffer(46)); c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, 0, true); c.setUint16(12, dt, true); c.setUint16(14, dd, true); c.setUint32(16, crc, true); c.setUint32(20, data.length, true); c.setUint32(24, data.length, true); c.setUint16(28, name.length, true); c.setUint32(42, off, true);
+    cen.push(new Uint8Array(c.buffer), name); off += 30 + name.length + data.length;
+  }
+  const csz = cen.reduce((a, b) => a + b.length, 0);
+  const e = new DataView(new ArrayBuffer(22)); e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, csz, true); e.setUint32(16, off, true);
+  return new Blob([...parts, ...cen, new Uint8Array(e.buffer)], { type: 'application/zip' });
+}
+const safeName = () => (S.set.name || 'pattern').trim().replace(/[^\w\-]+/g, '-').replace(/^-+|-+$/g, '') || 'pattern';
+const colorName = c => { const s = S.swatches.find(x => x.c.toUpperCase() === c.toUpperCase()); return ((s ? s.n : 'warna') + '-' + c.replace('#', '')).toLowerCase(); };
+async function doExport(kind){
+  if (!S.placements.length){ toast('Belum ada pola untuk diekspor'); return; }
+  const size = +S.set.exportSize, nm = safeName();
+  busy(true, 'Menyiapkan file…', 0.5); await sleep(30);
+  try {
+    if (kind === 'jpg') download(await makeJPG(size, S.bg), `${nm}_${colorName(S.bg)}_${size}.jpg`);
+    if (kind === 'png') download(await makePNG(size, S.bg), `${nm}_${colorName(S.bg)}_${size}.png`);
+    if (kind === 'pngt') download(await makePNG(size, null), `${nm}_transparan_${size}.png`);
+    if (kind === 'svg') download(new Blob([makeSVG(size, S.bg)], { type: 'image/svg+xml' }), `${nm}_${colorName(S.bg)}.svg`);
+    if (kind === 'svgt') download(new Blob([makeSVG(size, null)], { type: 'image/svg+xml' }), `${nm}_transparan.svg`);
+    if (kind === 'preview') download(await makePreview(S.bg), `${nm}_pratinjau-3x3.jpg`);
+    if (kind === 'strip'){ const W = +S.set.stripW || 1200; download(await jpgBlob(await stripCanvas(W, S.bg, S.placements)), `${nm}_${colorName(S.bg)}_vertikal-${W}x${W * 2}.jpg`); }
+    S.exported = true; updateSteps();
+  } catch (e) { console.error(e); toast('Gagal ekspor: ' + e.message, 4000); }
+  busy(false);
+}
+async function doZip(){
+  if (!S.placements.length){ toast('Belum ada pola untuk diekspor'); return; }
+  const size = +S.set.exportSize, nm = safeName();
+  const colors = S.pack.size ? [...S.pack] : [S.bg];
+  const steps = colors.length * 2 + 3; let st = 0; const files = []; const enc = new TextEncoder();
+  const tick = () => busy(true, 'Membuat paket ZIP…', ++st / steps);
+  busy(true, 'Membuat paket ZIP…', 0); await sleep(30);
+  try {
+    for (const c of colors){
+      files.push({ name: `${nm}_${colorName(c)}_${size}.jpg`, data: new Uint8Array(await (await makeJPG(size, c)).arrayBuffer()) }); tick(); await sleep(0);
+      files.push({ name: `vector/${nm}_${colorName(c)}.svg`, data: enc.encode(makeSVG(size, c)) }); tick();
+    }
+    files.push({ name: `${nm}_transparan_${size}.png`, data: new Uint8Array(await (await makePNG(size, null)).arrayBuffer()) }); tick(); await sleep(0);
+    files.push({ name: `vector/${nm}_transparan.svg`, data: enc.encode(makeSVG(size, null)) }); tick();
+    files.push({ name: `${nm}_pratinjau-3x3.jpg`, data: new Uint8Array(await (await makePreview(S.bg)).arrayBuffer()) }); tick();
+    download(zip(files), `${nm}_seamless-pack.zip`);
+    S.exported = true; updateSteps();
+    toast('Paket ZIP berisi ' + files.length + ' file');
+  } catch (e) { console.error(e); toast('Gagal membuat ZIP: ' + e.message, 4000); }
+  busy(false);
+}
+
+/* ================= project save/load ================= */
+function saveProject(){
+  if (!S.objects.length){ toast('Belum ada yang bisa disimpan'); return; }
+  syncActive();
+  const data = {
+    app: 'tilewright', v: 1, set: S.set, bg: S.bg, pack: [...S.pack], customSw: S.customSw, meta: S.meta, placements: S.placements, candidates: S.candidates, candIdx: S.candIdx,
+    sources: Object.fromEntries(Object.entries(S.sources).map(([k, v]) => [k, { name: v.name, kind: v.kind, defs: v.defs || '' }])),
+    objects: S.objects.map(o => ({ id: o.id, name: o.name, kind: o.kind, src: o.src, inner: o.inner, dataURL: o.dataURL, vb: o.vb, role: o.role, enabled: o.enabled }))
+  };
+  download(new Blob([JSON.stringify(data)], { type: 'application/json' }), safeName() + '.tilewright.json');
+}
+async function loadProject(file){
+  try {
+    const d = JSON.parse(await file.text()); if (d.app !== 'tilewright') throw new Error('Bukan file proyek Tilewright');
+    busy(true, 'Membuka proyek…', 0.3);
+    S.sources = d.sources || {}; S.objects = d.objects || [];
+    for (const o of S.objects) await prepareObject(o);
+    Object.assign(S.set, d.set || {}); S.bg = d.bg || S.bg; S.pack = new Set(d.pack || []); S.customSw = d.customSw || [];
+    S.placements = d.placements || []; S.meta = d.meta || null; S.candidates = d.candidates || []; S.candIdx = d.candIdx != null ? d.candIdx : -1; S.hist = []; S.fut = []; S.sel = -1;
+    busy(false); bindSettings(); renderLib(); updatePalette(); setBg(S.bg); renderCands(); draw(); updateUI();
+    toast('Proyek dibuka');
+  } catch (e) { busy(false); toast('Gagal membuka: ' + e.message, 4000); }
+}
+
+/* ================= prompt helper ================= */
+const STYLES = {
+  doodle: 'cute hand-drawn doodle illustrations with thick dark outlines, rounded friendly shapes and flat colors',
+  kawaii: 'kawaii style illustrations with soft pastel colors, rounded shapes, thin dark outlines and some objects with tiny happy faces',
+  flat: 'minimal flat vector illustrations with no outlines, simple clean geometric shapes and flat colors',
+  retro: 'retro 1970s groovy illustrations with thick outlines, warm muted colors and bold simple shapes',
+  boho: 'boho earthy illustrations with muted terracotta, sage, mustard and cream colors, simple organic shapes',
+  line: 'simple single-color line art icons with uniform black strokes and no fill',
+  watercolor: 'soft watercolor clipart illustrations with gentle color washes and clean edges'
+};
+function buildPrompt(){
+  const th = $('#pTheme').value.trim() || 'cute objects', st = STYLES[$('#pStyle').value], h = +$('#pHero').value, f = +$('#pFill').value, pal = $('#pPal').value.trim();
+  const total = h + f;
+  let t = `A sticker sheet of ${total} separate ${st}, theme: ${th}. `;
+  t += `Include ${h} different main objects related to the theme` + (f ? ` and ${f} tiny simple filler elements (such as small stars, dots, hearts, sparkles or little flowers) drawn at about one third of the main object size` : '') + `. `;
+  t += `Arrange them in a loose grid on a plain pure white background (#FFFFFF). Every object is fully visible, isolated, and separated by generous empty white space: no overlapping, no touching, nothing cut off at the edges. `;
+  t += `All objects share exactly the same art style, line weight and lighting. `;
+  if (pal) t += `Color palette: ${pal}. `;
+  t += `Flat colors, crisp clean edges, vector-friendly, no shadows, no gradients, no texture, no text, no watermark, no border, high resolution.`;
+  $('#pOut').value = t;
+}
+
+/* ================= UI binding ================= */
+function busy(on, txt, frac){ const b = $('#busy'); b.classList.toggle('on', !!on); if (txt) $('#busyTxt').textContent = txt; if (frac != null) $('#busyBar').style.width = Math.round(frac * 100) + '%'; }
+function bindSettings(){
+  $$('[data-seg]').forEach(sg => { const k = sg.dataset.seg; sg.querySelectorAll('button').forEach(b => b.classList.toggle('on', String(S.set[k]) === b.dataset.v)); });
+  $$('[data-set]').forEach(el => { const k = el.dataset.set; if (el.type === 'checkbox') el.checked = !!S.set[k]; else el.value = S.set[k]; });
+  fmtOutputs();
+}
+function fmtOutputs(){
+  const s = S.set;
+  $('#o_size').textContent = Math.round(s.size * 100) + '%';
+  $('#o_sizeVar').textContent = '±' + Math.round(s.sizeVar * 100) + '%';
+  $('#o_rotRange').textContent = '±' + s.rotRange + '°';
+  $('#o_fillerSize').textContent = Math.round(s.fillerSize * 100) + '%';
+  $('#joinOut').textContent = s.joinGap.toFixed(1) + '%';
+  $('#rotRangeWrap').style.display = s.rotMode === 'tilt' ? '' : 'none';
+  $('#fillerSizeWrap').style.display = s.fillers ? '' : 'none';
+  $('#jitterWrap').style.display = s.style === 'rapi' ? '' : 'none';
+  $('#o_gridJitter').textContent = Math.round((s.gridJitter == null ? 0.5 : s.gridJitter) * 100) + '%';
+  $('#styleSub').textContent = s.style === 'rapi' ? 'Objek diatur di grid tersembunyi, jarak rata, pengisi di tengah celah.' : 'Posisi bebas dan acak, terasa lebih organik.';
+}
+$$('[data-seg]').forEach(sg => sg.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return; const k = sg.dataset.seg; let v = b.dataset.v; if (k === 'copies') v = +v;
+  S.set[k] = v; saveSet(); bindSettings();
+}));
+$$('[data-set]').forEach(el => el.addEventListener('input', () => {
+  const k = el.dataset.set; let v = el.type === 'checkbox' ? el.checked : el.value;
+  if (el.type === 'range') v = parseFloat(v);
+  S.set[k] = v; saveSet(); fmtOutputs();
+}));
+function updateSteps(){
+  const st = !S.objects.length ? 1 : !S.placements.length ? 2 : S.exported ? 4 : 3;
+  $$('#steps span').forEach(s => { const n = +s.dataset.s; s.classList.toggle('on', n === st); s.classList.toggle('done', n < st); });
+}
+function updateUI(){
+  updateSteps(); updateSel();
+  const has = S.placements.length > 0;
+  $('#btnRefill').disabled = !has; $('#btnEven').disabled = !has; $('#btnRerot').disabled = !has; $('#btnUndo').disabled = !S.hist.length; $('#btnRedo').disabled = !S.fut.length;
+  $$('[data-exp]').forEach(b => b.disabled = !has); $('#btnZip').disabled = !has;
+  $('#btnGen').disabled = !S.objects.some(o => o.enabled);
+  $('#btnGen').textContent = S.candidates.length ? 'Buat 4 varian baru' : 'Buat 4 varian';
+  $('#btnMix').disabled = $('#btnGen').disabled; $('#btnMagic').disabled = $('#btnGen').disabled;
+  $('#btnStrips').disabled = !S.candidates.length;
+  if (S.candidates.length) renderCands();
+  $('#empty').style.display = S.objects.length || has ? 'none' : '';
+}
+$('#viewSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.view = +b.dataset.v; $$('#viewSeg button').forEach(x => x.classList.toggle('on', x === b)); draw(); });
+$('#zoom').addEventListener('input', e => { S.zoom = +e.target.value; $('#zoomOut').textContent = Math.round(S.zoom * 100) + '%'; draw(); });
+$('#gridT').addEventListener('change', e => { S.grid = e.target.checked; draw(); });
+$('#btnUndo').onclick = undo; $('#btnRedo').onclick = redo;
+$('#btnGen').onclick = () => generate('same'); $('#btnMagic').onclick = () => generate('magic'); $('#btnMix').onclick = () => generate('mix'); $('#btnStrips').onclick = doStrips; $('#btnRefill').onclick = refill; $('#btnEven').onclick = evenOut; $('#btnRerot').onclick = rerotate;
+$('#btnDesel').onclick = () => { S.sel = -1; updateSel(); draw(); };
+$$('[data-act]').forEach(b => b.onclick = () => selAction(b.dataset.act));
+$('#selRot').addEventListener('input', e => editSel(p => p.rot = +e.target.value, true));
+$('#selSize').addEventListener('input', e => { const p = S.placements[S.sel]; if (!p) return; const base = selBase(p, objById(p.obj)); editSel(p => p.s = base * (+e.target.value) / 100, true); });
+$$('[data-exp]').forEach(b => b.onclick = () => doExport(b.dataset.exp));
+$('#btnZip').onclick = doZip;
+$('#btnSave').onclick = saveProject;
+$('#btnOpen').onclick = () => $('#projIn').click();
+$('#projIn').onchange = e => { if (e.target.files[0]) loadProject(e.target.files[0]); e.target.value = ''; };
+$('#fileIn').onchange = e => { importFiles(e.target.files); e.target.value = ''; };
+const drop = $('#drop');
+['dragenter', 'dragover'].forEach(ev => document.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => document.addEventListener(ev, e => { e.preventDefault(); if (ev === 'drop' || !e.relatedTarget) drop.classList.remove('over'); }));
+document.addEventListener('drop', e => { const fs = Array.from(e.dataTransfer.files || []); const pj = fs.find(f => /\.json$/i.test(f.name)); if (pj) loadProject(pj); else importFiles(fs); });
+$('#btnClear').onclick = () => { if (!S.objects.length) return; if (!confirm('Hapus semua objek dan pola?')) return; S.objects = []; S.sources = {}; S.placements = []; S.candidates = []; S.candIdx = -1; S.sel = -1; S.hist = []; S.fut = []; renderLib(); renderCands(); updatePalette(); draw(); updateUI(); };
+$('#btnResplit').onclick = resplitAll;
+$('#bgPick').addEventListener('input', e => setBg(e.target.value));
+$('#bgHex').addEventListener('change', e => { let v = e.target.value.trim(); if (!v.startsWith('#')) v = '#' + v; if (/^#[0-9a-f]{6}$/i.test(v)) setBg(v); else e.target.value = S.bg; });
+$('#btnAddSw').onclick = () => { if (!S.customSw.includes(S.bg) && !S.swatches.some(s => s.c === S.bg)) S.customSw.push(S.bg); S.pack.add(S.bg); updatePalette(); };
+$('#btnPrompt').onclick = () => { buildPrompt(); $('#promptModal').classList.add('on'); };
+$$('[data-close]').forEach(b => b.onclick = () => b.closest('.modal').classList.remove('on'));
+$('#promptModal').addEventListener('click', e => { if (e.target.id === 'promptModal') e.target.classList.remove('on'); });
+['pTheme', 'pStyle', 'pHero', 'pFill', 'pPal'].forEach(id => $('#' + id).addEventListener('input', buildPrompt));
+$('#btnCopyPrompt').onclick = async () => { buildPrompt(); try { await navigator.clipboard.writeText($('#pOut').value); toast('Prompt disalin'); } catch (e) { $('#pOut').select(); document.execCommand('copy'); toast('Prompt disalin'); } };
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select')) return;
+  const ctrl = e.ctrlKey || e.metaKey;
+  if (ctrl && e.key.toLowerCase() === 'z'){ e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+  if (ctrl && e.key.toLowerCase() === 'y'){ e.preventDefault(); redo(); return; }
+  if (e.key === 'Escape'){ $$('.modal').forEach(m => m.classList.remove('on')); S.sel = -1; updateSel(); draw(); return; }
+  if (S.sel < 0) return;
+  const p = S.placements[S.sel]; const st = e.shiftKey ? 0.02 : 0.004;
+  const k = e.key;
+  if (k === 'Delete' || k === 'Backspace'){ e.preventDefault(); selAction('del'); }
+  else if (k === 'ArrowLeft'){ e.preventDefault(); editSel(p => p.x = mod1(p.x - st), true); }
+  else if (k === 'ArrowRight'){ e.preventDefault(); editSel(p => p.x = mod1(p.x + st), true); }
+  else if (k === 'ArrowUp'){ e.preventDefault(); editSel(p => p.y = mod1(p.y - st), true); }
+  else if (k === 'ArrowDown'){ e.preventDefault(); editSel(p => p.y = mod1(p.y + st), true); }
+  else if (k.toLowerCase() === 'r') selAction(e.shiftKey ? 'rot-15' : 'rot15');
+  else if (k.toLowerCase() === 'm') selAction('flipx');
+  else if (k.toLowerCase() === 'v') selAction('flipy');
+  else if (k.toLowerCase() === 'd') selAction('dup');
+  else if (k === ']') selAction('front');
+  else if (k === '[') selAction('back');
+  else if (k === '+' || k === '=') editSel(p => p.s *= 1.06, true);
+  else if (k === '-' || k === '_') editSel(p => p.s /= 1.06, true);
+});
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(draw, 80); });
+
+/* ================= demo objects (original, built-in) ================= */
+const DEMO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900">
+<style>.o{stroke:#3D3046;stroke-width:6;stroke-linejoin:round;stroke-linecap:round}.ln{fill:none;stroke-linecap:round}</style>
+<rect width="1200" height="900" fill="#ffffff"/>
+<g class="o" transform="translate(150,150)">
+ <path d="M0,95 C-60,60 -85,0 -70,-35 C-55,-70 -20,-60 0,-55 C20,-60 55,-70 70,-35 C85,0 60,60 0,95 Z" fill="#FF7A86"/>
+ <path d="M-42,-58 L-16,-50 L0,-82 L16,-50 L42,-58 L18,-37 L0,-45 L-18,-37 Z" fill="#7DCB6E"/>
+</g>
+<g class="o" transform="translate(450,150)">
+ <path d="M-60,10 L60,10 L45,88 L-45,88 Z" fill="#9CCBFF"/>
+ <path class="ln" d="M-30,14 L-24,84 M0,14 L0,84 M30,14 L24,84"/>
+ <path d="M-72,15 C-92,-15 -62,-45 -36,-36 C-30,-72 30,-72 36,-36 C62,-45 92,-15 72,15 Z" fill="#FFC6E0"/>
+ <circle cx="0" cy="-74" r="16" fill="#FF4D6D"/>
+ <path class="ln" d="M2,-90 Q8,-104 20,-108"/>
+</g>
+<g class="o" transform="translate(750,150)">
+ <path d="M-40,0 L40,0 L0,98 Z" fill="#F4B860"/>
+ <path class="ln" d="M-22,22 L12,60 M18,10 L-14,48"/>
+ <circle cx="-22" cy="-14" r="36" fill="#FFD3E6"/>
+ <circle cx="24" cy="-10" r="34" fill="#C9F2E0"/>
+ <circle cx="0" cy="-54" r="30" fill="#FFE9A8"/>
+</g>
+<g class="o" transform="translate(1050,150)">
+ <path fill-rule="evenodd" d="M-82,0 A82,82 0 1,0 82,0 A82,82 0 1,0 -82,0 Z M-28,0 A28,28 0 1,0 28,0 A28,28 0 1,0 -28,0 Z" fill="#E8A86B"/>
+ <path fill-rule="evenodd" stroke="none" d="M-66,-6 C-66,-50 -24,-70 6,-66 C46,-62 70,-30 66,6 C62,30 40,30 30,46 C14,66 -30,60 -50,40 C-64,26 -66,14 -66,-6 Z M-34,0 A34,34 0 1,0 34,0 A34,34 0 1,0 -34,0 Z" fill="#FF94C0"/>
+ <path class="ln" stroke-width="7" d="M-40,-40 l10,6 M30,-48 l-4,11 M48,-6 l10,-4 M-52,16 l11,2 M12,48 l-2,10" style="stroke:#7B5EA7"/>
+</g>
+<g class="o" transform="translate(150,450)">
+ <path d="M-28,0 C-30,40 -35,80 -30,90 L30,90 C35,80 30,40 28,0 Z" fill="#FFF3E0"/>
+ <path d="M-96,10 C-96,-60 -50,-96 0,-96 C50,-96 96,-60 96,10 Z" fill="#E85D5D"/>
+ <circle cx="-46" cy="-36" r="13" fill="#FFFFFF"/><circle cx="8" cy="-62" r="12" fill="#FFFFFF"/><circle cx="50" cy="-22" r="12" fill="#FFFFFF"/>
+</g>
+<g class="o" transform="translate(450,450)">
+ <path d="M-90,40 C-120,40 -122,-10 -86,-12 C-90,-56 -30,-72 -10,-40 C6,-82 76,-70 70,-24 C110,-30 122,40 80,40 Z" fill="#CFE8FF"/>
+ <path class="ln" d="M-12,12 Q0,24 12,12"/>
+</g>
+<g transform="translate(750,470)">
+ <path d="M-90,30 A90,90 0 0,1 90,30" fill="none" stroke="#FF7A7A" stroke-width="18" stroke-linecap="round"/>
+ <path d="M-68,30 A68,68 0 0,1 68,30" fill="none" stroke="#FFC36B" stroke-width="18" stroke-linecap="round"/>
+ <path d="M-46,30 A46,46 0 0,1 46,30" fill="none" stroke="#8FD694" stroke-width="18" stroke-linecap="round"/>
+ <g class="o"><circle cx="-80" cy="40" r="24" fill="#FFFFFF"/><circle cx="-56" cy="46" r="18" fill="#FFFFFF"/><circle cx="80" cy="40" r="24" fill="#FFFFFF"/><circle cx="56" cy="46" r="18" fill="#FFFFFF"/></g>
+</g>
+<g class="o" transform="translate(1050,450)">
+ <ellipse cx="0" cy="72" rx="96" ry="18" fill="#B8A9FF"/>
+ <circle cx="70" cy="2" r="22" fill="none" stroke-width="10" style="stroke:#3D3046"/>
+ <path d="M-66,-32 L66,-32 C66,30 40,64 0,64 C-40,64 -66,30 -66,-32 Z" fill="#FFFDF8"/>
+ <path d="M0,30 C-24,14 -18,-6 -6,-4 C-2,-4 0,0 0,2 C0,0 2,-4 6,-4 C18,-6 24,14 0,30 Z" fill="#FF94C0"/>
+ <path class="ln" d="M-16,-38 c-10,-14 10,-24 0,-40 M16,-38 c-10,-14 10,-24 0,-40"/>
+</g>
+<g transform="translate(150,760)">
+ <path d="M-36,30 Q-22,-40 20,-82 M38,24 Q32,-30 20,-82" fill="none" stroke="#5E8F3E" stroke-width="7" stroke-linecap="round"/>
+ <path class="o" d="M20,-82 C40,-100 70,-96 80,-80 C60,-66 36,-68 20,-82 Z" fill="#7DCB6E"/>
+ <circle class="o" cx="-36" cy="46" r="35" fill="#E63946"/><circle class="o" cx="40" cy="42" r="35" fill="#E63946"/>
+</g>
+<g class="o" transform="translate(450,760)">
+ <path d="M-104,-30 A104,104 0 0,0 104,-30 Z" fill="#7DCB6E"/>
+ <path d="M-84,-30 A84,84 0 0,0 84,-30 Z" fill="#FF7A86" stroke="none"/>
+</g>
+<path fill="#3D3046" d="M120,140 a4,6 0 1,0 0.1,0 z m30,-10 a4,6 0 1,0 0.1,0 z m28,14 a4,6 0 1,0 0.1,0 z m-42,30 a4,6 0 1,0 0.1,0 z m38,6 a4,6 0 1,0 0.1,0 z
+ M430,442 a6,7 0 1,0 0.1,0 z m40,0 a6,7 0 1,0 0.1,0 z
+ M400,765 a4,7 0 1,0 0.1,0 z m30,12 a4,7 0 1,0 0.1,0 z m30,-6 a4,7 0 1,0 0.1,0 z m30,-10 a4,7 0 1,0 0.1,0 z"/>
+<polygon class="o" transform="translate(690,730)" points="0,-40 11,-13 40,-12 17,6 25,35 0,18 -25,35 -17,6 -40,-12 -11,-13" fill="#FFD166"/>
+<path class="o" transform="translate(820,800) scale(1.4)" d="M0,25 C-40,0 -30,-30 -12,-28 C-5,-27 0,-20 0,-15 C0,-20 5,-27 12,-28 C30,-30 40,0 0,25 Z" fill="#FF94C0"/>
+<path class="o" transform="translate(1050,760)" d="M0,-40 C5,-10 10,-5 40,0 C10,5 5,10 0,40 C-5,10 -10,5 -40,0 C-10,-5 -5,-10 0,-40 Z" fill="#B8A9FF"/>
+</svg>`;
+async function loadDemo(){ const f = new File([DEMO_SVG], 'contoh.svg', { type: 'image/svg+xml' }); await importFiles([f]); }
+$('#btnDemo').onclick = loadDemo; $('#btnDemo2').onclick = loadDemo;
+
+/* init */
+bindSettings();
+$$('#viewSeg button').forEach(x => x.classList.toggle('on', +x.dataset.v === S.view));
+setBg(S.bg); updatePalette(); renderLib(); updateUI(); draw();
+</script>
+</body>
+</html>

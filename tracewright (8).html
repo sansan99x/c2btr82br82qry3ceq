@@ -1,0 +1,1301 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tracewright — Smart Vector Trace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F1EB; --panel:#FFFFFF; --panel2:#FAF8F4; --ink:#25222C; --ink2:#4A4653; --muted:#8C8794;
+  --line:#E7E2D9; --line2:#D9D3C8; --accent:#E0644A; --accent-d:#C8533B; --accent-s:#FCEAE4;
+  --sage:#4E7D6B; --sage-s:#E5F0EA; --plum:#7B5EA7; --plum-s:#EFE9F7;
+  --r:12px; --r-s:8px; --sh:0 1px 2px rgba(37,34,44,.05),0 6px 22px rgba(37,34,44,.06);
+  --font:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased;overflow:hidden}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+h3{margin:0 0 12px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:8px}
+h3 .count{letter-spacing:0;text-transform:none;font-weight:600;color:var(--ink2);font-size:12px}
+.top{height:58px;display:flex;align-items:center;gap:18px;padding:0 18px;background:var(--panel);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px}
+.brand b{font-size:16px;letter-spacing:-.01em}
+.brand span{color:var(--muted);font-size:12px;font-weight:500}
+.logo{width:30px;height:30px;border-radius:9px;background:var(--ink);display:grid;place-items:center}
+.top .sp{flex:1}
+.btn{border:1px solid var(--line2);background:var(--panel);padding:7px 12px;border-radius:var(--r-s);font-weight:600;font-size:12.5px;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:.15s;white-space:nowrap}
+.btn:hover{border-color:var(--ink2);background:var(--panel2)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent-d);border-color:var(--accent-d)}
+.btn.dark{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.dark:hover{background:#000}
+.btn.big{width:100%;padding:11px 14px;font-size:13.5px;border-radius:10px}
+.btn.sm{padding:6px 9px;font-size:12px}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.ghost:hover{background:var(--panel2);border-color:var(--line)}
+.link{border:0;background:none;padding:0;color:var(--accent-d);font-weight:600;font-size:12.5px}
+.link:hover{text-decoration:underline}
+.app{display:grid;grid-template-columns:292px 1fr 312px;height:calc(100% - 58px)}
+.panel{background:var(--panel);overflow:auto;scrollbar-width:thin}
+.left{border-right:1px solid var(--line)}
+.right{border-left:1px solid var(--line)}
+.panel section{padding:18px 18px 20px;border-bottom:1px solid var(--line)}
+.panel section:last-child{border-bottom:0}
+.drop{display:block;border:1.5px dashed var(--line2);border-radius:var(--r);padding:18px 12px;text-align:center;cursor:pointer;background:var(--panel2);transition:.15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-s)}
+.drop input{display:none}
+.drop b{display:block;font-size:13px;margin:6px 0 2px}
+.drop small{color:var(--muted)}
+.files{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.file{display:flex;align-items:center;gap:10px;padding:6px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);cursor:pointer;transition:.15s;text-align:left;width:100%}
+.file:hover{border-color:var(--line2)}
+.file.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-s);background:#fff}
+.file img{width:40px;height:40px;object-fit:contain;border-radius:6px;background:#fff;border:1px solid var(--line)}
+.file .nm{flex:1;min-width:0}
+.file .nm b{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file .nm small{color:var(--muted);font-size:11px}
+.file .x{border:0;background:none;color:var(--muted);font-size:14px;padding:4px}
+.file.part{margin-left:22px;width:calc(100% - 22px);padding:4px 6px}
+.file.part img{width:30px;height:30px}
+.file .tag{font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;background:var(--plum-s);color:var(--plum);margin-left:4px}
+.file .x:hover{color:var(--accent-d)}
+.pal{display:flex;flex-direction:column;gap:6px}
+.pi{display:flex;align-items:center;gap:8px}
+.pi .sw{width:30px;height:30px;border-radius:8px;border:1px solid rgba(0,0,0,.12);position:relative;cursor:pointer;flex:none}
+.pi .sw input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.pi .hex{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--ink2);flex:1}
+.pi .pct{font-size:11px;color:var(--muted);width:38px;text-align:right}
+.role{border:0;border-radius:6px;font-size:10.5px;font-weight:700;padding:3px 0;width:62px;text-align:center}
+.role.fill{background:var(--plum-s);color:var(--plum)}
+.role.line{background:#2E2A33;color:#fff}
+.role.bg{background:var(--line);color:var(--muted)}
+.role.del{background:var(--accent-s);color:var(--accent-d);text-decoration:line-through}
+.btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.stage.erase canvas{cursor:crosshair}
+.hint{color:var(--muted);font-size:12px;margin:10px 0 0}
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field>label,.flabel{display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:12.5px;margin-bottom:7px;color:var(--ink2)}
+.flabel output,.field>label output{font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.sub{color:var(--muted);font-size:11.5px;font-weight:500;margin-top:5px}
+.seg{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:2px;gap:2px}
+.seg button{flex:1;border:0;background:transparent;padding:6px 4px;border-radius:7px;font-weight:600;font-size:12px;color:var(--muted)}
+.seg button:hover{color:var(--ink)}
+.seg button.on{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:18px;margin:0;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:999px;background:var(--line)}
+input[type=range]::-moz-range-track{height:4px;border-radius:999px;background:var(--line)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--accent);margin-top:-6px;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid var(--accent)}
+input[type=text]{width:100%;border:1px solid var(--line2);border-radius:var(--r-s);padding:7px 9px;background:var(--panel)}
+.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.btnrow.four{grid-template-columns:repeat(4,1fr)}
+.mt{margin-top:10px}
+.checks{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}
+.checks label{display:flex;gap:5px;align-items:center;font-weight:600;font-size:12px;color:var(--ink2);cursor:pointer}
+.checks input{accent-color:var(--accent)}
+.center{display:flex;flex-direction:column;min-width:0;min-height:0}
+.viewbar{display:flex;align-items:center;gap:12px;padding:10px 18px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+.viewbar .seg{min-width:420px}
+.viewbar .sp{flex:1}
+.stat{font-size:12px;color:var(--muted);font-weight:600}
+.stat b{color:var(--ink2)}
+.stage{flex:1;position:relative;min-height:0;overflow:hidden}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
+.stage canvas:active{cursor:grabbing}
+.bottombar{display:flex;align-items:center;gap:12px;padding:10px 18px;border-top:1px solid var(--line);background:var(--panel)}
+.bottombar .grp{display:flex;align-items:center;gap:8px;color:var(--muted);font-weight:600;font-size:12px}
+.bottombar input[type=range]{width:160px}
+.bottombar .sp{flex:1}
+.kbd{font-size:11px;color:var(--muted)}
+.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:30px;pointer-events:none}
+.empty .card{pointer-events:auto;max-width:460px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:28px;box-shadow:var(--sh)}
+.empty h2{margin:12px 0 6px;font-size:19px;letter-spacing:-.01em}
+.empty p{margin:0 0 14px;color:var(--muted)}
+.flow{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.flow span{font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);color:var(--ink2)}
+.busy{position:absolute;inset:0;background:rgba(244,241,235,.72);backdrop-filter:blur(2px);display:none;place-items:center;z-index:5}
+.busy.on{display:grid}
+.busy .box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 22px;min-width:260px;box-shadow:var(--sh);text-align:center}
+.busy .bar{height:6px;background:var(--line);border-radius:999px;overflow:hidden;margin-top:12px}
+.busy .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-weight:600;font-size:12.5px;opacity:0;pointer-events:none;transition:.2s;z-index:30;max-width:80vw}
+#toast.on{opacity:1;transform:translateX(-50%)}
+@media (max-width:1100px){body{overflow:auto}.app{grid-template-columns:1fr;height:auto}.center{min-height:70vh}.viewbar .seg{min-width:0;flex:1}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <div class="logo"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 14C5 6 9 3 15 3" stroke="#E0644A" stroke-width="2.2" stroke-linecap="round"/><circle cx="3" cy="14" r="2" fill="#fff"/><circle cx="15" cy="3" r="2" fill="#fff"/><circle cx="8" cy="6.4" r="1.4" fill="#fff"/></svg></div>
+    <div><b>Tracewright</b><br><span>Smart Vector Trace · JPG/PNG → SVG, EPS, PDF, AI</span></div>
+  </div>
+  <div class="sp"></div>
+  <button class="btn ghost" id="btnReset" title="Kembalikan semua pengaturan ke default">Reset pengaturan</button>
+</header>
+
+<main class="app">
+  <aside class="panel left">
+    <section>
+      <h3>Gambar <span class="count" id="fileCount"></span></h3>
+      <label class="drop" id="drop">
+        <input type="file" id="fileIn" multiple accept="image/png,image/jpeg,image/webp">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8C8794" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        <b>Tarik JPG / PNG ke sini</b>
+        <small>atau klik untuk memilih · bisa banyak sekaligus</small>
+      </label>
+      <div class="checks" style="margin:10px 0 0"><label><input type="checkbox" id="splitChk">Pisah otomatis objek dalam satu sheet</label></div>
+      <div class="sub" style="margin-top:2px">Tiap objek diperbesar dan diberi palet sendiri, jadi hasilnya serapi diproses satu per satu.</div>
+      <div class="files" id="files"></div>
+    </section>
+    <section>
+      <h3>Palet warna <span class="count" id="palCount"></span></h3>
+      <div class="pal" id="pal"><div class="hint" style="margin:0">Palet muncul setelah gambar diproses.</div></div>
+      <p class="hint">Klik label untuk menukar peran: <b>Warna</b> → <b>Garis</b> → <b>Latar</b> → <b>Hapus</b>. "Hapus" membuang warna itu dari objek ini. Klik kotak warna untuk menggantinya.</p>
+    </section>
+  </aside>
+
+  <section class="center">
+    <div class="viewbar">
+      <div class="seg" id="viewSeg">
+        <button data-v="result" class="on">Hasil</button><button data-v="compare">Bandingkan</button><button data-v="orig">Asli</button><button data-v="line">Garis</button><button data-v="fill">Warna</button><button data-v="wire">Kerangka</button>
+      </div>
+      <div class="sp"></div>
+      <div class="stat" id="stats"></div>
+    </div>
+    <div class="stage" id="stage">
+      <canvas id="cv"></canvas>
+      <div class="empty" id="empty"><div class="card">
+        <svg width="54" height="54" viewBox="0 0 54 54"><rect width="54" height="54" rx="14" fill="#FCEAE4"/><path d="M12 38C16 20 26 14 42 14" stroke="#E0644A" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="12" cy="38" r="4" fill="#25222C"/><circle cx="42" cy="14" r="4" fill="#25222C"/><circle cx="25" cy="20" r="3" fill="#7B5EA7"/></svg>
+        <h2>Trace seperti digambar manual</h2>
+        <p>Warna ditutup penuh di bawah garis, garis berada di layer paling atas, tepian bergerigi dihaluskan, dan node dibuat sesedikit mungkin.</p>
+        <div class="flow"><span>1 · Masukkan JPG</span><span>2 · Cek hasil</span><span>3 · Ekspor EPS / AI</span></div>
+      </div></div>
+      <div class="busy" id="busy"><div class="box"><b id="busyTxt">Memproses…</b><div class="bar"><i id="busyBar"></i></div></div></div>
+    </div>
+    <div class="bottombar">
+      <div class="grp" id="splitGrp" style="display:none">Garis banding <input type="range" id="split" min="0" max="1" step="0.001" value="0.5"></div>
+      <div class="grp">Perbesar <input type="range" id="zoom" min="0.5" max="12" step="0.05" value="1"><span id="zoomOut" style="min-width:42px">100%</span></div>
+      <button class="btn sm" id="btnFit">Pas layar</button>
+      <button class="btn sm" id="btnErase" title="Klik area di gambar untuk menghapusnya (jadi transparan)">🧽 Hapus area</button>
+      <button class="btn sm" id="btnEraseUndo" title="Batalkan hapus area terakhir">↶ Batal hapus</button>
+      <div class="sp"></div>
+      <span class="kbd">Scroll = perbesar · seret = geser · klik 2× = pas layar</span>
+    </div>
+  </section>
+
+  <aside class="panel right">
+    <section>
+      <h3>Warna</h3>
+      <div class="field"><label>Jumlah warna maksimum <output id="o_maxColors"></output></label><input type="range" min="2" max="16" step="1" data-set="maxColors"></div>
+      <div class="field"><label>Gabung warna mirip <output id="o_merge"></output></label><input type="range" min="2" max="30" step="1" data-set="merge"><div class="sub">Naikkan bila satu warna terpecah jadi dua (misal karena tekstur).</div></div>
+    </section>
+    <section>
+      <h3>Garis</h3>
+      <div class="field"><div class="flabel">Cara membuat garis</div>
+        <div class="seg" data-seg="lineMode"><button data-v="smooth">Halus</button><button data-v="uniform">Seragam</button><button data-v="trace">Jiplak asli</button></div>
+        <div class="sub" id="lineSub"></div></div>
+      <div class="field" id="lwWrap"><label>Tebal garis <output id="o_lineWidth"></output></label><input type="range" min="0.5" max="1.6" step="0.05" data-set="lineWidth"></div>
+      <label class="checks" style="margin:0"><label><input type="checkbox" id="snapChk">Snap bentuk otomatis (garis lurus & lingkaran)</label></label>
+    </section>
+    <section>
+      <h3>Pembersihan</h3>
+      <div class="field"><label>Hilangkan tekstur / noise <output id="o_blur"></output></label><input type="range" min="0" max="4" step="0.1" data-set="blur"></div>
+      <div class="field"><label>Buang bintik kecil <output id="o_speck"></output></label><input type="range" min="0" max="200" step="2" data-set="speck"></div>
+      <div class="field"><label>Tutup celah garis <output id="o_gap"></output></label><input type="range" min="0" max="5" step="0.5" data-set="gap"><div class="sub">Menyambung garis yang putus atau ujung yang terpotong.</div></div>
+    </section>
+    <section>
+      <h3>Kurva</h3>
+      <div class="field"><label>Kehalusan <output id="o_smooth"></output></label><input type="range" min="0" max="100" step="1" data-set="smooth"><div class="sub">Lebih halus = node lebih sedikit, detail kecil sedikit berkurang.</div></div>
+      <div class="field"><label>Ketajaman sudut <output id="o_corner"></output></label><input type="range" min="90" max="165" step="1" data-set="corner"><div class="sub">Sudut di bawah nilai ini tetap tajam (ujung pensil, sudut kotak).</div></div>
+    </section>
+    <section>
+      <h3>Bentuk</h3>
+      <div class="field"><div class="flabel">Area putih yang tertutup garis</div>
+        <div class="seg" data-seg="holes"><button data-v="fill">Isi putih</button><button data-v="hole">Jadikan lubang</button></div>
+        <div class="sub">"Jadikan lubang" membuat lubang gunting atau donat jadi transparan.</div></div>
+    </section>
+    <section>
+      <h3>Ekspor</h3>
+      <div class="field"><div class="flabel">Nama file</div><input type="text" id="nameIn" spellcheck="false" placeholder="otomatis dari nama gambar"></div>
+      <div class="btnrow four">
+        <button class="btn sm" data-exp="svg">SVG</button><button class="btn sm" data-exp="eps">EPS</button><button class="btn sm" data-exp="pdf">PDF</button><button class="btn sm" data-exp="ai">AI</button>
+      </div>
+      <div class="sub mt">Isi file: tiap objek satu group, di dalamnya layer <b>Warna</b> di bawah dan <b>Garis</b> di atas. EPS level 2 (setara EPS 10), warna RGB. AI berbasis PDF dan bisa langsung dibuka di Illustrator.</div>
+      <div class="flabel" style="margin-top:16px">Semua gambar sekaligus (ZIP)</div>
+      <div class="checks" id="zipFmt">
+        <label><input type="checkbox" value="svg" checked>SVG</label><label><input type="checkbox" value="eps" checked>EPS</label><label><input type="checkbox" value="pdf">PDF</label><label><input type="checkbox" value="ai">AI</label>
+      </div>
+      <div class="checks" style="margin-top:0"><label><input type="checkbox" id="zipParts">Sertakan juga file per objek (untuk sheet)</label></div>
+      <button class="btn dark big" id="btnZip">Proses & unduh semua (ZIP)</button>
+    </section>
+  </aside>
+</main>
+<div id="toast"></div>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s), $$ = s => Array.from(document.querySelectorAll(s));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const toHex = c => '#' + c.map(v => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0')).join('').toUpperCase();
+const hexToRgb = h => { const n = parseInt(h.replace('#', ''), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+function toast(m, ms = 2600){ const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), ms); }
+function download(blob, name){ const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
+function busy(on, txt, f){ $('#busy').classList.toggle('on', !!on); if (txt) $('#busyTxt').textContent = txt; if (f != null) $('#busyBar').style.width = Math.round(f * 100) + '%'; }
+
+/* ================= settings ================= */
+const DEF = { _v: 5, split: true, lineMode: 'smooth', lineWidth: 1, snap: true, maxColors: 16, merge: 8, blur: 1.2, speck: 30, gap: 1, smooth: 55, corner: 118, holes: 'fill' };
+const S = { set: Object.assign({}, DEF), files: [], cur: -1, view: 'result', zoom: 1, panX: 0, panY: 0, split: 0.5 };
+const SET_VER = 5;
+try { const sv = JSON.parse(localStorage.getItem('tracewright.set') || 'null'); if (sv && sv._v === SET_VER) Object.assign(S.set, sv); } catch (e) {}
+S.set._v = SET_VER;
+const saveSet = () => { try { localStorage.setItem('tracewright.set', JSON.stringify(S.set)); } catch (e) {} };
+
+/* ================= colour helpers ================= */
+const LIN = new Float32Array(256); for (let i = 0; i < 256; i++){ const c = i / 255; LIN[i] = c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+const fLab = t => t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116;
+function rgb2lab(r, g, b){
+  const R = LIN[r], G = LIN[g], B = LIN[b];
+  const x = (R * 0.4124 + G * 0.3576 + B * 0.1805) / 0.95047, y = R * 0.2126 + G * 0.7152 + B * 0.0722, z = (R * 0.0193 + G * 0.1192 + B * 0.9505) / 1.08883;
+  const fx = fLab(x), fy = fLab(y), fz = fLab(z);
+  return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
+}
+
+/* ================= distance transform (Felzenszwalb, exact squared EDT) ================= */
+function edt(mask, W, H){
+  const INF = 1e20, n = Math.max(W, H), f = new Float64Array(n), d = new Float64Array(n), v = new Int32Array(n), z = new Float64Array(n + 1);
+  const out = new Float64Array(W * H);
+  for (let i = 0; i < W * H; i++) out[i] = mask[i] ? 0 : INF;
+  const pass = (len) => {
+    let k = 0; v[0] = 0; z[0] = -INF; z[1] = INF;
+    for (let q = 1; q < len; q++){
+      let s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+      while (s <= z[k]){ k--; s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]); }
+      k++; v[k] = q; z[k] = s; z[k + 1] = INF;
+    }
+    k = 0;
+    for (let q = 0; q < len; q++){ while (z[k + 1] < q) k++; d[q] = (q - v[k]) * (q - v[k]) + f[v[k]]; }
+  };
+  for (let x = 0; x < W; x++){ for (let y = 0; y < H; y++) f[y] = out[y * W + x]; pass(H); for (let y = 0; y < H; y++) out[y * W + x] = d[y]; }
+  for (let y = 0; y < H; y++){ const o = y * W; for (let x = 0; x < W; x++) f[x] = out[o + x]; pass(W); for (let x = 0; x < W; x++) out[o + x] = d[x]; }
+  return out;
+}
+/* index of the nearest feature pixel for every pixel (exact Euclidean, Felzenszwalb + argmin) */
+function nearestIdx(feat, W, H){
+  const INF = 1e20, n = Math.max(W, H), N = W * H, f = new Float64Array(n), d = new Float64Array(n), a = new Int32Array(n), v = new Int32Array(n), z = new Float64Array(n + 1);
+  const g = new Float64Array(N), colRow = new Int32Array(N), out = new Int32Array(N);
+  const pass = (len) => {
+    let k = 0; v[0] = 0; z[0] = -INF; z[1] = INF;
+    for (let q = 1; q < len; q++){
+      let s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+      while (s <= z[k]){ k--; s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]); }
+      k++; v[k] = q; z[k] = s; z[k + 1] = INF;
+    }
+    k = 0; for (let q = 0; q < len; q++){ while (z[k + 1] < q) k++; d[q] = (q - v[k]) * (q - v[k]) + f[v[k]]; a[q] = v[k]; }
+  };
+  for (let x = 0; x < W; x++){ for (let y = 0; y < H; y++) f[y] = feat[y * W + x] ? 0 : INF; pass(H); for (let y = 0; y < H; y++){ g[y * W + x] = d[y]; colRow[y * W + x] = a[y]; } }
+  for (let y = 0; y < H; y++){ const o = y * W; for (let x = 0; x < W; x++) f[x] = g[o + x]; pass(W); for (let x = 0; x < W; x++){ const cx = a[x]; out[o + x] = colRow[o + cx] * W + cx; } }
+  return out;
+}
+function dilate(mask, W, H, r){ if (r <= 0) return mask.slice(); const d = edt(mask, W, H), o = new Uint8Array(W * H), r2 = r * r; for (let i = 0; i < o.length; i++) o[i] = d[i] <= r2 ? 1 : 0; return o; }
+function erode(mask, W, H, r){ if (r <= 0) return mask.slice(); const inv = new Uint8Array(W * H); for (let i = 0; i < inv.length; i++) inv[i] = mask[i] ? 0 : 1; const d = edt(inv, W, H), o = new Uint8Array(W * H), r2 = r * r; for (let i = 0; i < o.length; i++) o[i] = d[i] > r2 ? 1 : 0; return o; }
+
+/* ================= stage A: resample, denoise, quantise ================= */
+function stageA(F, st){
+  const img = F.img, ow = img.naturalWidth, oh = img.naturalHeight;
+  const L = clamp(Math.max(ow, oh) * 2, 1200, 2000), sc = L / Math.max(ow, oh);
+  const W = Math.round(ow * sc), H = Math.round(oh * sc), N = W * H;
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const cx = cv.getContext('2d', { willReadFrequently: true });
+  cx.imageSmoothingEnabled = true; cx.imageSmoothingQuality = 'high';
+  if (st.blur > 0) cx.filter = `blur(${(st.blur * sc / 2).toFixed(2)}px)`;
+  cx.drawImage(img, 0, 0, W, H); cx.filter = 'none';
+  const px = cx.getImageData(0, 0, W, H).data;
+  const La = new Float32Array(N), Aa = new Float32Array(N), Ba = new Float32Array(N), op = new Uint8Array(N);
+  const cache = new Map();
+  for (let i = 0; i < N; i++){
+    const a = px[i * 4 + 3]; if (a < 128) continue; op[i] = 1;
+    const r = px[i * 4], g = px[i * 4 + 1], b = px[i * 4 + 2], key = (r << 16) | (g << 8) | b;
+    let lab = cache.get(key); if (!lab){ lab = rgb2lab(r, g, b); if (cache.size < 300000) cache.set(key, lab); }
+    La[i] = lab[0]; Aa[i] = lab[1]; Ba[i] = lab[2];
+  }
+  // k-means++ on a sample
+  let seed = 12345; const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+  const idx = []; for (let i = 0; i < N; i++) if (op[i]) idx.push(i);
+  if (!idx.length) throw new Error('Gambar kosong / transparan');
+  const sN = Math.min(idx.length, 60000), smp = new Int32Array(sN); for (let i = 0; i < sN; i++) smp[i] = idx[Math.floor(rnd() * idx.length)];
+  const K = st.maxColors; let C = [];
+  C.push([La[smp[0]], Aa[smp[0]], Ba[smp[0]]]);
+  const dmin = new Float64Array(sN).fill(1e18);
+  while (C.length < K){
+    const c = C[C.length - 1]; let tot = 0;
+    for (let s = 0; s < sN; s++){ const i = smp[s]; const d = (La[i] - c[0]) ** 2 + (Aa[i] - c[1]) ** 2 + (Ba[i] - c[2]) ** 2; if (d < dmin[s]) dmin[s] = d; tot += dmin[s]; }
+    if (tot <= 0) break; let t = rnd() * tot, pick = 0; for (let s = 0; s < sN; s++){ t -= dmin[s]; if (t <= 0){ pick = s; break; } }
+    const i = smp[pick]; C.push([La[i], Aa[i], Ba[i]]);
+  }
+  const sl = new Uint8Array(sN);
+  for (let it = 0; it < 14; it++){
+    const acc = C.map(() => [0, 0, 0, 0]);
+    for (let s = 0; s < sN; s++){ const i = smp[s]; let b = 0, bd = 1e18; for (let k = 0; k < C.length; k++){ const c = C[k]; const d = (La[i] - c[0]) ** 2 + (Aa[i] - c[1]) ** 2 + (Ba[i] - c[2]) ** 2; if (d < bd){ bd = d; b = k; } } sl[s] = b; const a = acc[b]; a[0] += La[i]; a[1] += Aa[i]; a[2] += Ba[i]; a[3]++; }
+    C = C.map((c, k) => acc[k][3] ? [acc[k][0] / acc[k][3], acc[k][1] / acc[k][3], acc[k][2] / acc[k][3]] : c);
+  }
+  // merge near colours
+  let cnt = C.map(() => 0); for (let s = 0; s < sN; s++) cnt[sl[s]]++;
+  let items = C.map((c, k) => ({ c, n: cnt[k] })).filter(o => o.n > 0);
+  const thr2 = st.merge * st.merge;
+  for (let changed = true; changed;){
+    changed = false; let bi = -1, bj = -1, bd = thr2;
+    for (let i = 0; i < items.length; i++) for (let j = i + 1; j < items.length; j++){ const a = items[i].c, b = items[j].c; const d = (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2; if (d < bd){ bd = d; bi = i; bj = j; } }
+    if (bi >= 0){ const a = items[bi], b = items[bj], n = a.n + b.n; a.c = [0, 1, 2].map(k => (a.c[k] * a.n + b.c[k] * b.n) / n); a.n = n; items.splice(bj, 1); changed = true; }
+  }
+  items = items.filter(o => o.n / sN > 0.0004);
+  C = items.map(o => o.c);
+  // assign every pixel
+  const lab = new Uint8Array(N).fill(255);
+  const assign = () => { const K2 = C.length; for (let i = 0; i < N; i++){
+    if (!op[i]) continue; let b = 0, bd = 1e18;
+    for (let k = 0; k < K2; k++){ const c = C[k]; const d = (La[i] - c[0]) ** 2 + (Aa[i] - c[1]) ** 2 + (Ba[i] - c[2]) ** 2; if (d < bd){ bd = d; b = k; } }
+    lab[i] = b; } };
+  assign();
+  // the background cluster must contain ONLY background-coloured pixels: very light colours inside objects
+  // (light grey blade, pale lavender bottle) get their own colour instead of being swallowed by white
+  { const bl = [], ba = [], bb = []; for (let x = 0; x < W; x += 3) for (const y of [0, H - 1]){ const i = y * W + x; if (op[i]){ bl.push(La[i]); ba.push(Aa[i]); bb.push(Ba[i]); } }
+    for (let y = 0; y < H; y += 3) for (const x of [0, W - 1]){ const i = y * W + x; if (op[i]){ bl.push(La[i]); ba.push(Aa[i]); bb.push(Ba[i]); } }
+    if (bl.length > 20){
+      const med = a => a.slice().sort((p, q) => p - q)[a.length >> 1], bg = [med(bl), med(ba), med(bb)];
+      let kb = 0, kd = 1e18; C.forEach((c, k) => { const d = (c[0] - bg[0]) ** 2 + (c[1] - bg[1]) ** 2 + (c[2] - bg[2]) ** 2; if (d < kd){ kd = d; kb = k; } });
+      if (kd < 225){
+        const off = []; for (let i = 0; i < N; i++) if (lab[i] === kb && (La[i] - bg[0]) ** 2 + (Aa[i] - bg[1]) ** 2 + (Ba[i] - bg[2]) ** 2 > 49) off.push(i);
+        if (off.length > N * 0.002){
+          // 2-means on the off-white pixels
+          let c1 = [0, 0, 0], c2; off.forEach(i => { c1[0] += La[i]; c1[1] += Aa[i]; c1[2] += Ba[i]; }); c1 = c1.map(v => v / off.length);
+          c2 = [c1[0] - 6, c1[1], c1[2]]; c1 = [c1[0] + 3, c1[1], c1[2]];
+          for (let it = 0; it < 8; it++){ const A1 = [0, 0, 0, 0], A2 = [0, 0, 0, 0]; for (const i of off){ const d1 = (La[i] - c1[0]) ** 2 + (Aa[i] - c1[1]) ** 2 + (Ba[i] - c1[2]) ** 2, d2 = (La[i] - c2[0]) ** 2 + (Aa[i] - c2[1]) ** 2 + (Ba[i] - c2[2]) ** 2; const A = d1 <= d2 ? A1 : A2; A[0] += La[i]; A[1] += Aa[i]; A[2] += Ba[i]; A[3]++; } if (A1[3]) c1 = [A1[0] / A1[3], A1[1] / A1[3], A1[2] / A1[3]]; if (A2[3]) c2 = [A2[0] / A2[3], A2[1] / A2[3], A2[2] / A2[3]]; }
+          C[kb] = bg; C.push(c1); if ((c1[0] - c2[0]) ** 2 + (c1[1] - c2[1]) ** 2 + (c1[2] - c2[2]) ** 2 > 36) C.push(c2);
+          assign();
+        }
+      }
+    }
+  }
+  modeFilter(lab, W, H, 2);
+  dropTransitionColors(lab, W, H, C, sc, La);
+  mergeBlotches(lab, W, H, C);
+  // colours that ended up with almost no pixels are folded into the nearest remaining colour
+  { const cnt2 = new Int32Array(C.length); for (let i = 0; i < N; i++) if (lab[i] !== 255) cnt2[lab[i]]++;
+    const tiny = C.map((c, k) => cnt2[k] > 0 && cnt2[k] < N * 0.0003), keepK = C.map((c, k) => cnt2[k] >= N * 0.0003);
+    if (tiny.some(Boolean)) for (let i = 0; i < N; i++){ const v = lab[i]; if (v === 255 || !tiny[v]) continue; let b = v, bd = 1e18; for (let k = 0; k < C.length; k++){ if (!keepK[k]) continue; const c = C[k]; const d = (La[i] - c[0]) ** 2 + (Aa[i] - c[1]) ** 2 + (Ba[i] - c[2]) ** 2; if (d < bd){ bd = d; b = k; } } lab[i] = b; } }
+  const sum = C.map(() => [0, 0, 0, 0]);
+  for (let i = 0; i < N; i++){ const b = lab[i]; if (b === 255) continue; const s = sum[b]; s[0] += px[i * 4]; s[1] += px[i * 4 + 1]; s[2] += px[i * 4 + 2]; s[3]++; }
+  let pal = C.map((c, k) => ({ lab: c, rgb: sum[k][3] ? [sum[k][0] / sum[k][3], sum[k][1] / sum[k][3], sum[k][2] / sum[k][3]] : [128, 128, 128], n: sum[k][3] }));
+  const remap = new Uint8Array(256).fill(255); const keep = []; pal.forEach((p, k) => { if (p.n > 0){ remap[k] = keep.length; keep.push(p); } });
+  for (let i = 0; i < N; i++) lab[i] = remap[lab[i]]; pal = keep;
+  return { key: [st.blur, st.maxColors, st.merge].join('|'), W, H, sc, ow, oh, lab, pal };
+}
+/* thin bands of colour that only exist BETWEEN two other colours (anti-aliasing, soft edges) are dissolved into their
+   neighbours; compact small regions (blush, a button, a highlight) are kept even if their colour is rare */
+function dropTransitionColors(lab, W, H, C, sc, La){
+  const N = W * H, K = C.length, share = new Float64Array(K); let tot = 0;
+  for (let i = 0; i < N; i++) if (lab[i] !== 255){ share[lab[i]]++; tot++; }
+  for (let k = 0; k < K; k++) share[k] /= tot || 1;
+  let darkest = 0; for (let k = 1; k < K; k++) if (C[k][0] < C[darkest][0]) darkest = k;
+  const q = new Int32Array(N), nbc = new Float64Array(K + 1);
+  for (let pass = 0; pass < 2; pass++){
+    const seen = new Uint8Array(N), mark = new Uint8Array(N); let any = false;
+    for (let s = 0; s < N; s++){
+      const L = lab[s]; if (seen[s] || L === 255 || L === darkest) continue;
+      let qs = 0, qe = 0, perim = 0; q[qe++] = s; seen[s] = 1; const used = [];
+      while (qs < qe){ const i = q[qs++], x = i % W; const nbs = [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W];
+        for (const j of nbs){ if (j < 0 || j >= N) continue; const v = lab[j]; if (v === L){ if (!seen[j]){ seen[j] = 1; q[qe++] = j; } } else { perim++; const t = v === 255 ? K : v; if (!nbc[t]) used.push(t); nbc[t]++; } } }
+      const width = perim ? 2 * qe / perim : 1e9;
+      let sides = 0, nbL = -1, nbc2 = 0; for (const t of used){ if (nbc[t] > perim * 0.15) sides++; if (t !== K && t !== darkest && nbc[t] > nbc2){ nbc2 = nbc[t]; nbL = t; } nbc[t] = 0; }
+      const darkish = C[L][0] < C[darkest][0] + 22;
+      if (share[L] < 0.06 && ((width < 2.6 * sc && sides >= 2) || width < 1.4 * sc || (darkish && width < 4 * sc))){
+        // each pixel goes to the line colour or to the neighbouring colour, whichever its lightness is closer to
+        const dL = C[darkest][0], nL = nbL >= 0 ? C[nbL][0] : 100;
+        for (let k = 0; k < qe; k++){ const i = q[k]; lab[i] = (La && nbL >= 0 && Math.abs(La[i] - nL) < Math.abs(La[i] - dL)) ? nbL : (La ? darkest : lab[i]); if (!La) mark[i] = 1; }
+        any = true; }
+    }
+    if (!any) break;
+    let qs = 0, qe = 0;
+    for (let i = 0; i < N; i++){ if (mark[i] || lab[i] === 255) continue; const x = i % W; if ((x > 0 && mark[i - 1]) || (x < W - 1 && mark[i + 1]) || (i >= W && mark[i - W]) || (i < N - W && mark[i + W])) q[qe++] = i; }
+    while (qs < qe){ const i = q[qs++], v = lab[i], x = i % W; const nbs = [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W];
+      for (const j of nbs){ if (j >= 0 && j < N && mark[j]){ mark[j] = 0; lab[j] = v; q[qe++] = j; } } }
+  }
+}
+/* soft shading / watercolour texture shows up as ragged patches of a similar colour inside one region:
+   merge those patches into the colour around them (compact details like blush or a button are kept) */
+function mergeBlotches(lab, W, H, C){
+  const N = W * H, K = C.length; let darkest = 0; for (let k = 1; k < K; k++) if (C[k][0] < C[darkest][0]) darkest = k;
+  const seen = new Uint8Array(N), q = new Int32Array(N), nbc = new Float64Array(K + 1);
+  for (let s = 0; s < N; s++){
+    const L = lab[s]; if (seen[s] || L === 255 || L === darkest || C[L][0] < Math.min(45, C[darkest][0] + 25)) continue;
+    let qs = 0, qe = 0, perim = 0; q[qe++] = s; seen[s] = 1; const used = [];
+    while (qs < qe){ const i = q[qs++], x = i % W; const nbs = [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W];
+      for (const j of nbs){ if (j < 0 || j >= N){ perim++; continue; } const v = lab[j]; if (v === L){ if (!seen[j]){ seen[j] = 1; q[qe++] = j; } } else { perim++; if (v !== darkest){ const t = v === 255 ? K : v; if (!nbc[t]) used.push(t); nbc[t]++; } } } }
+    let dom = -1, dc = 0, tot = 0; for (const t of used){ tot += nbc[t]; if (nbc[t] > dc){ dc = nbc[t]; dom = t; } nbc[t] = 0; }
+    if (dom < 0 || dom === K || qe > N * 0.02) continue;
+    const rough = perim / (2 * Math.sqrt(Math.PI * qe));
+    const a = C[L], b = C[dom], dE = Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2);
+    if ((rough > 1.9 && tot > perim * 0.4 && dc / tot > 0.8 && dE < 30) || (dE < 13 && tot > perim * 0.3 && dc / tot > 0.7)) for (let k = 0; k < qe; k++) lab[q[k]] = dom;
+  }
+}
+function modeFilter(lab, W, H, passes){
+  const cnt = new Uint8Array(256);
+  for (let p = 0; p < passes; p++){
+    const src = lab.slice();
+    for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++){
+      const i = y * W + x, me = src[i];
+      if (src[i - 1] === me && src[i + 1] === me && src[i - W] === me && src[i + W] === me) continue;
+      const nb = [src[i - W - 1], src[i - W], src[i - W + 1], src[i - 1], me, src[i + 1], src[i + W - 1], src[i + W], src[i + W + 1]];
+      let best = me, bc = 0; for (const v of nb){ cnt[v]++; if (cnt[v] > bc){ bc = cnt[v]; best = v; } }
+      for (const v of nb) cnt[v] = 0;
+      if (bc >= 5 && best !== me) lab[i] = best;
+    }
+  }
+}
+/* merge connected regions smaller than minArea into their dominant neighbour */
+function removeSpecks(lab, W, H, minArea){
+  if (minArea <= 1) return;
+  const N = W * H, seen = new Uint8Array(N), q = new Int32Array(N), cnt = new Int32Array(256);
+  for (let s = 0; s < N; s++){
+    if (seen[s]) continue; const L = lab[s]; let qs = 0, qe = 0; q[qe++] = s; seen[s] = 1;
+    while (qs < qe){ const i = q[qs++], x = i % W; if (x > 0 && !seen[i - 1] && lab[i - 1] === L){ seen[i - 1] = 1; q[qe++] = i - 1; } if (x < W - 1 && !seen[i + 1] && lab[i + 1] === L){ seen[i + 1] = 1; q[qe++] = i + 1; } if (i >= W && !seen[i - W] && lab[i - W] === L){ seen[i - W] = 1; q[qe++] = i - W; } if (i < N - W && !seen[i + W] && lab[i + W] === L){ seen[i + W] = 1; q[qe++] = i + W; } }
+    if (qe >= minArea) continue;
+    const used = [];
+    for (let k = 0; k < qe; k++){ const i = q[k], x = i % W; const nb = [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W]; for (const j of nb){ if (j < 0 || j >= N) continue; const v = lab[j]; if (v !== L){ if (!cnt[v]) used.push(v); cnt[v]++; } } }
+    let best = -1, bc = 0; for (const v of used){ if (cnt[v] > bc){ bc = cnt[v]; best = v; } cnt[v] = 0; }
+    if (best >= 0) for (let k = 0; k < qe; k++) lab[q[k]] = best;
+  }
+}
+function removeBinarySpecks(mask, W, H, minArea, value){
+  const N = W * H, seen = new Uint8Array(N), q = new Int32Array(N);
+  for (let s = 0; s < N; s++){
+    if (seen[s] || mask[s] !== value) continue; let qs = 0, qe = 0; q[qe++] = s; seen[s] = 1;
+    while (qs < qe){ const i = q[qs++], x = i % W; const nb = [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W]; for (const j of nb){ if (j >= 0 && j < N && !seen[j] && mask[j] === value){ seen[j] = 1; q[qe++] = j; } } }
+    if (qe < minArea) for (let k = 0; k < qe; k++) mask[q[k]] = value ? 0 : 1;
+  }
+}
+
+/* ================= line redraw: skeleton → graph → smooth / snap → re-stroke ================= */
+function thinZS(mask, W, H){
+  const s = mask.slice(); let list = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){ const i = y * W + x; if (!s[i]) continue; if (x < 1 || y < 1 || x >= W - 1 || y >= H - 1){ s[i] = 0; continue; } list.push(i); }
+  for (let guard = 0; guard < 200; guard++){
+    let changed = false;
+    for (let pass = 0; pass < 2; pass++){
+      const del = [];
+      for (const i of list){
+        if (!s[i]) continue;
+        const p2 = s[i - W], p3 = s[i - W + 1], p4 = s[i + 1], p5 = s[i + W + 1], p6 = s[i + W], p7 = s[i + W - 1], p8 = s[i - 1], p9 = s[i - W - 1];
+        const B = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9; if (B < 2 || B > 6) continue;
+        const A = (!p2 && p3 ? 1 : 0) + (!p3 && p4 ? 1 : 0) + (!p4 && p5 ? 1 : 0) + (!p5 && p6 ? 1 : 0) + (!p6 && p7 ? 1 : 0) + (!p7 && p8 ? 1 : 0) + (!p8 && p9 ? 1 : 0) + (!p9 && p2 ? 1 : 0);
+        if (A !== 1) continue;
+        if (pass === 0){ if (p2 && p4 && p6) continue; if (p4 && p6 && p8) continue; }
+        else { if (p2 && p4 && p8) continue; if (p2 && p6 && p8) continue; }
+        del.push(i);
+      }
+      for (const i of del) s[i] = 0; if (del.length) changed = true;
+    }
+    list = list.filter(i => s[i]);
+    if (!changed) break;
+  }
+  return s;
+}
+const NB8 = W => [-W, -W + 1, 1, W + 1, W, W - 1, -1, -W - 1];
+function crossing(s, i, W){ const o = NB8(W); let c = 0; for (let k = 0; k < 8; k++){ if (!s[i + o[k]] && s[i + o[(k + 1) % 8]]) c++; } return c; }
+function gaussSmooth(P, sigma, closed, fixEnds){
+  const n = P.length; if (n < 3 || sigma < 0.5) return P.map(p => p.slice());
+  const r = Math.ceil(sigma * 2.5), w = []; let ws = 0; for (let i = -r; i <= r; i++){ const v = Math.exp(-i * i / (2 * sigma * sigma)); w.push(v); ws += v; }
+  const at = closed ? (j => P[((j % n) + n) % n]) : (j => j < 0 ? [2 * P[0][0] - P[-j][0], 2 * P[0][1] - P[-j][1]] : j >= n ? [2 * P[n - 1][0] - P[2 * n - 2 - j][0], 2 * P[n - 1][1] - P[2 * n - 2 - j][1]] : P[j]);
+  const out = [];
+  for (let i = 0; i < n; i++){ let x = 0, y = 0; for (let k = -r; k <= r; k++){ const j = i + k; const p = (!closed && (j < -(n - 1) || j > 2 * n - 2)) ? P[clamp(j, 0, n - 1)] : at(j); x += p[0] * w[k + r]; y += p[1] * w[k + r]; } out.push([x / ws, y / ws]); }
+  if (!closed && fixEnds){ out[0] = P[0].slice(); out[n - 1] = P[n - 1].slice(); }
+  return out;
+}
+function smooth1(v, sigma, closed){
+  const n = v.length; if (n < 3) return v.slice(); const r = Math.ceil(sigma * 2.5), o = [];
+  for (let i = 0; i < n; i++){ let s = 0, ws = 0; for (let k = -r; k <= r; k++){ let j = i + k; if (closed) j = ((j % n) + n) % n; else j = clamp(j, 0, n - 1); const ww = Math.exp(-k * k / (2 * sigma * sigma)); s += v[j] * ww; ws += ww; } o.push(s / ws); }
+  return o;
+}
+function cornerSplit(P, k, closed, cosThr){
+  const n = P.length; if (n < 2 * k + 3) return [];
+  const cs = new Float64Array(n).fill(-1);
+  for (let i = closed ? 0 : k; i < (closed ? n : n - k); i++){
+    const a = P[((i - k) % n + n) % n], b = P[(i + k) % n], p = P[i];
+    const v1 = [a[0] - p[0], a[1] - p[1]], v2 = [b[0] - p[0], b[1] - p[1]];
+    cs[i] = (v1[0] * v2[0] + v1[1] * v2[1]) / ((Math.hypot(...v1) * Math.hypot(...v2)) || 1);
+  }
+  const cor = [];
+  for (let i = 0; i < n; i++){ if (cs[i] <= cosThr) continue; let mx = true; for (let j = -k; j <= k; j++){ const t = closed ? ((i + j) % n + n) % n : i + j; if (t < 0 || t >= n || !j) continue; if (cs[t] > cs[i]){ mx = false; break; } } if (mx && (!cor.length || i - cor[cor.length - 1] > k)) cor.push(i); }
+  return cor;
+}
+function fitEllipse(P){
+  const n = P.length; let cx = 0, cy = 0; for (const p of P){ cx += p[0]; cy += p[1]; } cx /= n; cy /= n;
+  let sxx = 0, syy = 0, sxy = 0; for (const p of P){ const dx = p[0] - cx, dy = p[1] - cy; sxx += dx * dx; syy += dy * dy; sxy += dx * dy; } sxx /= n; syy /= n; sxy /= n;
+  const tr = sxx + syy, det = sxx * syy - sxy * sxy, d = Math.sqrt(Math.max(0, tr * tr / 4 - det)), l1 = tr / 2 + d, l2 = tr / 2 - d;
+  const th = 0.5 * Math.atan2(2 * sxy, sxx - syy), a = Math.sqrt(2 * l1), b = Math.sqrt(2 * Math.max(l2, 1e-9));
+  const c = Math.cos(th), s = Math.sin(th); let e = 0;
+  for (const p of P){ const dx = p[0] - cx, dy = p[1] - cy, u = dx * c + dy * s, v = -dx * s + dy * c; const rho = Math.sqrt((u / a) ** 2 + (v / b) ** 2); e += (rho - 1) ** 2; }
+  return { cx, cy, a, b, th, err: Math.sqrt(e / n) };
+}
+function redrawLine(line, W, H, sc, st){
+  const N = W * H;
+  const non = new Uint8Array(N); for (let i = 0; i < N; i++) non[i] = line[i] ? 0 : 1;
+  const dNon = edt(non, W, H);
+  const hwAt = (x, y) => { const i = clamp(Math.round(y), 0, H - 1) * W + clamp(Math.round(x), 0, W - 1); return Math.sqrt(dNon[i]) + 0.5; };
+  const sk = thinZS(line, W, H), o8 = NB8(W);
+  const cn = new Uint8Array(N); const skel = []; for (let i = 0; i < N; i++) if (sk[i]){ cn[i] = crossing(sk, i, W); skel.push(i); }
+  // nodes: junction clusters (cn>=3) and endpoints (cn==1)
+  const nodeId = new Int32Array(N).fill(-1), nodes = [];
+  for (const i of skel){
+    if (nodeId[i] >= 0) continue;
+    if (cn[i] >= 3){ const id = nodes.length, pix = [i], st2 = [i]; nodeId[i] = id;
+      while (st2.length){ const p = st2.pop(); for (const d of o8){ const q = p + d; if (sk[q] && cn[q] >= 3 && nodeId[q] < 0){ nodeId[q] = id; pix.push(q); st2.push(q); } } }
+      let x = 0, y = 0; for (const p of pix){ x += p % W; y += (p / W) | 0; } nodes.push({ x: x / pix.length, y: y / pix.length, pix, j: true }); }
+    else if (cn[i] === 1){ nodeId[i] = nodes.length; nodes.push({ x: i % W, y: (i / W) | 0, pix: [i], j: false }); }
+  }
+  const vis = new Uint8Array(N), edges = [];
+  const walk = (nid, first) => {
+    const pts = [[nodes[nid].x, nodes[nid].y], [first % W, (first / W) | 0]]; vis[first] = 1; let prev = -1, cur = first;
+    for (let guard = 0; guard < N; guard++){
+      let endNode = -1, next = -1, nextDiag = -1;
+      for (let k = 0; k < 8; k++){ const q = cur + o8[k]; if (!sk[q] || q === prev) continue;
+        const m = nodeId[q]; if (m >= 0){ if (m !== nid || pts.length > 3){ endNode = m; break; } continue; }
+        if (vis[q]) continue; if (k % 2 === 0){ if (next < 0) next = q; } else if (nextDiag < 0) nextDiag = q; }
+      if (endNode >= 0){ pts.push([nodes[endNode].x, nodes[endNode].y]); return { a: nid, b: endNode, pts }; }
+      const nx = next >= 0 ? next : nextDiag; if (nx < 0){ const id = nodes.length; nodes.push({ x: cur % W, y: (cur / W) | 0, pix: [cur], j: false }); return { a: nid, b: id, pts }; }
+      vis[nx] = 1; pts.push([nx % W, (nx / W) | 0]); prev = cur; cur = nx;
+    }
+    return null;
+  };
+  for (let nid = 0; nid < nodes.length; nid++) for (const p of nodes[nid].pix) for (const d of o8){ const q = p + d; if (sk[q] && nodeId[q] < 0 && !vis[q]){ const e = walk(nid, q); if (e && e.pts.length >= 2) edges.push(e); } }
+  // closed loops without nodes
+  const loops = [];
+  for (const i of skel){
+    if (vis[i] || nodeId[i] >= 0 || cn[i] !== 2) continue;
+    const pts = [[i % W, (i / W) | 0]]; vis[i] = 1; let cur = i, prev = -1;
+    for (let guard = 0; guard < N; guard++){ let nx = -1, nd = -1; for (let k = 0; k < 8; k++){ const q = cur + o8[k]; if (!sk[q] || q === prev || vis[q] || nodeId[q] >= 0) continue; if (k % 2 === 0){ if (nx < 0) nx = q; } else if (nd < 0) nd = q; } const t = nx >= 0 ? nx : nd; if (t < 0) break; vis[t] = 1; pts.push([t % W, (t / W) | 0]); prev = cur; cur = t; }
+    if (pts.length > 8) loops.push(pts);
+  }
+  // prune short spurs (skeleton whiskers at corners / blobs), then merge through degree-2 junctions
+  for (let it = 0; it < 4; it++){
+    const deg = new Int32Array(nodes.length); edges.forEach(e => { if (!e.dead){ deg[e.a]++; deg[e.b]++; } });
+    let changed = false;
+    edges.forEach(e => { if (e.dead) return; const ja = deg[e.a] >= 3, jb = deg[e.b] >= 3; if (ja === jb) return;
+      const J = ja ? nodes[e.a] : nodes[e.b], L = e.pts.length; if (L < 2.4 * hwAt(J.x, J.y)){ e.dead = true; changed = true; } });
+    const deg2 = new Int32Array(nodes.length); edges.forEach(e => { if (!e.dead){ deg2[e.a]++; deg2[e.b]++; } });
+    for (let nid = 0; nid < nodes.length; nid++){
+      if (deg2[nid] !== 2) continue; const es = edges.filter(e => !e.dead && (e.a === nid || e.b === nid)); if (es.length !== 2) continue;
+      const [e1, e2] = es; if (e1 === e2) continue;
+      const p1 = e1.b === nid ? e1.pts : e1.pts.slice().reverse(), p2 = e2.a === nid ? e2.pts : e2.pts.slice().reverse();
+      const na = e1.b === nid ? e1.a : e1.b, nb = e2.a === nid ? e2.b : e2.a;
+      e1.dead = e2.dead = true; changed = true;
+      const pts = p1.concat(p2.slice(1));
+      if (na === nb && na === nid) loops.push(pts.slice(0, -1)); else edges.push({ a: na, b: nb, pts });
+      deg2[nid] = 0;
+    }
+    if (!changed) break;
+  }
+  const live = edges.filter(e => !e.dead && e.pts.length >= 2);
+  if (0) redrawLine.dbg = { nodes: nodes.map(n => (n.j ? 'J' : 'E') + n.pix.length).join(' '), edges: edges.map(e => e.a + '-' + e.b + ':' + e.pts.length + (e.dead ? 'x' : '')).join(' '), loops: loops.map(L => L.length).join(' '), skel: skel.length };
+  // global typical half-width (for "uniform")
+  const allHw = []; live.forEach(e => e.pts.forEach(p => allHw.push(hwAt(p[0], p[1])))); loops.forEach(L => L.forEach(p => allHw.push(hwAt(p[0], p[1]))));
+  allHw.sort((a, b) => a - b); const hwMed = allHw.length ? allHw[allHw.length >> 1] : 2 * sc;
+  const mul = st.lineWidth || 1, uniform = st.lineMode === 'uniform';
+  const sigFor = hw => (0.4 + (st.smooth / 100) * 1.4) * Math.max(hw, 1.5 * sc);
+  const shapes = [];   // {pts, hw[], closed} | {ell}
+  const addPoly = (P, closed) => {
+    if (P.length < 2) return;
+    let hw = P.map(p => hwAt(p[0], p[1])); const m = hw.slice().sort((a, b) => a - b)[hw.length >> 1];
+    if (!uniform && m > 2.2 * hwMed && P.length < 4 * m) return;   // blob: handled by the residual pass
+    const sig = sigFor(m);
+    if (closed && st.snap && P.length > 12){
+      const S = gaussSmooth(P, Math.max(1, sig * 0.5), true), e = fitEllipse(S);
+      if (e.err < 0.035 && Math.min(e.a, e.b) > 1.5 * m){ if (e.a / e.b < 1.08){ const r = (e.a + e.b) / 2; e.a = e.b = r; } shapes.push({ ell: e, hw: uniform ? hwMed : m }); return; }
+    }
+    const k = Math.max(3, Math.round(1.8 * m)), cor = cornerSplit(P, k, closed, -0.76);
+    let pieces = [];
+    if (!cor.length){ pieces = [{ P, closed }]; }
+    else if (closed){ for (let c = 0; c < cor.length; c++){ const s0 = cor[c], e0 = cor[(c + 1) % cor.length]; const seg = []; for (let j = s0; ; j = (j + 1) % P.length){ seg.push(P[j]); if (j === e0 && seg.length > 1) break; if (seg.length > P.length + 1) break; } pieces.push({ P: seg, closed: false }); } }
+    else { let s0 = 0; for (const c of cor.concat([P.length - 1])){ if (c > s0) pieces.push({ P: P.slice(s0, c + 1), closed: false }); s0 = c; } }
+    for (const pc of pieces){
+      let Q = pc.P; const hwq = Q.map(p => hwAt(p[0], p[1])), mq = hwq.slice().sort((a, b) => a - b)[hwq.length >> 1];
+      if (!pc.closed && st.snap && Q.length > 7 * mq){
+        const A = Q[0], B = Q[Q.length - 1], L = Math.hypot(B[0] - A[0], B[1] - A[1]) || 1; let dev = 0, arc = 0;
+        for (let i = 1; i < Q.length; i++) arc += Math.hypot(Q[i][0] - Q[i - 1][0], Q[i][1] - Q[i - 1][1]);
+        for (const p of Q){ const d = Math.abs((B[0] - A[0]) * (A[1] - p[1]) - (A[0] - p[0]) * (B[1] - A[1])) / L; if (d > dev) dev = d; }
+        if (L > 4 * mq && arc < L * 1.02 && dev < Math.min(0.4 * mq, Math.max(1.2, 0.012 * L))){ shapes.push({ pts: [A, B], hw: [uniform ? hwMed : mq, uniform ? hwMed : mq], closed: false }); continue; }
+      }
+      const sg = Math.min(sig, Q.length / 7);
+      // smooth, then add back what smoothing took from the curvature (no shrinking of arcs / scallops)
+      const G1 = gaussSmooth(Q, sg, pc.closed, true), G2 = gaussSmooth(G1, sg, pc.closed, true);
+      Q = G1.map((p, i) => [2 * p[0] - G2[i][0], 2 * p[1] - G2[i][1]]); if (!pc.closed){ Q[0] = pc.P[0].slice(); Q[Q.length - 1] = pc.P[pc.P.length - 1].slice(); }
+      let hws = uniform ? Q.map(() => hwMed) : smooth1(smooth1(hwq, sig * 4, pc.closed), sig * 4, pc.closed);
+      shapes.push({ pts: Q, hw: hws, closed: pc.closed });
+    }
+  };
+  live.forEach(e => addPoly(e.pts, e.a === e.b && e.pts.length > 10));
+  loops.forEach(L => addPoly(L, true));
+  // render the new strokes
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const cx = cv.getContext('2d', { willReadFrequently: true });
+  cx.strokeStyle = cx.fillStyle = '#000'; cx.lineCap = cx.lineJoin = 'round';
+  for (const s of shapes){
+    if (s.ell){ const e = s.ell; cx.lineWidth = 2 * s.hw * mul; cx.beginPath(); cx.ellipse(e.cx + 0.5, e.cy + 0.5, e.a, e.b, e.th, 0, Math.PI * 2); cx.stroke(); continue; }
+    const P = s.pts;
+    if (uniform || P.length === 2){ cx.lineWidth = 2 * s.hw[0] * mul; cx.beginPath(); cx.moveTo(P[0][0] + 0.5, P[0][1] + 0.5); for (let i = 1; i < P.length; i++) cx.lineTo(P[i][0] + 0.5, P[i][1] + 0.5); if (s.closed) cx.closePath(); cx.stroke(); continue; }
+    const n = P.length, last = s.closed ? n : n - 1;
+    for (let i = 0; i < last; i++){ const j = (i + 1) % n; cx.lineWidth = (s.hw[i] + s.hw[j]) * mul; cx.beginPath(); cx.moveTo(P[i][0] + 0.5, P[i][1] + 0.5); cx.lineTo(P[j][0] + 0.5, P[j][1] + 0.5); cx.stroke(); }
+  }
+  const img = cx.getImageData(0, 0, W, H).data, out = new Uint8Array(N); for (let i = 0; i < N; i++) out[i] = img[i * 4 + 3] > 127 ? 1 : 0;
+  // keep solid dark shapes that are not strokes (eyes, filled pencil tip, dots)
+  // opening with a radius larger than a stroke's half-width removes every stroke and keeps only solid shapes
+  const hw90 = allHw.length ? allHw[Math.floor(allHw.length * 0.9)] : hwMed;
+  const rb = Math.max(1.3 * hwMed, 1.2 * hw90), blobs = dilate(erode(line, W, H, rb), W, H, rb + 0.5);
+  for (let i = 0; i < N; i++) if (blobs[i] && line[i]) out[i] = 1;
+  return { mask: out, shapes, hwMed };
+}
+
+/* ================= stage B: roles, layers, closing colour under line ================= */
+const BG = 254;
+function autoRoles(A){
+  const { lab, W, H, pal } = A; const cnt = new Int32Array(256), N = W * H;
+  for (let x = 0; x < W; x++){ cnt[lab[x]]++; cnt[lab[(H - 1) * W + x]]++; } for (let y = 0; y < H; y++){ cnt[lab[y * W]]++; cnt[lab[y * W + W - 1]]++; }
+  let bg = -1, bc = 0; for (let k = 0; k < pal.length; k++) if (cnt[k] > bc){ bc = cnt[k]; bg = k; }
+  if (cnt[255] > bc) bg = -1; // transparent border = background already
+  const tot = pal.reduce((a, p) => a + p.n, 0);
+  const dark = pal.map((p, k) => ({ k, L: p.lab[0], share: p.n / tot })).filter(o => o.k !== bg && o.share > 0.004).sort((a, b) => a.L - b.L);
+  const roles = pal.map((_, k) => k === bg ? 'bg' : 'fill');
+  if (dark.length && dark[0].L < 42){ roles[dark[0].k] = 'line'; dark.slice(1).forEach(o => { if (o.L < dark[0].L + 10 && o.L < 40) roles[o.k] = 'line'; }); }
+  return roles;
+}
+function stageB(F, st){
+  const A = F.A, W = A.W, H = A.H, N = W * H, sc = A.sc;
+  const lab = A.lab.slice();
+  const minA = Math.max(2, Math.round(st.speck * sc * sc));
+  removeSpecks(lab, W, H, minA);
+  const roles = F.roles;
+  removeSlivers(lab, W, H, 1.25 * sc, roles);
+  const isBg = v => v === 255 || roles[v] === 'bg';
+  // background = bg-role pixels connected to the border (+ enclosed ones in "hole" mode)
+  const bgMask = new Uint8Array(N), q = new Int32Array(N); let qs = 0, qe = 0;
+  const push = i => { if (!bgMask[i] && isBg(lab[i])){ bgMask[i] = 1; q[qe++] = i; } };
+  for (let x = 0; x < W; x++){ push(x); push((H - 1) * W + x); } for (let y = 0; y < H; y++){ push(y * W); push(y * W + W - 1); }
+  while (qs < qe){ const i = q[qs++], x = i % W; if (x > 0) push(i - 1); if (x < W - 1) push(i + 1); if (i >= W) push(i - W); if (i < N - W) push(i + W); }
+  for (let i = 0; i < N; i++) if (lab[i] === 255 || (st.holes === 'hole' && isBg(lab[i])) || roles[lab[i]] === 'del') bgMask[i] = 1;
+  // areas the user clicked away: flood the clicked colour region and make it background
+  if (F.holes && F.holes.length){
+    for (const [hx, hy, hk] of F.holes){
+      let s0 = clamp(Math.round(hy * sc), 0, H - 1) * W + clamp(Math.round(hx * sc), 0, W - 1);
+      if (hk != null && lab[s0] !== hk){ // find the nearest pixel of the clicked piece's colour
+        const r = Math.round(10 * sc), cx0 = s0 % W, cy0 = (s0 / W) | 0; let best = -1, bd = 1e9;
+        for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++){ const x = cx0 + dx, y = cy0 + dy; if (x < 0 || y < 0 || x >= W || y >= H) continue; const j = y * W + x; if (lab[j] !== hk || bgMask[j]) continue; const dd = dx * dx + dy * dy; if (dd < bd){ bd = dd; best = j; } }
+        if (best >= 0) s0 = best;
+      }
+      if (lab[s0] === 255 || roles[lab[s0]] === 'line'){ // clicked on the line: take the nearest colour pixel
+        const r = Math.round(4 * sc), cx0 = s0 % W, cy0 = (s0 / W) | 0; let best = -1, bd = 1e9;
+        for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++){ const x = cx0 + dx, y = cy0 + dy; if (x < 0 || y < 0 || x >= W || y >= H) continue; const j = y * W + x, v = lab[j]; if (v === 255 || roles[v] === 'line') continue; const dd = dx * dx + dy * dy; if (dd < bd){ bd = dd; best = j; } }
+        if (best < 0) continue; s0 = best; }
+      const L = lab[s0]; let qs1 = 0, qe1 = 0; q[qe1++] = s0; bgMask[s0] = 1;
+      while (qs1 < qe1){ const i = q[qs1++], x = i % W; const nb = [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W]; for (const j of nb){ if (j >= 0 && j < N && !bgMask[j] && lab[j] === L){ bgMask[j] = 1; q[qe1++] = j; } } }
+    }
+  }
+
+  // line layer
+  let line = new Uint8Array(N); for (let i = 0; i < N; i++) if (!bgMask[i] && roles[lab[i]] === 'line') line[i] = 1;
+  const gr = st.gap * sc;
+  if (gr > 0.3){ line = erode(dilate(line, W, H, gr), W, H, gr); }
+  removeBinarySpecks(line, W, H, minA, 1);
+  // typical line thickness T (from the distance transform inside the line)
+  let T = 4 * sc;
+  { const dIn = edt(line.map(v => v ? 0 : 1), W, H), vals = []; for (let i = 0; i < N; i += 7) if (line[i]) vals.push(Math.sqrt(dIn[i])); if (vals.length > 50){ vals.sort((a, b) => a - b); T = Math.max(2 * sc, 2 * vals[Math.floor(vals.length * 0.95)]); } }
+  // light noise speckles inside the line body (JPG artefacts) belong to the line
+  removeBinarySpecks(line, W, H, Math.max(Math.round(minA / 2), Math.round((0.6 * T) ** 2)), 0);
+  // halo: a thin band of colour hugging the OUTSIDE of the outline is background, not a real colour region
+  { const r = Math.max(1.3 * sc, 0.3 * T), U = new Uint8Array(N); for (let i = 0; i < N; i++) U[i] = !bgMask[i] && !line[i] && roles[lab[i]] !== 'line' ? 1 : 0;
+    const op = dilate(erode(U, W, H, r), W, H, r), dB = edt(bgMask, W, H), dL = edt(line, W, H), lim = (r + 1.5) * (r + 1.5), limL = (0.9 * T) * (0.9 * T);
+    for (let i = 0; i < N; i++) if (U[i] && !op[i] && dB[i] <= lim && dL[i] <= limL) bgMask[i] = 1;
+    // re-grow background through what was freed, so enclosed leftovers next to it go too
+    let qs2 = 0, qe2 = 0; for (let i = 0; i < N; i++) if (bgMask[i]) q[qe2++] = i;
+    while (qs2 < qe2){ const i = q[qs2++], x = i % W; const nb = [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W]; for (const j of nb){ if (j >= 0 && j < N && !bgMask[j] && U[j] && !op[j] && dL[j] <= limL){ bgMask[j] = 1; q[qe2++] = j; } } } }
+  // redraw the outline as clean strokes (smooth or uniform width, round ends, snapped lines/circles)
+  let redraw = null;
+  if (st.lineMode !== 'trace'){ let any = false; for (let i = 0; i < N; i++) if (line[i]){ any = true; break; } if (any){ redraw = redrawLine(line, W, H, sc, st); } }
+  const newLine = redraw ? redraw.mask : line;
+  // colour layer: every non-line pixel keeps its colour; line pixels take the colour of the nearest region
+  const fill = new Int16Array(N);
+  for (let i = 0; i < N; i++) fill[i] = line[i] ? -1 : bgMask[i] ? BG : (roles[lab[i]] === 'line' || isBg(lab[i]) && st.holes === 'hole') ? -2 : lab[i];
+  for (let i = 0; i < N; i++) if (fill[i] === -2) fill[i] = -1;
+  { // step 1: pixels of the old line that the new line no longer covers
+    const src = new Uint8Array(N); let any = false; for (let i = 0; i < N; i++) if (fill[i] !== -1){ src[i] = 1; any = true; }
+    if (any){ const near = nearestIdx(src, W, H); for (let i = 0; i < N; i++) if (fill[i] === -1 && !newLine[i]) fill[i] = fill[near[i]]; }
+    // step 2: pixels under the (new) line split at its smooth centre
+    const src2 = new Uint8Array(N); let any2 = false; for (let i = 0; i < N; i++) if (fill[i] !== -1 && !newLine[i]){ src2[i] = 1; any2 = true; }
+    if (any2){ const near = nearestIdx(src2, W, H); for (let i = 0; i < N; i++) if (newLine[i] || fill[i] === -1) fill[i] = fill[near[i]]; }
+    for (let i = 0; i < N; i++) if (fill[i] === -1) fill[i] = BG; }
+  line = newLine;
+  // smooth the hidden boundaries under the line (no teeth / spikes in the colour paths)
+  { const u8 = new Uint8Array(N); for (let i = 0; i < N; i++) u8[i] = fill[i]; modeFilter(u8, W, H, 3); for (let i = 0; i < N; i++) if (line[i]) fill[i] = u8[i]; }
+  // per colour masks with holes closed (so lower colours continue underneath upper ones)
+  const used = new Set(); for (let i = 0; i < N; i++) if (fill[i] !== BG) used.add(fill[i]);
+  const bgFill = new Uint8Array(N); for (let i = 0; i < N; i++) bgFill[i] = fill[i] === BG ? 1 : 0;
+  const fills = [];
+  for (const k of used){
+    const m = new Uint8Array(N); let area = 0; for (let i = 0; i < N; i++) if (fill[i] === k){ m[i] = 1; area++; }
+    fillHoles(m, W, H, bgFill);
+    // grow 1px into neighbouring colours (never into background) so adjacent colours overlap slightly
+    const g = m.slice(); for (let i = 0; i < N; i++){ if (m[i] || fill[i] === BG) continue; const x = i % W; if ((x > 0 && m[i - 1]) || (x < W - 1 && m[i + 1]) || (i >= W && m[i - W]) || (i < N - W && m[i + W])) g[i] = 1; }
+    removeBinarySpecks(g, W, H, minA, 1);
+    let a2 = 0; for (let i = 0; i < N; i++) a2 += g[i];
+    if (a2 > 0) fills.push({ k, mask: g, area: a2 });
+  }
+  fills.sort((a, b) => b.area - a.area);
+  // objects = connected non-background regions (slightly joined)
+  const fg = new Uint8Array(N); for (let i = 0; i < N; i++) fg[i] = fill[i] !== BG || line[i] ? 1 : 0;
+  const fgd = dilate(fg, W, H, Math.max(2, 0.006 * Math.max(W, H)));
+  const obj = new Int32Array(N).fill(-1); let no = 0;
+  for (let s = 0; s < N; s++){ if (!fgd[s] || obj[s] >= 0) continue; qs = 0; qe = 0; q[qe++] = s; obj[s] = no; while (qs < qe){ const i = q[qs++], x = i % W; const nb = [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W]; for (const j of nb){ if (j >= 0 && j < N && fgd[j] && obj[j] < 0){ obj[j] = no; q[qe++] = j; } } } no++; }
+  return { line, fills, obj, nObj: no, redraw };
+}
+/* thin bands of a fill colour (anti-alias halos around the outline, crescents inside holes) go to their non-line neighbour */
+function removeSlivers(lab, W, H, maxW, roles){
+  const N = W * H, seen = new Uint8Array(N), q = new Int32Array(N), cnt = new Float64Array(256);
+  const isLine = v => v !== 255 && roles[v] === 'line';
+  for (let s = 0; s < N; s++){
+    const L = lab[s]; if (seen[s] || isLine(L) || L === 255) continue;
+    let qs = 0, qe = 0, perim = 0; q[qe++] = s; seen[s] = 1; const used = [];
+    while (qs < qe){ const i = q[qs++], x = i % W; const nbs = [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W];
+      for (const j of nbs){ if (j < 0 || j >= N){ perim++; continue; } const v = lab[j]; if (v === L){ if (!seen[j]){ seen[j] = 1; q[qe++] = j; } } else { perim++; if (!isLine(v)){ if (!cnt[v]) used.push(v); cnt[v]++; } } } }
+    const width = perim ? 2 * qe / perim : 1e9;
+    let best = -1, bc = 0; for (const v of used){ if (cnt[v] > bc){ bc = cnt[v]; best = v; } cnt[v] = 0; }
+    if (width < maxW && best >= 0 && qe < N * 0.05) for (let k = 0; k < qe; k++) lab[q[k]] = best;
+  }
+}
+function fillHoles(m, W, H, bgMask){
+  const N = W * H, out = new Uint8Array(N), q = new Int32Array(N); let qs = 0, qe = 0;
+  const push = i => { if (!m[i] && !out[i]){ out[i] = 1; q[qe++] = i; } };
+  for (let x = 0; x < W; x++){ push(x); push((H - 1) * W + x); } for (let y = 0; y < H; y++){ push(y * W); push(y * W + W - 1); }
+  while (qs < qe){ const i = q[qs++], x = i % W; if (x > 0) push(i - 1); if (x < W - 1) push(i + 1); if (i >= W) push(i - W); if (i < N - W) push(i + W); }
+  const seen = new Uint8Array(N);
+  for (let s = 0; s < N; s++){
+    if (m[s] || out[s] || seen[s]) continue;
+    qs = 0; qe = 0; q[qe++] = s; seen[s] = 1; let bgc = 0;
+    while (qs < qe){ const i = q[qs++], x = i % W; if (bgMask[i]) bgc++; const nb = [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W]; for (const j of nb){ if (j >= 0 && j < N && !m[j] && !out[j] && !seen[j]){ seen[j] = 1; q[qe++] = j; } } }
+    if (bgc / qe < 0.5) for (let k = 0; k < qe; k++) m[q[k]] = 1;
+  }
+}
+
+/* ================= contour tracing (pixel-edge loops, holes included) ================= */
+function traceMask(mask, W, H){
+  const VW = W + 1, nV = VW * (H + 1);
+  let ne = 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){ const i = y * W + x; if (!mask[i]) continue; if (y === 0 || !mask[i - W]) ne++; if (x === W - 1 || !mask[i + 1]) ne++; if (y === H - 1 || !mask[i + W]) ne++; if (x === 0 || !mask[i - 1]) ne++; }
+  const es = new Int32Array(ne), ed = new Uint8Array(ne), ep = new Int32Array(ne), used = new Uint8Array(ne);
+  const o0 = new Int32Array(nV).fill(-1), o1 = new Int32Array(nV).fill(-1);
+  let e = 0;
+  const add = (v, d, p) => { es[e] = v; ed[e] = d; ep[e] = p; if (o0[v] < 0) o0[v] = e; else o1[v] = e; e++; };
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){
+    const i = y * W + x; if (!mask[i]) continue;
+    if (y === 0 || !mask[i - W]) add(y * VW + x, 0, i);
+    if (x === W - 1 || !mask[i + 1]) add(y * VW + x + 1, 1, i);
+    if (y === H - 1 || !mask[i + W]) add((y + 1) * VW + x + 1, 2, i);
+    if (x === 0 || !mask[i - 1]) add((y + 1) * VW + x, 3, i);
+  }
+  const step = [1, VW, -1, -VW], loops = [];
+  for (let s = 0; s < ne; s++){
+    if (used[s]) continue;
+    const xs = [], ys = []; let cur = s, guard = 0;
+    while (!used[cur] && guard++ < 4 * ne){
+      used[cur] = 1; const v = es[cur]; xs.push(v % VW); ys.push((v / VW) | 0);
+      const end = v + step[ed[cur]], d = ed[cur];
+      const a = o0[end], b = o1[end]; let nx = -1;
+      if (b < 0) nx = a;
+      else { for (const want of [(d + 1) % 4, d, (d + 3) % 4]){ if (a >= 0 && !used[a] && ed[a] === want){ nx = a; break; } if (!used[b] && ed[b] === want){ nx = b; break; } } }
+      if (nx < 0 || used[nx]) break; cur = nx;
+    }
+    if (xs.length >= 4) loops.push({ xs, ys, pix: ep[s] });
+  }
+  return loops;
+}
+
+/* ================= smoothing + corner detection + Bézier fitting (Schneider) ================= */
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1]], addv = (a, b) => [a[0] + b[0], a[1] + b[1]], mul = (a, s) => [a[0] * s, a[1] * s], dot = (a, b) => a[0] * b[0] + a[1] * b[1];
+const len = a => Math.hypot(a[0], a[1]), norm = a => { const l = len(a); return l > 1e-9 ? [a[0] / l, a[1] / l] : [1, 0]; };
+function bez(b, t){ const mt = 1 - t; return [mt * mt * mt * b[0][0] + 3 * mt * mt * t * b[1][0] + 3 * mt * t * t * b[2][0] + t * t * t * b[3][0], mt * mt * mt * b[0][1] + 3 * mt * mt * t * b[1][1] + 3 * mt * t * t * b[2][1] + t * t * t * b[3][1]]; }
+function genBez(P, f, l, u, t1, t2){
+  const p0 = P[f], p3 = P[l]; let c00 = 0, c01 = 0, c11 = 0, x0 = 0, x1 = 0;
+  for (let i = 0; i <= l - f; i++){
+    const t = u[i], mt = 1 - t, b0 = mt * mt * mt, b1 = 3 * mt * mt * t, b2 = 3 * mt * t * t, b3 = t * t * t;
+    const a0 = mul(t1, b1), a1 = mul(t2, b2);
+    c00 += dot(a0, a0); c01 += dot(a0, a1); c11 += dot(a1, a1);
+    const tmp = sub(P[f + i], addv(mul(p0, b0 + b1), mul(p3, b2 + b3)));
+    x0 += dot(a0, tmp); x1 += dot(a1, tmp);
+  }
+  const det = c00 * c11 - c01 * c01;
+  let al = det ? (x0 * c11 - x1 * c01) / det : 0, ar = det ? (c00 * x1 - c01 * x0) / det : 0;
+  const seg = len(sub(p3, p0)), eps = 1e-6 * seg;
+  if (al < eps || ar < eps || al > seg * 2 || ar > seg * 2){ al = ar = seg / 3; }
+  return [p0, addv(p0, mul(t1, al)), addv(p3, mul(t2, ar)), p3];
+}
+function maxErr(P, f, l, b, u){ let m = 0, sp = Math.floor((f + l) / 2); for (let i = f + 1; i < l; i++){ const p = bez(b, u[i - f]), d = (p[0] - P[i][0]) ** 2 + (p[1] - P[i][1]) ** 2; if (d >= m){ m = d; sp = i; } } return [m, clamp(sp, f + 1, l - 1)]; }
+function reparam(P, f, l, u, b){
+  const q1 = [mul(sub(b[1], b[0]), 3), mul(sub(b[2], b[1]), 3), mul(sub(b[3], b[2]), 3)], q2 = [mul(sub(q1[1], q1[0]), 2), mul(sub(q1[2], q1[1]), 2)];
+  return u.map((t, i) => {
+    const p = P[f + i], q = bez(b, t), mt = 1 - t;
+    const d1 = [mt * mt * q1[0][0] + 2 * mt * t * q1[1][0] + t * t * q1[2][0], mt * mt * q1[0][1] + 2 * mt * t * q1[1][1] + t * t * q1[2][1]];
+    const d2 = [mt * q2[0][0] + t * q2[1][0], mt * q2[0][1] + t * q2[1][1]];
+    const num = (q[0] - p[0]) * d1[0] + (q[1] - p[1]) * d1[1], den = d1[0] * d1[0] + d1[1] * d1[1] + (q[0] - p[0]) * d2[0] + (q[1] - p[1]) * d2[1];
+    return den ? clamp(t - num / den, 0, 1) : t;
+  });
+}
+function chord(P, f, l){ const u = [0]; for (let i = f + 1; i <= l; i++) u.push(u[u.length - 1] + len(sub(P[i], P[i - 1]))); const T = u[u.length - 1] || 1; return u.map(v => v / T); }
+function fitCubic(P, f, l, t1, t2, e2, out, depth){
+  if (l - f === 1){ const d = len(sub(P[l], P[f])) / 3; out.push([P[f], addv(P[f], mul(t1, d)), addv(P[l], mul(t2, d)), P[l]]); return; }
+  let u = chord(P, f, l), b = genBez(P, f, l, u, t1, t2), [m, sp] = maxErr(P, f, l, b, u);
+  if (m < e2 || depth > 60){ out.push(b); return; }
+  if (m < e2 * 9){ for (let it = 0; it < 10; it++){ u = reparam(P, f, l, u, b); b = genBez(P, f, l, u, t1, t2); [m, sp] = maxErr(P, f, l, b, u); if (m < e2){ out.push(b); return; } } }
+  const tc = norm(sub(P[sp - 1], P[sp + 1]));
+  fitCubic(P, f, sp, t1, tc, e2, out, depth + 1);
+  fitCubic(P, sp, l, mul(tc, -1), t2, e2, out, depth + 1);
+}
+function gaussW(sig){ const r = Math.max(1, Math.ceil(sig * 2.5)), w = []; let s = 0; for (let i = -r; i <= r; i++){ const v = Math.exp(-i * i / (2 * sig * sig)); w.push(v); s += v; } return { r, w: w.map(v => v / s) }; }
+function fitLoop(xs, ys, o){
+  const n = xs.length;
+  if (n < 6){ const P = xs.map((x, i) => [x, ys[i]]); const out = []; for (let i = 0; i < n; i++){ const a = P[i], b = P[(i + 1) % n]; out.push([a, addv(a, mul(sub(b, a), 1 / 3)), addv(a, mul(sub(b, a), 2 / 3)), b]); } return out; }
+  // corners on lightly smoothed outline
+  const k = Math.min(o.k, Math.floor(n / 4));
+  const g1 = gaussW(1), sx = new Float64Array(n), sy = new Float64Array(n);
+  for (let i = 0; i < n; i++){ let a = 0, b = 0; for (let j = -g1.r; j <= g1.r; j++){ const t = (i + j + n) % n; a += xs[t] * g1.w[j + g1.r]; b += ys[t] * g1.w[j + g1.r]; } sx[i] = a; sy[i] = b; }
+  const cs = new Float64Array(n);
+  for (let i = 0; i < n; i++){ const a = (i - k + n) % n, b = (i + k) % n; const v1 = [sx[a] - sx[i], sy[a] - sy[i]], v2 = [sx[b] - sx[i], sy[b] - sy[i]]; cs[i] = dot(v1, v2) / ((len(v1) * len(v2)) || 1); }
+  let corners = [];
+  for (let i = 0; i < n; i++){ if (cs[i] <= o.cornerCos) continue; let mx = true; for (let j = -k; j <= k; j++){ if (j && cs[(i + j + n) % n] > cs[i]){ mx = false; break; } } if (mx && (!corners.length || i - corners[corners.length - 1] > k)) corners.push(i); }
+  if (corners.length > 1 && corners[0] + n - corners[corners.length - 1] <= k) corners.pop();
+  const g = gaussW(o.sigma), out = [], e2 = o.tol * o.tol;
+  if (!corners.length){
+    const P = [];
+    for (let i = 0; i < n; i++){ let a = 0, b = 0; for (let j = -g.r; j <= g.r; j++){ const t = (i + j + n) % n; a += xs[t] * g.w[j + g.r]; b += ys[t] * g.w[j + g.r]; } P.push([a, b]); }
+    P.push(P[0]);
+    const t = norm(sub(P[1], P[n - 1]));
+    fitCubic(P, 0, n, t, mul(t, -1), e2, out, 0);
+    return out;
+  }
+  for (let c = 0; c < corners.length; c++){
+    const s = corners[c], e = corners[(c + 1) % corners.length], m = ((e - s + n) % n) || n;
+    const raw = []; for (let j = 0; j <= m; j++){ const t = (s + j) % n; raw.push([xs[t], ys[t]]); }
+    const P = raw.map((p, j) => { if (j === 0 || j === m) return p; let a = 0, b = 0, ws = 0; for (let d = -g.r; d <= g.r; d++){ const t = j + d; if (t < 0 || t > m) continue; const w = g.w[d + g.r]; a += raw[t][0] * w; b += raw[t][1] * w; ws += w; } return [a / ws, b / ws]; });
+    if (m < 2){ out.push([P[0], addv(P[0], mul(sub(P[m], P[0]), 1 / 3)), addv(P[0], mul(sub(P[m], P[0]), 2 / 3)), P[m]]); continue; }
+    const h = Math.min(3, m);
+    fitCubic(P, 0, m, norm(sub(P[h], P[0])), norm(sub(P[m - h], P[m])), e2, out, 0);
+  }
+  return out;
+}
+
+/* ================= stage C: trace every layer ================= */
+function stageC(F, B, st){
+  const A = F.A, W = A.W, H = A.H, sc = A.sc;
+  const v = st.smooth / 100;
+  const base = { k: Math.round(3 + 2 * sc), cornerCos: Math.cos(st.corner * Math.PI / 180) };
+  const oFill = Object.assign({}, base, { sigma: (0.7 + v * 3) * sc / 2, tol: (0.5 + v * 2.2) * sc / 2 });
+  const oLine = Object.assign({}, base, { sigma: (0.6 + v * 2.4) * sc / 2, tol: (0.45 + v * 1.8) * sc / 2 });
+  const minLoop = Math.max(4, st.speck * sc * sc * 0.5);
+  const layers = [];
+  const doMask = (mask, color, role, o) => {
+    const loops = traceMask(mask, W, H).filter(L => { let a = 0; const n = L.xs.length; for (let i = 0; i < n; i++){ const j = (i + 1) % n; a += L.xs[i] * L.ys[j] - L.xs[j] * L.ys[i]; } return Math.abs(a / 2) >= minLoop; });
+    const out = loops.map(L => ({ obj: B.obj[L.pix], segs: fitLoop(L.xs, L.ys, o).map(b => b.map(p => [p[0] / sc, p[1] / sc])) }));
+    if (out.length) layers.push({ color, role, loops: out });
+  };
+  // every connected shape of a colour is its own piece; pieces are stacked big → small, so a shape that
+  // surrounds another one (handle around its hole, notebook around its label) is always underneath it
+  const pieces = [];
+  for (const f of B.fills){
+    const p = A.pal[f.k], color = F.over[f.k] ? hexToRgb(F.over[f.k]) : p.rgb.map(Math.round);
+    const comp = new Int32Array(W * H).fill(-1), areas = []; const q = new Int32Array(W * H);
+    for (let s0 = 0; s0 < W * H; s0++){ if (!f.mask[s0] || comp[s0] >= 0) continue; const id = areas.length; let qs = 0, qe = 0; q[qe++] = s0; comp[s0] = id;
+      while (qs < qe){ const i = q[qs++], x = i % W; const nb = [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W]; for (const j of nb){ if (j >= 0 && j < W * H && f.mask[j] && comp[j] < 0){ comp[j] = id; q[qe++] = j; } } }
+      areas.push(qe); }
+    const loops = traceMask(f.mask, W, H).filter(L => { let a = 0; const n = L.xs.length; for (let i = 0; i < n; i++){ const j = (i + 1) % n; a += L.xs[i] * L.ys[j] - L.xs[j] * L.ys[i]; } return Math.abs(a / 2) >= minLoop; });
+    const byComp = new Map();
+    for (const L of loops){ const c = comp[L.pix]; if (!byComp.has(c)) byComp.set(c, []); byComp.get(c).push({ obj: B.obj[L.pix], segs: fitLoop(L.xs, L.ys, oFill).map(b => b.map(pt => [pt[0] / sc, pt[1] / sc])) }); }
+    for (const [c, ls] of byComp) pieces.push({ color, role: 'fill', loops: ls, area: areas[c] });
+  }
+  pieces.sort((a, b) => b.area - a.area);
+  pieces.forEach(pc => layers.push(pc));
+  const lineCols = A.pal.map((p, k) => F.roles[k] === 'line' ? { k, n: p.n } : null).filter(Boolean).sort((a, b) => b.n - a.n);
+  if (lineCols.length){ const k = lineCols[0].k; doMask(B.line, F.over[k] ? hexToRgb(F.over[k]) : A.pal[k].rgb.map(Math.round), 'line', oLine); }
+  const W0 = A.ow, H0 = A.oh;
+  // per-object order: fills (big → small) then line
+  const objs = [...new Set(layers.flatMap(l => l.loops.map(p => p.obj)))].filter(o => o >= 0).sort((a, b) => a - b);
+  let nodes = 0, paths = 0; layers.forEach(l => l.loops.forEach(p => { nodes += p.segs.length; paths++; }));
+  return { W: W0, H: H0, layers, objs, nodes, paths };
+}
+
+/* ================= pipeline ================= */
+async function processFile(F, quiet){
+  if (F.kind === 'sheet'){
+    const n = F.parts.length, t0 = performance.now();
+    for (let i = 0; i < n; i++){ const P = F.parts[i]; if (P.res && !P.dirty) continue; busy(true, `Objek ${i + 1} dari ${n}…`, i / n); await sleep(15); await processFile(P, true); }
+    F.res = mergeSheet(F); F.res.ms = performance.now() - t0; F.dirty = false; if (!quiet) busy(false); return;
+  }
+  const st = S.set, t0 = performance.now();
+  if (!quiet) busy(true, 'Membaca & merapikan warna…', 0.15); await sleep(20);
+  const keyA = [st.blur, st.maxColors, st.merge].join('|');
+  if (!F.A || F.A.key !== keyA){ F.A = stageA(F, st); F.roles = autoRoles(F.A); F.over = {}; }
+  if (!quiet) busy(true, 'Menutup warna di bawah garis…', 0.5); await sleep(10);
+  const B = stageB(F, st);
+  if (!quiet) busy(true, 'Menghaluskan kurva…', 0.8); await sleep(10);
+  F.res = stageC(F, B, st); F.res.ms = performance.now() - t0;
+  buildPaths(F.res);
+  F.dirty = false;
+  if (!quiet) busy(false);
+}
+function mergeSheet(Sh){
+  const layers = [], objs = []; let nodes = 0, paths = 0;
+  Sh.parts.forEach((P, pi) => { const R = P.res; if (!R) return;
+    const off = segs => segs.map(b => b.map(pt => [pt[0] + P.ox, pt[1] + P.oy]));
+    R.layers.forEach(l => layers.push({ color: l.color, role: l.role, loops: l.loops.map(lp => ({ obj: pi * 1000 + lp.obj, segs: off(lp.segs) })) }));
+    R.objs.forEach(o => objs.push(pi * 1000 + o)); nodes += R.nodes; paths += R.paths; });
+  const R = { W: Sh.img.naturalWidth, H: Sh.img.naturalHeight, layers, objs, nodes, paths }; buildPaths(R); return R;
+}
+/* find the separate objects on a sheet and cut each one out (other objects masked away) */
+async function detectParts(img){
+  const ow = img.naturalWidth, oh = img.naturalHeight, k = Math.min(1, 900 / Math.max(ow, oh)), w = Math.max(1, Math.round(ow * k)), h = Math.max(1, Math.round(oh * k)), N = w * h;
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const cx = c.getContext('2d', { willReadFrequently: true }); cx.drawImage(img, 0, 0, w, h);
+  const d = cx.getImageData(0, 0, w, h).data;
+  const border = []; for (let x = 0; x < w; x += 2){ border.push(x, (h - 1) * w + x); } for (let y = 0; y < h; y += 2){ border.push(y * w, y * w + w - 1); }
+  const transp = border.filter(i => d[i * 4 + 3] < 16).length > border.length * 0.5;
+  const med = ch => { const a = border.map(i => d[i * 4 + ch]).sort((p, q) => p - q); return a[a.length >> 1]; };
+  const bg = [med(0), med(1), med(2)];
+  const fg = new Uint8Array(N);
+  for (let i = 0; i < N; i++){ const a = d[i * 4 + 3]; if (a < 40) continue; if (transp){ fg[i] = 1; continue; } const dr = d[i * 4] - bg[0], dg = d[i * 4 + 1] - bg[1], db = d[i * 4 + 2] - bg[2]; if (dr * dr + dg * dg + db * db > 900) fg[i] = 1; }
+  const dl = dilate(fg, w, h, Math.max(2, Math.round(0.01 * Math.max(w, h))));
+  const lab = new Int32Array(N).fill(-1), q = new Int32Array(N), comps = [];
+  for (let s0 = 0; s0 < N; s0++){
+    if (!dl[s0] || lab[s0] >= 0) continue; const id = comps.length; let qs = 0, qe = 0; q[qe++] = s0; lab[s0] = id; let x0 = w, y0 = h, x1 = -1, y1 = -1, area = 0;
+    while (qs < qe){ const i = q[qs++], x = i % w, y = (i / w) | 0; if (fg[i]){ area++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      const nb = [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i - w, i + w]; for (const j of nb){ if (j >= 0 && j < N && dl[j] && lab[j] < 0){ lab[j] = id; q[qe++] = j; } } }
+    comps.push({ id, x0, y0, x1, y1, area });
+  }
+  const keep = comps.filter(o => o.area >= N * 0.0003 && o.x1 >= o.x0);
+  if (keep.length < 2) return null;
+  const hs = keep.map(o => o.y1 - o.y0).sort((a, b) => a - b), rowH = Math.max(1, hs[hs.length >> 1] * 0.6);
+  keep.sort((a, b) => Math.round((a.y0 + a.y1) / 2 / rowH) - Math.round((b.y0 + b.y1) / 2 / rowH) || a.x0 - b.x0);
+  const out = [];
+  for (const o of keep){
+    const bx = o.x0 / k, by = o.y0 / k, bw = (o.x1 - o.x0 + 1) / k, bh = (o.y1 - o.y0 + 1) / k, pad = Math.round(0.05 * Math.max(bw, bh)) + 6;
+    const X = Math.max(0, Math.floor(bx - pad)), Y = Math.max(0, Math.floor(by - pad)), X2 = Math.min(ow, Math.ceil(bx + bw + pad)), Y2 = Math.min(oh, Math.ceil(by + bh + pad)), CW = X2 - X, CH = Y2 - Y;
+    const pc = document.createElement('canvas'); pc.width = CW; pc.height = CH; const px = pc.getContext('2d', { willReadFrequently: true });
+    px.drawImage(img, X, Y, CW, CH, 0, 0, CW, CH);
+    const id2 = px.getImageData(0, 0, CW, CH), pd = id2.data;
+    for (let yy = 0; yy < CH; yy++) for (let xx = 0; xx < CW; xx++){
+      const sx = Math.min(w - 1, Math.floor((X + xx) * k)), sy = Math.min(h - 1, Math.floor((Y + yy) * k)), L = lab[sy * w + sx];
+      if (L >= 0 && L !== o.id){ const t = (yy * CW + xx) * 4; if (transp) pd[t + 3] = 0; else { pd[t] = bg[0]; pd[t + 1] = bg[1]; pd[t + 2] = bg[2]; pd[t + 3] = 255; } }
+    }
+    px.putImageData(id2, 0, 0);
+    const blob = await new Promise(r => pc.toBlob(r, 'image/png')), url = URL.createObjectURL(blob), im = new Image(); im.src = url; await im.decode().catch(() => {});
+    out.push({ img: im, url, ox: X, oy: Y });
+  }
+  return out;
+}
+function buildPaths(R){
+  R.layers.forEach(l => { l.loops.forEach(p => { p.d = segsToD(p.segs); }); l.p2d = new Path2D(l.loops.map(p => p.d).join('')); });
+}
+const f2 = v => Math.round(v * 100) / 100;
+function segsToD(segs){ if (!segs.length) return ''; let d = `M${f2(segs[0][0][0])} ${f2(segs[0][0][1])}`; for (const b of segs) d += `C${f2(b[1][0])} ${f2(b[1][1])} ${f2(b[2][0])} ${f2(b[2][1])} ${f2(b[3][0])} ${f2(b[3][1])}`; return d + 'Z'; }
+
+/* ================= export ================= */
+function grouped(R){
+  // [{obj, fills:[{color,d,segs}], line:[...]}]
+  return R.objs.map(o => ({ o, fills: R.layers.filter(l => l.role === 'fill').map(l => ({ color: l.color, loops: l.loops.filter(p => p.obj === o) })).filter(x => x.loops.length), line: R.layers.filter(l => l.role === 'line').map(l => ({ color: l.color, loops: l.loops.filter(p => p.obj === o) })).filter(x => x.loops.length) }));
+}
+function makeSVG(R){
+  let s = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${R.W} ${R.H}" width="${R.W}" height="${R.H}">\n`;
+  grouped(R).forEach((g, i) => {
+    s += `<g id="objek-${i + 1}">\n<g id="objek-${i + 1}-warna">\n`;
+    g.fills.forEach(f => { s += `<path fill="${toHex(f.color)}" fill-rule="evenodd" d="${f.loops.map(p => p.d).join('')}"/>\n`; });
+    s += `</g>\n<g id="objek-${i + 1}-garis">\n`;
+    g.line.forEach(f => { s += `<path fill="${toHex(f.color)}" fill-rule="evenodd" d="${f.loops.map(p => p.d).join('')}"/>\n`; });
+    s += `</g>\n</g>\n`;
+  });
+  return s + '</svg>\n';
+}
+function psPath(loops, H, ops){ let s = ''; for (const p of loops){ const b0 = p.segs[0]; if (!b0) continue; s += `${f2(b0[0][0])} ${f2(H - b0[0][1])} ${ops.m}\n`; for (const b of p.segs) s += `${f2(b[1][0])} ${f2(H - b[1][1])} ${f2(b[2][0])} ${f2(H - b[2][1])} ${f2(b[3][0])} ${f2(H - b[3][1])} ${ops.c}\n`; s += `${ops.h}\n`; } return s; }
+function makeEPS(R, title){
+  const W = R.W, H = R.H;
+  let s = `%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 0 0 ${Math.ceil(W)} ${Math.ceil(H)}\n%%HiResBoundingBox: 0 0 ${W} ${H}\n%%Creator: Tracewright\n%%Title: ${title}\n%%LanguageLevel: 2\n%%Pages: 1\n%%EndComments\n%%BeginProlog\n/m {moveto} bind def /c {curveto} bind def /h {closepath} bind def /f {eofill} bind def /rg {setrgbcolor} bind def\n%%EndProlog\n%%Page: 1 1\n`;
+  grouped(R).forEach(g => {
+    s += 'gsave\n';
+    for (const part of [...g.fills, ...g.line]){ const c = part.color.map(v => (v / 255).toFixed(4)); s += `${c[0]} ${c[1]} ${c[2]} rg\nnewpath\n` + psPath(part.loops, H, { m: 'm', c: 'c', h: 'h' }) + 'f\n'; }
+    s += 'grestore\n';
+  });
+  return s + 'showpage\n%%Trailer\n%%EOF\n';
+}
+async function deflate(bytes){
+  if (typeof CompressionStream === 'undefined') return null;
+  const cs = new CompressionStream('deflate'); const w = cs.writable.getWriter(); w.write(bytes); w.close();
+  return new Uint8Array(await new Response(cs.readable).arrayBuffer());
+}
+async function makePDF(R, title){
+  const W = R.W, H = R.H, enc = new TextEncoder();
+  let content = '';
+  grouped(R).forEach(g => {
+    content += 'q\n';
+    for (const part of [...g.fills, ...g.line]){ const c = part.color.map(v => (v / 255).toFixed(4)); content += `${c[0]} ${c[1]} ${c[2]} rg\n` + psPath(part.loops, H, { m: 'm', c: 'c', h: 'h' }) + 'f*\n'; }
+    content += 'Q\n';
+  });
+  let data = enc.encode(content), filter = '';
+  const z = await deflate(data); if (z){ data = z; filter = '/Filter /FlateDecode '; }
+  const parts = [], offs = []; let pos = 0;
+  const push = b => { const u = typeof b === 'string' ? enc.encode(b) : b; parts.push(u); pos += u.length; };
+  push('%PDF-1.5\n%\xE2\xE3\xCF\xD3\n');
+  const obj = (n, body) => { offs[n] = pos; push(`${n} 0 obj\n${body}\nendobj\n`); };
+  obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+  obj(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+  obj(3, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << >> /Contents 4 0 R >>`);
+  offs[4] = pos; push(`4 0 obj\n<< ${filter}/Length ${data.length} >>\nstream\n`); push(data); push('\nendstream\nendobj\n');
+  obj(5, `<< /Title (${title.replace(/[()\\]/g, '')}) /Creator (Tracewright) /Producer (Tracewright) >>`);
+  const xref = pos;
+  let x = `xref\n0 6\n0000000000 65535 f \n`; for (let n = 1; n <= 5; n++) x += String(offs[n]).padStart(10, '0') + ' 00000 n \n';
+  push(x + `trailer\n<< /Size 6 /Root 1 0 R /Info 5 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+  return new Blob(parts, { type: 'application/pdf' });
+}
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++){ let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+const crc32 = b => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+function zip(files){
+  const enc = new TextEncoder(), parts = [], cen = []; let off = 0;
+  for (const f of files){
+    const name = enc.encode(f.name), data = f.data, crc = crc32(data);
+    const h = new DataView(new ArrayBuffer(30)); h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint32(14, crc, true); h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, name.length, true);
+    parts.push(new Uint8Array(h.buffer), name, data);
+    const c = new DataView(new ArrayBuffer(46)); c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint32(16, crc, true); c.setUint32(20, data.length, true); c.setUint32(24, data.length, true); c.setUint16(28, name.length, true); c.setUint32(42, off, true);
+    cen.push(new Uint8Array(c.buffer), name); off += 30 + name.length + data.length;
+  }
+  const cs = cen.reduce((a, b) => a + b.length, 0), e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, cs, true); e.setUint32(16, off, true);
+  return new Blob([...parts, ...cen, new Uint8Array(e.buffer)], { type: 'application/zip' });
+}
+const baseName = F => (($('#nameIn').value.trim() && S.files.length === 1) ? $('#nameIn').value.trim() : F.name.replace(/\.[^.]+$/, '')).replace(/[^\w\-]+/g, '-') || 'vector';
+async function fileBlob(F, fmt){
+  const nm = baseName(F);
+  if (fmt === 'svg') return new Blob([makeSVG(F.res)], { type: 'image/svg+xml' });
+  if (fmt === 'eps') return new Blob([makeEPS(F.res, nm)], { type: 'application/postscript' });
+  return await makePDF(F.res, nm);
+}
+async function exportOne(fmt){
+  const F = S.files[S.cur]; if (!F || !F.res){ toast('Belum ada hasil'); return; }
+  if (F.dirty || (F.kind === 'sheet' && F.parts.some(P => !P.res || P.dirty))) await processFile(F);
+  download(await fileBlob(F, fmt), `${baseName(F)}.${fmt}`);
+}
+async function exportAll(){
+  if (!S.files.length){ toast('Belum ada gambar'); return; }
+  const fmts = $$('#zipFmt input:checked').map(i => i.value); if (!fmts.length){ toast('Pilih minimal satu format'); return; }
+  const files = [], tops = S.files.filter(F => F.kind !== 'part'), withParts = $('#zipParts').checked;
+  for (let i = 0; i < tops.length; i++){
+    const F = tops[i]; busy(true, `Memproses ${i + 1} / ${tops.length}…`, i / tops.length); await sleep(20);
+    if (!F.res || F.dirty || (F.kind === 'sheet' && F.parts.some(P => !P.res || P.dirty))) await processFile(F, true);
+    for (const fmt of fmts) files.push({ name: `${fmt}/${baseName(F)}.${fmt}`, data: new Uint8Array(await (await fileBlob(F, fmt)).arrayBuffer()) });
+    if (F.kind === 'sheet' && withParts) for (const P of F.parts) for (const fmt of fmts) files.push({ name: `${fmt}/${baseName(F)}-objek/${baseName(P)}.${fmt}`, data: new Uint8Array(await (await fileBlob(P, fmt)).arrayBuffer()) });
+  }
+  busy(false); renderFiles();
+  download(zip(files), 'tracewright-vektor.zip'); toast(files.length + ' file vektor dalam ZIP');
+}
+
+/* ================= viewer ================= */
+const cv = $('#cv'), ctx = cv.getContext('2d');
+let fitK = 1;
+function draw(){
+  const st = $('#stage'), dpr = window.devicePixelRatio || 1, w = st.clientWidth, h = st.clientHeight;
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+  const F = S.files[S.cur];
+  $('#empty').style.display = F ? 'none' : '';
+  if (!F) return;
+  const iw = F.img.naturalWidth, ih = F.img.naturalHeight;
+  fitK = Math.min((w - 40) / iw, (h - 40) / ih);
+  const k = fitK * S.zoom * dpr, ox = (w * dpr - iw * k) / 2 + S.panX * dpr, oy = (h * dpr - ih * k) / 2 + S.panY * dpr;
+  S.tx = { k, ox, oy, dpr };
+  // checkerboard behind the artwork
+  ctx.save(); ctx.beginPath(); ctx.rect(ox, oy, iw * k, ih * k); ctx.clip();
+  const cs = 10 * dpr; ctx.fillStyle = '#FFFFFF'; ctx.fillRect(ox, oy, iw * k, ih * k); ctx.fillStyle = '#EFEBE4';
+  for (let y = 0; y * cs < ih * k; y++) for (let x = 0; x * cs < iw * k; x++) if ((x + y) % 2) ctx.fillRect(ox + x * cs, oy + y * cs, cs, cs);
+  ctx.restore();
+  const R = F.res, v = S.view;
+  const drawRes = (only) => {
+    if (!R) return; ctx.save(); ctx.setTransform(k, 0, 0, k, ox, oy);
+    for (const l of R.layers){ if (only && l.role !== only) continue; ctx.fillStyle = only === 'line' ? '#25222C' : toHex(l.color); ctx.fill(l.p2d, 'evenodd'); }
+    ctx.restore();
+  };
+  if (v === 'orig' || v === 'compare'){ ctx.imageSmoothingQuality = 'high'; ctx.drawImage(F.img, ox, oy, iw * k, ih * k); }
+  if (v === 'result' || v === 'line' || v === 'fill') drawRes(v === 'result' ? null : v);
+  if (v === 'compare' && R){
+    const sx = ox + iw * k * S.split;
+    ctx.save(); ctx.beginPath(); ctx.rect(sx, oy, ox + iw * k - sx, ih * k); ctx.clip();
+    ctx.fillStyle = '#fff'; ctx.fillRect(sx, oy, ox + iw * k - sx, ih * k); drawRes(null); ctx.restore();
+    ctx.fillStyle = '#E0644A'; ctx.fillRect(sx - dpr, oy, 2 * dpr, ih * k);
+    ctx.font = `600 ${11 * dpr}px ${getComputedStyle(document.body).fontFamily}`; ctx.fillStyle = '#25222C';
+    ctx.fillText('Asli', ox + 8 * dpr, oy + 16 * dpr); ctx.fillText('Vektor', sx + 8 * dpr, oy + 16 * dpr);
+  }
+  if (S.erase && S.hover && S.hover.layer && v !== 'orig'){
+    const hv = S.hover; ctx.save(); ctx.setTransform(k, 0, 0, k, ox + hv.offX * k, oy + hv.offY * k);
+    ctx.fillStyle = 'rgba(224,100,74,.35)'; ctx.fill(hv.layer.p2dPiece, 'evenodd');
+    ctx.lineWidth = 2.5 * dpr / k; ctx.strokeStyle = '#E0644A'; ctx.setLineDash([6 * dpr / k, 4 * dpr / k]); ctx.stroke(hv.layer.p2dPiece);
+    ctx.restore();
+  }
+  if (v === 'wire' && R){
+    ctx.save(); ctx.setTransform(k, 0, 0, k, ox, oy);
+    ctx.lineWidth = 1 / k * dpr;
+    for (const l of R.layers){ ctx.strokeStyle = l.role === 'line' ? '#25222C' : toHex(l.color.map(c => c * 0.7)); ctx.stroke(l.p2d); }
+    if (S.zoom >= 1.5){ const r = 2.2 / k * dpr; ctx.fillStyle = '#E0644A'; for (const l of R.layers) for (const p of l.loops) for (const b of p.segs) ctx.fillRect(b[0][0] - r, b[0][1] - r, 2 * r, 2 * r); }
+    ctx.restore();
+  }
+}
+function renderStats(){
+  const F = S.files[S.cur], R = F && F.res;
+  if (R && F.kind === 'sheet'){ $('#stats').innerHTML = `<b>${F.parts.length}</b> objek · <b>${R.paths}</b> path · <b>${R.nodes}</b> node · ${((R.ms || 0) / 1000).toFixed(0)} dtk`; return; }
+  $('#stats').innerHTML = R ? `<b>${new Set(R.layers.map(l => l.color.join(','))).size}</b> warna · <b>${R.paths}</b> path · <b>${R.nodes}</b> node · <b>${R.objs.length}</b> objek · ${(R.ms / 1000).toFixed(1)} dtk` : '';
+}
+
+/* ================= UI ================= */
+function renderFiles(){
+  const box = $('#files'); box.innerHTML = '';
+  S.files.forEach((F, i) => {
+    const b = document.createElement('div'); b.className = 'file' + (F.kind === 'part' ? ' part' : '') + (i === S.cur ? ' on' : '');
+    const st = F.kind === 'sheet' ? `${F.parts.length} objek · ${F.res && !F.dirty ? F.res.nodes + ' node' : 'klik untuk memproses semua'}` : (F.res ? (F.dirty ? 'perlu diproses ulang' : F.res.nodes + ' node') : 'belum diproses');
+    b.innerHTML = `<img src="${F.url}" alt=""><div class="nm"><b>${F.name.replace(/</g, '&lt;')}${F.kind === 'sheet' ? '<span class="tag">SHEET</span>' : ''}</b><small>${st}</small></div><button class="x" title="Hapus">✕</button>`;
+    b.onclick = e => {
+      if (e.target.closest('.x')){
+        if (F.kind === 'sheet') S.files = S.files.filter(G => G !== F && G.sheet !== F);
+        else { S.files.splice(i, 1); if (F.kind === 'part'){ const Sh = F.sheet; Sh.parts = Sh.parts.filter(P => P !== F); Sh.dirty = true; if (!Sh.parts.length) S.files = S.files.filter(G => G !== Sh); } }
+        S.cur = Math.min(S.cur, S.files.length - 1); renderFiles(); select(S.cur); return; }
+      select(i); };
+    box.appendChild(b);
+  });
+  const nTop = S.files.filter(F => F.kind !== 'part').length;
+  $('#fileCount').textContent = nTop ? nTop + ' file' : '';
+}
+function renderPal(){
+  const F = S.files[S.cur], box = $('#pal');
+  if (F && F.kind === 'sheet'){ box.innerHTML = `<div class="hint" style="margin:0">Sheet ini berisi <b>${F.parts.length} objek</b>, masing-masing dengan palet sendiri. Klik salah satu objek di daftar kiri untuk mengatur warnanya.</div>`; $('#palCount').textContent = ''; return; }
+  if (!F || !F.A){ box.innerHTML = '<div class="hint" style="margin:0">Palet muncul setelah gambar diproses.</div>'; $('#palCount').textContent = ''; return; }
+  box.innerHTML = ''; const tot = F.A.pal.reduce((a, p) => a + p.n, 0);
+  const order = F.A.pal.map((p, k) => k).sort((a, b) => F.A.pal[b].n - F.A.pal[a].n);
+  const RN = { fill: 'Warna', line: 'Garis', bg: 'Latar', del: 'Hapus' };
+  for (const k of order){
+    const p = F.A.pal[k], hex = F.over[k] || toHex(p.rgb);
+    const row = document.createElement('div'); row.className = 'pi';
+    row.innerHTML = `<label class="sw" style="background:${hex}" title="Ganti warna"><input type="color" value="${hex.toLowerCase()}"></label><span class="hex">${hex}</span><span class="pct">${(p.n / tot * 100).toFixed(1)}%</span><button class="role ${F.roles[k]}">${RN[F.roles[k]]}</button>`;
+    row.querySelector('input').addEventListener('change', e => { F.over[k] = e.target.value.toUpperCase(); if (F.sheet) F.sheet.dirty = true; schedule(true); });
+    row.querySelector('.role').onclick = () => { const nx = { fill: 'line', line: 'bg', bg: 'del', del: 'fill' }; F.roles[k] = nx[F.roles[k]]; if (F.sheet) F.sheet.dirty = true; schedule(true); };
+    box.appendChild(row);
+  }
+  $('#palCount').textContent = F.A.pal.length + ' warna';
+}
+async function select(i){
+  S.cur = i; S.zoom = 1; S.panX = S.panY = 0; $('#zoom').value = 1; $('#zoomOut').textContent = '100%';
+  renderFiles();
+  const F = S.files[i];
+  if (F && (!F.res || F.dirty || (F.kind === 'sheet' && F.parts.some(P => !P.res || P.dirty)))){ await processFile(F); if (F.kind === 'part') F.sheet.dirty = true; }
+  renderFiles(); renderPal(); renderStats(); draw();
+}
+let tm = null;
+function schedule(now){
+  S.files.forEach(F => F.dirty = true);
+  clearTimeout(tm); tm = setTimeout(async () => { const F = S.files[S.cur]; if (!F) return; await processFile(F); renderFiles(); renderPal(); renderStats(); draw(); }, now ? 30 : (S.files[S.cur] && S.files[S.cur].kind === 'sheet' ? 900 : 380));
+}
+async function addFiles(list){
+  const fs = Array.from(list).filter(f => /image\/(png|jpe?g|webp)/i.test(f.type) || /\.(png|jpe?g|webp)$/i.test(f.name)); if (!fs.length) return;
+  const first = S.files.length;
+  for (const f of fs){
+    const url = URL.createObjectURL(f); const img = new Image(); img.src = url; await img.decode().catch(() => {});
+    let parts = null;
+    if (S.set.split){ busy(true, 'Mencari objek dalam gambar…', 0.1); await sleep(15); try { parts = await detectParts(img); } catch (e) { console.error(e); parts = null; } busy(false); }
+    if (parts){
+      const base = f.name.replace(/\.[^.]+$/, ''), Sh = { kind: 'sheet', name: f.name, url, img, parts: [], res: null, dirty: true };
+      S.files.push(Sh);
+      parts.forEach((p, j) => { const P = { kind: 'part', sheet: Sh, name: `${base}-${String(j + 1).padStart(2, '0')}.png`, url: p.url, img: p.img, ox: p.ox, oy: p.oy, A: null, res: null, roles: null, over: {}, dirty: true }; Sh.parts.push(P); S.files.push(P); });
+      toast(`${parts.length} objek ditemukan. Tiap objek diproses dengan resolusi & palet sendiri.`, 3500);
+    } else S.files.push({ kind: 'single', name: f.name, url, img, A: null, res: null, roles: null, over: {}, dirty: true });
+  }
+  if (first === 0 || S.cur < 0) await select(first); else renderFiles();
+  if (fs.length > 1) toast(fs.length + ' gambar ditambahkan. Klik untuk melihat, atau proses semua lewat ZIP.');
+}
+function fmtOut(){
+  const s = S.set;
+  $('#o_lineWidth').textContent = Math.round(s.lineWidth * 100) + '%';
+  $('#lwWrap').style.display = s.lineMode === 'trace' ? 'none' : '';
+  $('#snapChk').checked = !!s.snap; $('#snapChk').disabled = s.lineMode === 'trace';
+  $('#lineSub').textContent = { smooth: 'Garis digambar ulang: goyang dihilangkan, tebal-tipis berubah halus, ujung bulat.', uniform: 'Garis digambar ulang dengan tebal sama rata dan ujung bulat, seperti ikon vektor.', trace: 'Menjiplak tepi garis apa adanya, termasuk goyangnya.' }[s.lineMode];
+  $('#o_maxColors').textContent = s.maxColors; $('#o_merge').textContent = s.merge; $('#o_blur').textContent = s.blur.toFixed(1);
+  $('#o_speck').textContent = s.speck + ' px²'; $('#o_gap').textContent = s.gap + ' px'; $('#o_smooth').textContent = s.smooth + '%'; $('#o_corner').textContent = s.corner + '°';
+}
+function bind(){
+  $$('[data-set]').forEach(el => { el.value = S.set[el.dataset.set]; });
+  $$('[data-seg]').forEach(sg => sg.querySelectorAll('button').forEach(b => b.classList.toggle('on', S.set[sg.dataset.seg] === b.dataset.v)));
+  fmtOut();
+}
+$$('[data-set]').forEach(el => el.addEventListener('input', () => { S.set[el.dataset.set] = parseFloat(el.value); saveSet(); fmtOut(); schedule(); }));
+$$('[data-seg]').forEach(sg => sg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.set[sg.dataset.seg] = b.dataset.v; saveSet(); bind(); schedule(true); }));
+$('#splitChk').checked = S.set.split !== false;
+$('#splitChk').addEventListener('change', e => { S.set.split = e.target.checked; saveSet(); toast(e.target.checked ? 'Gambar berikutnya yang berisi banyak objek akan dipisah otomatis' : 'Gambar berikutnya diproses utuh sebagai satu gambar'); });
+$('#snapChk').addEventListener('change', e => { S.set.snap = e.target.checked; saveSet(); schedule(true); });
+$('#viewSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.view = b.dataset.v; $$('#viewSeg button').forEach(x => x.classList.toggle('on', x === b)); $('#splitGrp').style.display = S.view === 'compare' ? '' : 'none'; draw(); });
+$('#split').addEventListener('input', e => { S.split = +e.target.value; draw(); });
+const setZoom = (z, cx, cy) => {
+  const st = $('#stage'); const w = st.clientWidth, h = st.clientHeight; z = clamp(z, 0.5, 12);
+  if (cx != null){ const k0 = S.zoom, mx = cx - w / 2 - S.panX, my = cy - h / 2 - S.panY; S.panX -= mx * (z / k0 - 1); S.panY -= my * (z / k0 - 1); }
+  S.zoom = z; $('#zoom').value = z; $('#zoomOut').textContent = Math.round(z * 100) + '%'; draw();
+};
+$('#zoom').addEventListener('input', e => setZoom(+e.target.value));
+$('#btnFit').onclick = () => { S.panX = S.panY = 0; setZoom(1); };
+cv.addEventListener('wheel', e => { e.preventDefault(); const r = cv.getBoundingClientRect(); setZoom(S.zoom * (e.deltaY < 0 ? 1.15 : 1 / 1.15), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+let pan = null;
+cv.addEventListener('pointerdown', e => { pan = { x: e.clientX, y: e.clientY, px: S.panX, py: S.panY, moved: false }; cv.setPointerCapture(e.pointerId); });
+cv.addEventListener('pointermove', e => { if (!pan) return; S.panX = pan.px + e.clientX - pan.x; S.panY = pan.py + e.clientY - pan.y; draw(); });
+cv.addEventListener('pointerup', e => { const p0 = pan; pan = null; if (S.erase && p0 && Math.hypot(e.clientX - p0.x, e.clientY - p0.y) < 5){ S.panX = p0.px; S.panY = p0.py; eraseAt(e); } });
+const eraseHist = [], hitCtx = document.createElement('canvas').getContext('2d');
+/* which coloured piece is under the cursor (topmost fill shape; the line is skipped so small areas inside it can be picked) */
+function hitPiece(e){
+  const F = S.files[S.cur]; if (!F || !F.res || !S.tx) return null;
+  const r = cv.getBoundingClientRect(), t = S.tx, x = ((e.clientX - r.left) * t.dpr - t.ox) / t.k, y = ((e.clientY - r.top) * t.dpr - t.oy) / t.k;
+  const cands = F.kind === 'sheet' ? F.parts.map(P => ({ T: P, lx: x - P.ox, ly: y - P.oy, offX: P.ox, offY: P.oy })) : [{ T: F, lx: x, ly: y, offX: 0, offY: 0 }];
+  for (const c of cands){
+    const R = c.T.res; if (!R || c.lx < 0 || c.ly < 0 || c.lx > c.T.img.naturalWidth || c.ly > c.T.img.naturalHeight) continue;
+    for (let i = R.layers.length - 1; i >= 0; i--){ const l = R.layers[i]; if (l.role !== 'fill') continue;
+      if (!l.p2dPiece) l.p2dPiece = new Path2D(l.loops.map(p => p.d).join(''));
+      if (hitCtx.isPointInPath(l.p2dPiece, c.lx, c.ly, 'evenodd')) return Object.assign(c, { layer: l }); }
+  }
+  return null;
+}
+cv.addEventListener('mousemove', e => { if (!S.erase || pan) return; const h = hitPiece(e); if ((h && h.layer) !== (S.hover && S.hover.layer)){ S.hover = h; draw(); } });
+cv.addEventListener('mouseleave', () => { if (S.hover){ S.hover = null; draw(); } });
+async function eraseAt(e){
+  const F = S.files[S.cur]; if (!F || !F.res || !S.tx){ toast('Proses gambar dulu'); return; }
+  const h = hitPiece(e); if (!h){ toast('Tidak ada area warna di titik itu'); return; }
+  const T = h.T, hex = toHex(h.layer.color);
+  let k = T.A ? T.A.pal.findIndex((p, j) => (T.over[j] || toHex(p.rgb)) === hex) : -1;
+  (T.holes = T.holes || []).push([h.lx, h.ly, k >= 0 ? k : undefined]); eraseHist.push(T); S.hover = null;
+  T.dirty = true; if (T.sheet) T.sheet.dirty = true;
+  await processFile(F); renderFiles(); renderStats(); draw();
+  toast('Area dihapus. Klik "↶ Batal hapus" untuk mengembalikan.');
+}
+$('#btnErase').onclick = () => { S.erase = !S.erase; $('#btnErase').classList.toggle('on', S.erase); $('#stage').classList.toggle('erase', S.erase); if (S.erase) toast('Mode hapus aktif: arahkan kursor, area yang akan dihapus ditandai oranye, lalu klik. Perbesar dulu untuk area kecil.', 4000); else { S.hover = null; draw(); } };
+$('#btnEraseUndo').onclick = async () => { const T = eraseHist.pop(); if (!T || !T.holes || !T.holes.length){ toast('Tidak ada yang bisa dibatalkan'); return; } T.holes.pop(); T.dirty = true; if (T.sheet) T.sheet.dirty = true; const F = S.files[S.cur]; if (F){ await processFile(F); renderFiles(); renderStats(); draw(); } };
+cv.addEventListener('dblclick', () => { S.panX = S.panY = 0; setZoom(1); });
+$('#fileIn').onchange = e => { addFiles(e.target.files); e.target.value = ''; };
+const drop = $('#drop');
+['dragenter', 'dragover'].forEach(ev => document.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => document.addEventListener(ev, e => { e.preventDefault(); if (ev === 'drop' || !e.relatedTarget) drop.classList.remove('over'); }));
+document.addEventListener('drop', e => addFiles(e.dataTransfer.files || []));
+$$('[data-exp]').forEach(b => b.onclick = () => exportOne(b.dataset.exp === 'ai' ? 'ai' : b.dataset.exp));
+$('#btnZip').onclick = exportAll;
+$('#btnReset').onclick = () => { S.set = Object.assign({}, DEF); saveSet(); bind(); S.files.forEach(F => { F.A = null; }); schedule(true); toast('Pengaturan dikembalikan ke default'); };
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(draw, 60); });
+bind(); renderFiles(); draw();
+</script>
+</body>
+</html>

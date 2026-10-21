@@ -10,18 +10,18 @@
 <style>
 :root{
   --bg:#EDEFF3;--panel:#FFFFFF;--panel2:#F5F6F9;--line:#D5DAE3;--text:#1A2130;--muted:#566175;
-  --accent:#9A6207;--accent-bg:#F8E6C4;--cool:#23788D;--cool-bg:#DCEFF3;--warn:#A33A2B;--warn-bg:#F7E1DD;
+  --accent:#9A6207;--accent-bg:#F8E6C4;--cool:#23788D;--cool-bg:#DCEFF3;--warn:#A33A2B;--warn-bg:#F7E1DD;--ok:#1C7A45;--ok-bg:#DCF1E4;
   box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     --bg:#171D29;--panel:#212A3A;--panel2:#1B2331;--line:#35415B;--text:#ECEAE4;--muted:#9EA8BC;
-    --accent:#F0B24A;--accent-bg:#3B3222;--cool:#7CC4D6;--cool-bg:#1E3540;--warn:#F2A193;--warn-bg:#3D2420;
+    --accent:#F0B24A;--accent-bg:#3B3222;--cool:#7CC4D6;--cool-bg:#1E3540;--warn:#F2A193;--warn-bg:#3D2420;--ok:#7DDCA5;--ok-bg:#1C3A2B;
   }
 }
 :root[data-theme="dark"]{
   --bg:#171D29;--panel:#212A3A;--panel2:#1B2331;--line:#35415B;--text:#ECEAE4;--muted:#9EA8BC;
-  --accent:#F0B24A;--accent-bg:#3B3222;--cool:#7CC4D6;--cool-bg:#1E3540;--warn:#F2A193;--warn-bg:#3D2420;
+  --accent:#F0B24A;--accent-bg:#3B3222;--cool:#7CC4D6;--cool-bg:#1E3540;--warn:#F2A193;--warn-bg:#3D2420;--ok:#7DDCA5;--ok-bg:#1C3A2B;
 }
 *,*::before,*::after{box-sizing:inherit}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 "Figtree","Segoe UI",system-ui,-apple-system,sans-serif}
@@ -81,7 +81,7 @@ pre.master{white-space:pre-wrap;word-break:break-word;font:.82rem/1.5 "Figtree",
 .meta{font-size:.8rem;color:var(--muted);margin:2px 0 0}
 .copy{font:inherit;font-size:.8rem;font-weight:600;padding:6px 10px;border-radius:7px;border:1px solid var(--text);background:transparent;color:var(--text);cursor:pointer}
 .copy.all{background:var(--text);color:var(--bg)}
-.copy.done{background:var(--accent);border-color:var(--accent);color:#1A2130}
+.copy.copied,.copy.all.copied{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
 details{margin-top:8px}
 summary{cursor:pointer;font-size:.84rem;font-weight:600;color:var(--cool)}
 .p-label{font-size:.76rem;font-weight:600;color:var(--muted);margin:10px 0 3px}
@@ -170,7 +170,7 @@ summary{cursor:pointer;font-size:.84rem;font-weight:600;color:var(--cool)}
       </div>
       <div id="gen-note"></div>
       <div class="neg" id="neg-box" hidden>
-        <div class="neg-head"><b>Negative prompt (untuk semua adegan)</b><button type="button" class="copy" id="copy-neg">Salin</button></div>
+        <div class="neg-head"><b>Negative prompt (untuk semua adegan)</b><span id="neg-btn"></span></div>
         <p id="neg-text"></p>
       </div>
       <div class="cards" id="cards"></div>
@@ -960,7 +960,7 @@ async function copyText(text, btn){
     document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); }catch(_){}
     ta.remove();
   }
-  if(btn){ const old = btn.textContent; btn.textContent="Tersalin"; btn.classList.add("done"); setTimeout(()=>{ btn.textContent=old; btn.classList.remove("done"); },1300); }
+  if(btn){ btn.textContent="Tersalin"; btn.classList.add("copied"); }
 }
 function allText(s){
   let t = `#${s.no} ${s.nama}\n\nFRAME AWAL:\n${s.first}\n\nFRAME AKHIR:\n${s.last}\n\nVIDEO:\n${s.video}\n\nNEGATIVE PROMPT:\n${NEGATIVE}`;
@@ -975,8 +975,8 @@ function exportHTML(res){
 <html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Prompt Video ${res.created}</title>
 <style>
-:root{--bg:#EDEFF3;--panel:#fff;--panel2:#F5F6F9;--line:#D5DAE3;--text:#1A2130;--muted:#566175;--accent:#9A6207;--cool:#23788D;--cool-bg:#DCEFF3}
-@media (prefers-color-scheme:dark){:root{--bg:#171D29;--panel:#212A3A;--panel2:#1B2331;--line:#35415B;--text:#ECEAE4;--muted:#9EA8BC;--accent:#F0B24A;--cool:#7CC4D6;--cool-bg:#1E3540}}
+:root{--bg:#EDEFF3;--panel:#fff;--panel2:#F5F6F9;--line:#D5DAE3;--text:#1A2130;--muted:#566175;--accent:#9A6207;--cool:#23788D;--cool-bg:#DCEFF3;--ok:#1C7A45;--ok-bg:#DCF1E4}
+@media (prefers-color-scheme:dark){:root{--bg:#171D29;--panel:#212A3A;--panel2:#1B2331;--line:#35415B;--text:#ECEAE4;--muted:#9EA8BC;--accent:#F0B24A;--cool:#7CC4D6;--cool-bg:#1E3540;--ok:#7DDCA5;--ok-bg:#1C3A2B}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 "Segoe UI",system-ui,-apple-system,sans-serif}
 .wrap{max-width:960px;margin:0 auto;padding:24px 16px 60px}h1{margin:0 0 4px;font-size:1.7rem}.sub{color:var(--muted);margin:0}
 .bar{position:sticky;top:0;background:var(--bg);padding:12px 0;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px;align-items:center;z-index:2}
@@ -990,28 +990,33 @@ function exportHTML(res){
 h3{margin:0;font-size:1.05rem}.meta{color:var(--muted);font-size:.84rem;margin:2px 0 0}.tag{display:inline-block;margin-top:6px;font-size:.75rem;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--cool-bg);color:var(--cool)}
 .done{margin-left:auto;display:flex;gap:6px;align-items:center;font-size:.84rem;color:var(--muted);cursor:pointer;white-space:nowrap}
 .btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.copy{font:inherit;font-size:.82rem;font-weight:600;padding:6px 11px;border-radius:8px;border:1px solid var(--text);background:transparent;color:var(--text);cursor:pointer}
-.copy.all{background:var(--text);color:var(--bg)}.copy.ok{background:var(--accent);border-color:var(--accent);color:#1A2130}
+.copy.all{background:var(--text);color:var(--bg)}.copy.copied,.copy.all.copied{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.reset{font:inherit;font-size:.82rem;padding:5px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer}
 details{margin-top:10px}summary{cursor:pointer;font-weight:600;font-size:.86rem;color:var(--cool)}.lbl{font-size:.78rem;font-weight:600;color:var(--muted);margin:10px 0 3px}
 .p{white-space:pre-wrap;word-break:break-word;font-size:.85rem;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 11px;margin:0}
 button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--cool);outline-offset:2px}
 </style></head><body><div class="wrap">
 <h1>Prompt Video</h1><p class="sub" id="sub"></p>
-<div class="neg"><div class="row"><b>Negative prompt (untuk semua adegan)</b><button class="copy" id="neg-copy">Salin</button></div><p id="neg"></p></div>
-<div class="bar"><input class="search" id="q" type="search" placeholder="Cari adegan"><span id="cats"></span><span class="count" id="count"></span></div>
+<div class="neg"><div class="row"><b>Negative prompt (untuk semua adegan)</b><span id="neg-btn"></span></div><p id="neg"></p></div>
+<div class="bar"><input class="search" id="q" type="search" placeholder="Cari adegan"><span id="cats"></span><span class="count" id="count"></span><button type="button" class="reset" id="clear-copied">Hapus tanda salin</button></div>
 <div class="list" id="list"></div></div>
 <script>
 const D=${data};
 const KEY="prompt-video-done-"+D.id;
 let done={};try{done=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){}
 function saveDone(){try{localStorage.setItem(KEY,JSON.stringify(done))}catch(e){}}
-async function cp(t,b){try{await navigator.clipboard.writeText(t)}catch(e){const a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();try{document.execCommand("copy")}catch(_){}a.remove()}const o=b.textContent;b.textContent="Tersalin";b.classList.add("ok");setTimeout(()=>{b.textContent=o;b.classList.remove("ok")},1300)}
+const CKEY="prompt-video-copied-"+D.id;let copied={};try{copied=JSON.parse(localStorage.getItem(CKEY)||"{}")}catch(e){}
+function saveC(){try{localStorage.setItem(CKEY,JSON.stringify(copied))}catch(e){}}
+async function cp(t){try{await navigator.clipboard.writeText(t)}catch(e){const a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();try{document.execCommand("copy")}catch(_){}a.remove()}}
+function paint(b){const k=b.dataset.k;if(copied[k]){b.classList.add("copied");b.textContent="\u2713 "+b.dataset.l}else{b.classList.remove("copied");b.textContent=b.dataset.l}}
 function all(s){let t="#"+s.no+" "+s.nama+"\\n\\nFRAME AWAL:\\n"+s.first+"\\n\\nFRAME AKHIR:\\n"+s.last+"\\n\\nVIDEO:\\n"+s.video+"\\n\\nNEGATIVE PROMPT:\\n"+D.neg;if(s.title)t+="\\n\\nJUDUL:\\n"+s.title+"\\n\\nKEYWORD:\\n"+s.kw;return t}
 document.getElementById("sub").textContent=D.scenes.length+" adegan • dibuat "+D.created+(D.meta?" • "+D.meta:"");
 document.getElementById("neg").textContent=D.neg;
-document.getElementById("neg-copy").onclick=e=>cp(D.neg,e.currentTarget);
+document.getElementById("neg-btn").appendChild(btn("Salin",D.neg,"neg"));
+document.getElementById("clear-copied").onclick=()=>{if(!confirm("Hapus semua tanda tombol yang sudah disalin?"))return;copied={};saveC();document.querySelectorAll("[data-k]").forEach(paint)};
 let cat="Semua";const cats=["Semua"].concat([...new Set(D.scenes.map(s=>s.kat))]);
 function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
-function btn(l,t,c){const b=el("button","copy"+(c?" "+c:""),l);b.type="button";b.onclick=()=>cp(t,b);return b}
+function btn(l,t,k,c,also){const b=el("button","copy"+(c?" "+c:""),l);b.type="button";b.dataset.k=k;b.dataset.l=l;paint(b);b.onclick=async()=>{await cp(t);[k].concat(also||[]).forEach(x=>copied[x]=1);saveC();b.textContent="Tersalin";b.classList.add("copied");setTimeout(()=>document.querySelectorAll("[data-k]").forEach(paint),800)};return b}
 function render(){
  const cw=document.getElementById("cats");cw.innerHTML="";
  cats.forEach(c=>{const b=el("button","chip",c);b.type="button";b.setAttribute("aria-pressed",String(c===cat));b.onclick=()=>{cat=c;render()};cw.appendChild(b)});
@@ -1025,8 +1030,8 @@ function render(){
   const lab=el("label","done");const cb=document.createElement("input");cb.type="checkbox";cb.checked=!!done[s.no];
   cb.onchange=()=>{if(cb.checked)done[s.no]=1;else delete done[s.no];saveDone();card.classList.toggle("used",cb.checked)};
   lab.appendChild(cb);lab.appendChild(document.createTextNode("Sudah dibuat"));top.appendChild(lab);card.appendChild(top);
-  const bs=el("div","btns");bs.appendChild(btn("Frame awal",s.first));bs.appendChild(btn("Frame akhir",s.last));bs.appendChild(btn("Video",s.video));
-  if(s.title)bs.appendChild(btn("Judul & keyword",s.title+"\\n\\n"+s.kw));bs.appendChild(btn("Salin semua",all(s),"all"));card.appendChild(bs);
+  const bs=el("div","btns"),K=s.no+"-";bs.appendChild(btn("Frame awal",s.first,K+"awal"));bs.appendChild(btn("Frame akhir",s.last,K+"akhir"));bs.appendChild(btn("Video",s.video,K+"video"));
+  if(s.title)bs.appendChild(btn("Judul & keyword",s.title+"\\n\\n"+s.kw,K+"meta"));bs.appendChild(btn("Salin semua",all(s),K+"all","all",[K+"awal",K+"akhir",K+"video",K+"meta"]));card.appendChild(bs);
   const d=el("details");d.appendChild(el("summary",null,"Lihat prompt"));
   [["Frame awal",s.first],["Frame akhir",s.last],["Video",s.video]].concat(s.title?[["Judul",s.title],["Keyword",s.kw]]:[]).forEach(([l,t])=>{d.appendChild(el("div","lbl",l));d.appendChild(el("pre","p",t))});
   card.appendChild(d);list.appendChild(card)});
@@ -1104,13 +1109,24 @@ function renderPicks(rows){
   msgs.forEach(m=>{ const p=document.createElement("p"); p.className = "note"+(m.w?" warn":""); p.textContent=m.t; note.appendChild(p); });
 }
 function el(tag, cls, txt){ const e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
-function copyBtn(label, text, extra){ const b = el("button", "copy"+(extra?" "+extra:""), label); b.type="button"; b.addEventListener("click",()=>copyText(text,b)); return b; }
+function paintBtn(b){ const c = (state.copied||{})[b.dataset.k]; b.classList.toggle("copied", !!c); b.textContent = c ? "\u2713 "+b.dataset.l : b.dataset.l; }
+function copyBtn(label, text, key, extra, also){
+  const b = el("button", "copy"+(extra?" "+extra:""), label); b.type="button"; b.dataset.k=key; b.dataset.l=label; paintBtn(b);
+  b.addEventListener("click", async ()=>{
+    await copyText(text, b);
+    state.copied = state.copied || {};
+    [key].concat(also||[]).forEach(k=>state.copied[k]=1); save();
+    setTimeout(()=>document.querySelectorAll("#cards [data-k], #neg-box [data-k]").forEach(paintBtn), 800);
+  });
+  return b;
+}
 function renderResult(){
   const res = state.result, box = $("#cards");
   box.innerHTML = "";
   $("#dl").disabled = !res;
   $("#neg-box").hidden = !res;
   $("#neg-text").textContent = NEGATIVE;
+  $("#neg-btn").innerHTML = ""; $("#neg-btn").appendChild(copyBtn("Salin", NEGATIVE, "neg"));
   if(!res){ $("#res-info").textContent = ""; box.appendChild(el("p","hint","Belum ada hasil. Atur pilihan di kiri, lalu klik Buat prompt.")); return; }
   $("#res-info").textContent = `${res.scenes.length} adegan • ${res.created}`;
   res.scenes.forEach(s=>{
@@ -1122,9 +1138,10 @@ function renderResult(){
     info.appendChild(el("p","meta",s.info));
     top.appendChild(info); card.appendChild(top);
     const bs = el("div","btns");
-    bs.append(copyBtn("Frame awal", s.first), copyBtn("Frame akhir", s.last), copyBtn("Video", s.video));
-    if(s.title) bs.appendChild(copyBtn("Judul & keyword", s.title+"\n\n"+s.kw));
-    bs.appendChild(copyBtn("Salin semua", allText(s), "all"));
+    const K = s.no+"-";
+    bs.append(copyBtn("Frame awal", s.first, K+"awal"), copyBtn("Frame akhir", s.last, K+"akhir"), copyBtn("Video", s.video, K+"video"));
+    if(s.title) bs.appendChild(copyBtn("Judul & keyword", s.title+"\n\n"+s.kw, K+"meta"));
+    bs.appendChild(copyBtn("Salin semua", allText(s), K+"all", "all", [K+"awal",K+"akhir",K+"video",K+"meta"]));
     card.appendChild(bs);
     const d = el("details"); d.appendChild(el("summary",null,"Lihat prompt"));
     [["Frame awal",s.first],["Frame akhir",s.last],["Video",s.video]].concat(s.title?[["Judul",s.title],["Keyword",s.kw]]:[]).forEach(([l,t])=>{ d.appendChild(el("div","p-label",l)); d.appendChild(el("pre","ptxt",t)); });
@@ -1189,6 +1206,7 @@ $("#gen").addEventListener("click", ()=>{
     meta: state.subjek==="objek" ? "objek" : temaL,
     scenes
   };
+  state.copied = {};
   markUsed();
   render(); renderResult();
   const gn = $("#gen-note"); gn.innerHTML="";
@@ -1196,7 +1214,6 @@ $("#gen").addEventListener("click", ()=>{
   gn.appendChild(p);
 });
 $("#dl").addEventListener("click", ()=>{ if(state.result) exportHTML(state.result); });
-$("#copy-neg").addEventListener("click", e=>copyText(NEGATIVE, e.currentTarget));
 $("#copy").addEventListener("click", async (e)=>{
   const btn = e.currentTarget;
   await copyText($("#master").textContent, null);

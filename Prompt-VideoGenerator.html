@@ -850,7 +850,71 @@ function shortAction(a){
   while(w.length>2 && stop.includes(w[w.length-1].toLowerCase())) w.pop();
   return w.join(" ");
 }
-const SILENT_ACTING = "Silent visual acting only: the character never speaks, never mouths words, and never lip-syncs. No dialogue, narration, singing, or conversational mouth movements. Communicate only through facial expression, eye direction, head movement, posture, and natural gestures. The mouth may open only for an appropriate silent expression such as a gasp, laugh, or yawn, never to form words.";
+const SILENT_ACTING = "HARD OVERRIDE — EXPRESSION ONLY, NO TALKING: the character must remain completely silent for the whole clip. Do not make the character speak or appear to speak. Absolutely no dialogue, voice, narration, singing, humming, whispering, shouting, lip-sync, mouthing words or syllables, or speech-like rhythmic mouth movement. Keep lips closed and motionless throughout unless the assigned physical action strictly requires mouth movement (for example, taking a bite); even then, mouth movement must be limited to that physical action and must never resemble speech. Show emotion only through eyes, eyebrows, gaze, blinking, head tilt, cheeks, closed-mouth smile, shoulders, posture, and silent hand/body gestures. Do not animate the lips as if forming sounds. No audible vocalization or implied conversation. A phone, laptop, microphone, headset, or megaphone is only a prop; do not infer or animate a conversation from it.";
+
+// Rewrite speech-like descriptions before they reach any human prompt.
+function silentifyAction(value){
+  let s = String(value || "");
+  const replacements = [
+    [/gasping in shock/gi, "showing a silent shocked expression with widened eyes and raised eyebrows"],
+    [/the mouth is wide open in a full shocked gasp/gi, "the eyes widen and the eyebrows rise high in silent surprise, with lips closed"],
+    [/gasping/gi, "showing a silent startled expression"],
+    [/full shocked gasp/gi, "silent shocked expression"],
+    [/a gasp escapes/gi, "a startled expression appears, lips closed"],
+    [/the mouth is wide open in a full yawn and the back of one wrist rubs an eye/gi, "the eyelids droop as the back of one wrist rubs an eye, with lips closed"],
+    [/starting a big yawn with heavy eyelids/gi, "looking sleepy with heavy eyelids and a drooping head"],
+    [/\byawn\b/gi, "sleepy expression"],
+    [/laughing hard/gi, "showing strong amusement with a closed-mouth smile"],
+    [/a quiet laugh escapes/gi, "a closed-mouth smile appears"],
+    [/the head is tipped back in a full belly laugh with the eyes squeezed shut/gi, "the head tilts back slightly, the eyes squeeze shut and the cheeks lift in silent amusement, lips closed"],
+    [/laughing quietly/gi, "smiling softly with silent amusement"],
+    [/laughing/gi, "smiling with a clear, silent expression of amusement"],
+    [/\bbelly laugh\b/gi, "silent amusement expression"],
+    [/\blaughs\b/gi, "smiles silently"],
+    [/\blaugh\b/gi, "closed-mouth smile"],
+    [/cheering with both arms rising above the head/gi, "celebrating silently with both arms rising above the head"],
+    [/both arms are fully raised in victory and the mouth is open in a joyful shout/gi, "both arms are fully raised in victory, the eyes brighten and the person smiles with lips closed"],
+    [/\bcheering\b/gi, "celebrating silently"],
+    [/\bshouting\b/gi, "celebrating silently"],
+    [/\bshout\b/gi, "silent celebratory expression"],
+    [/\bscreaming\b/gi, "showing an intense silent expression"],
+    [/\bscream\b/gi, "intense silent expression"],
+    [/\bspeaking into a phone held near the mouth\b/gi, "holding a phone near the face with a focused expression, lips closed"],
+    [/\bspeaking into a microphone\b/gi, "holding a microphone in a silent pose, lips closed"],
+    [/\bspeaking to a phone or voice assistant\b/gi, "looking at a phone with a curious expression, lips closed"],
+    [/\btalking on a phone while walking briskly\b/gi, "walking briskly while holding a phone to one ear and listening silently, lips closed"],
+    [/\btalking on a phone\b/gi, "holding a phone to one ear and listening silently, lips closed"],
+    [/\basking a question\b/gi, "raising a hand and looking curious without speaking"],
+    [/\bthe jaw drops in shock\b/gi, "the eyes widen and eyebrows rise in silent shock, lips closed"],
+    [/\bthe jaw drops\b/gi, "the eyes widen in surprise, lips closed"],
+    [/\b(an|the) exasperated sigh follows\b/gi, "a silent exasperated expression follows"],
+    [/\blets out an exasperated sigh\b/gi, "shows an exasperated expression and lowers the shoulders"],
+    [/\ba heavy sigh follows\b/gi, "a tired expression appears and the shoulders drop"],
+    [/\bsighs\b/gi, "silently exhales"],
+    [/\bsigh\b/gi, "silent exhale"],
+    [/\bspeaks to a phone\b/gi, "looks at a phone with a curious expression, lips closed"],
+    [/\b(speaks|spoke|speak|talks|talked|talk|says|said|say|saying)\b/gi, "gestures silently"],
+    [/\b(conversation|conversational|conversing|conversed)\b/gi, "silent interaction"],
+    [/\b(announces|announced|announcing)\b/gi, "gestures silently"],
+    [/\bwhispering\b/gi, "making a secretive expression without speaking"],
+    [/\bwhisper\b/gi, "secretive silent expression"],
+    [/\bsinging\b/gi, "moving rhythmically with lips closed"],
+    [/\bhumming\b/gi, "moving rhythmically with lips closed"],
+    [/\bexplaining\b/gi, "demonstrating silently"],
+    [/\banswering questions\b/gi, "listening attentively and responding with a polite, silent nod"],
+    [/\bshouting an announcement\b/gi, "making an energetic announcement gesture silently, lips closed"],
+    [/\bsaying stop\b/gi, "signalling stop silently"],
+    [/\bas if sharing a secret\b/gi, "with a playful secretive expression, without speaking"],
+    [/\bthe mouth is wide open\b/gi, "the eyes widen and eyebrows rise, lips closed"],
+    [/\bwith the mouth open\b/gi, "with widened eyes and raised eyebrows, lips closed"],
+    [/\bmouth open in amazement\b/gi, "eyes wide in silent amazement, lips closed"],
+    [/\bthe mouth is open\b/gi, "the eyes widen and the eyebrows rise, lips closed"],
+    [/\bopens the mouth\b/gi, "widens the eyes and raises the eyebrows"],
+    [/\bopening the mouth wide\b/gi, "leaning in with an eager expression"],
+  ];
+  for(const [pattern,replacement] of replacements) s=s.replace(pattern,replacement);
+  return s.replace(/\s{2,}/g," ").trim();
+}
 
 function buildScenes(rows){
   const r = rng(state.seed + 7);
@@ -899,11 +963,13 @@ function buildScenes(rows){
       }
       const outfit = p.o ? p.o : `a ${outfitColour(x, r)} ${item}`;
       const bg = bgPhrase(x, false);
+      const actionStart = silentifyAction(p.a);
+      const actionEnd = silentifyAction(p.b);
       const hands = state.aman ? " Relaxed, natural hands with five fingers on each hand." : "";
-      first = `Photorealistic stock photo, ${x.framing} of ${who}, wearing ${outfit}, ${bg}. The person is ${p.a}, with the emotion clearly readable on the face. ${SILENT_ACTING} ${lighting}, ${x.angle}, ${composition}, ${ratioTxt} aspect ratio. Natural skin texture, realistic facial proportions, sharp focus on the face.${hands}${briefRule} No text, no logos, no watermark, no other people.`;
+      first = `Photorealistic stock photo, ${x.framing} of ${who}, wearing ${outfit}, ${bg}. The person is ${actionStart}, with the emotion clearly readable on the face. ${SILENT_ACTING} ${lighting}, ${x.angle}, ${composition}, ${ratioTxt} aspect ratio. Natural skin texture, realistic facial proportions, sharp focus on the face.${hands}${briefRule} No text, no logos, no watermark, no other people. ${SILENT_ACTING}`;
       lastP = loop ? `Loop scene: use the first frame again as the last frame, without changes. ${SILENT_ACTING}`
-        : `Edit this image, which is the first frame of a video. Keep exactly the same person, face, hairstyle, clothing, props, background colour, lighting, framing and camera angle. Change only this: ${p.b}. Preserve silent acting only: no speaking, no dialogue, no mouthing words, and no lip-sync. Correct human anatomy with natural hands and five fingers on each hand. Keep it photorealistic and seamless with the original.${brief ? ` Preserve this creative direction: ${brief}.` : ""} No text, no logos, no other people.`;
-      video = `Photorealistic stock footage, ${x.framing}, ${x.angle}. ${cap(who)}, wearing ${outfit}, ${bg}. The clip opens with the person already ${p.a}, and the motion continues smoothly until ${p.b}${loop ? ", then returns smoothly to the starting pose so the clip ends exactly as it began, creating a seamless loop" : ""}. The emotion is clearly visible from the very first frame to the last. ${SILENT_ACTING} Camera: locked-off static camera with no movement. ${speed}. ${lighting}, ${composition}, ${ratioTxt} aspect ratio. One single continuous shot with no cuts, no scene changes and no transitions. The background stays exactly the same throughout. The person's face, hair, clothing and props stay consistent throughout, with natural human anatomy and realistic hand movement.${briefRule} No text, no logos, no other people.`;
+        : `Edit this image, which is the first frame of a video. Keep exactly the same person, face, hairstyle, clothing, props, background colour, lighting, framing and camera angle. Change only this: ${actionEnd}. ${SILENT_ACTING} Correct human anatomy with natural hands and five fingers on each hand. Keep it photorealistic and seamless with the original.${brief ? ` Preserve this creative direction: ${brief}.` : ""} No text, no logos, no other people. ${SILENT_ACTING}`;
+      video = `Photorealistic stock footage, ${x.framing}, ${x.angle}. ${cap(who)}, wearing ${outfit}, ${bg}. The clip opens with the person already ${actionStart}, and the motion continues smoothly until ${actionEnd}${loop ? ", then returns smoothly to the starting pose so the clip ends exactly as it began, creating a seamless loop" : ""}. The emotion is clearly visible from the very first frame to the last. ${SILENT_ACTING} Camera: locked-off static camera with no movement. ${speed}. ${lighting}, ${composition}, ${ratioTxt} aspect ratio. One single continuous shot with no cuts, no scene changes and no transitions. The background stays exactly the same throughout. The person's face, hair, clothing and props stay consistent throughout, with natural human anatomy and realistic hand movement.${briefRule} No text, no logos, no other people. ${SILENT_ACTING}`;
       info = `${pp.gender==="woman"?"wanita":"pria"} ${pp.age} th • ${FRAMES_ID[x.fk]} • ${bgText(x)} • ${x.ratio}${loop?" • loop":""}${slow?" • slow-mo":""}`;
     }
     return {no:i+1, nama:p.n, kat:(OPT.tema.find(o=>o.id===p.t)||{l:"Objek"}).l, info, first, last:lastP, video};
@@ -970,7 +1036,9 @@ function buildMaster(rows){
   L.push(`Each line gives the Indonesian scene name, how the first frame looks, how the last frame ends, and the assigned framing, angle, background and aspect ratio. Keep the core action exactly as given.`);
   rows.forEach((x,i)=>{
     const who = x.p.kind==="orang" ? "person" : "objects only";
-    const parts = [`${i+1}. ${x.p.n} [${who}] — starts: ${x.p.a}; ends: ${x.p.b}`, `framing: ${x.framing}`];
+    const startDesc = x.p.kind==="orang" ? silentifyAction(x.p.a) : x.p.a;
+    const endDesc = x.p.kind==="orang" ? silentifyAction(x.p.b) : x.p.b;
+    const parts = [`${i+1}. ${x.p.n} [${who}] — starts: ${startDesc}; ends: ${endDesc}`, `framing: ${x.framing}`];
     if(x.angle) parts.push(`angle: ${x.angle}`);
     parts.push(`background: ${bgText(x)}`, `aspect ratio: ${x.ratio}`);
     L.push(parts.join(" | "));
@@ -994,13 +1062,13 @@ function buildMaster(rows){
   L.push(`- The last frame is the peak or the next beat of the same action, in the same place, with the same subject and the same camera position.`);
   L.push(``);
   if(subj!=="objek"){
-    L.push(`MANDATORY SILENT PERFORMANCE — the character must never speak, mouth words, sing, or lip-sync. No dialogue, narration, voiceover, or conversational mouth movements. Express the action and emotion only with facial expressions, eye direction, head movement, posture, and natural gestures. The mouth may open only for a natural silent gasp, laugh, or yawn, never to form words. Rewrite actions such as phone calls, presentations, interviews, teaching, vlogging, announcements, and explaining as silent nonverbal acting while preserving the core visual action.`);
+    L.push(`MANDATORY EXPRESSION-ONLY PERFORMANCE — every human character remains completely silent throughout. No speaking, dialogue, voice, narration, singing, humming, whispering, shouting, lip-sync, mouthing words or syllables, or rhythmic speech-like mouth movement. Keep lips closed and still whenever the physical action does not require mouth movement; for actions such as eating, mouth motion is only for that physical action and must never resemble speech. Show emotion only through the eyes, eyebrows, gaze, blinking, head tilt, cheeks, closed-mouth smile, shoulders, posture, and silent hand/body gestures. Rewrite phone calls, presentations, interviews, teaching, vlogging, announcements, and explaining as silent listening, posing, demonstrating or gesturing. Avoid any description that would make a model animate the character as if talking.`);
     L.push(``);
   }
   L.push(`PROMPT STRUCTURE (follow this skeleton every time)`);
-  L.push(`1. First-frame prompt: "Photorealistic stock photo, [framing] of [full description of the fictional person including age, hair and build], wearing [full outfit], [background, written exactly as the rules say]. [One or two sentences describing the person already mid-action, with the expression and body position]. [Lighting], [camera angle], [composition], [aspect ratio]. Natural skin texture, realistic facial proportions, sharp focus on the face. The character is not speaking and is not forming words with the mouth. No text, no logos, no watermark, no other people."`);
-  L.push(`2. Last-frame prompt: "Edit this image, which is the first frame of a video. Keep exactly the same person, face, hairstyle, clothing, props, background colour, lighting, framing and camera angle. Change only this: [the single change]. Preserve silent expression only: no speaking, no dialogue, no mouthing words, and no lip-sync. Correct human anatomy with natural hands and five fingers on each hand. Keep it photorealistic and seamless with the original. No text, no logos, no other people."`);
-  L.push(`3. Video prompt: "Photorealistic stock footage, [framing], [camera angle]. [Person description], wearing [outfit], [background, same words as the first frame]. [One or two sentences describing the continuous motion from the first frame to the last]. The emotion is clearly visible from the very first frame to the last. The character never speaks, never mouths words, and never lip-syncs; no dialogue or voice. Communicate only through facial expression, gaze, head movement, posture, and gestures. Camera: locked-off static camera with no movement. [Speed]. [Lighting], [composition], [aspect ratio]. One single continuous shot with no cuts, no scene changes and no transitions. The background colour stays exactly the same throughout. The person's face, hair, clothing and props stay consistent throughout, with natural human anatomy and realistic hand movement. No text, no logos, no other people."`);
+  L.push(`1. First-frame prompt: "Photorealistic stock photo, [framing] of [full description of the fictional person including age, hair and build], wearing [full outfit], [background, written exactly as the rules say]. [One or two sentences describing the person already mid-action, with a clear nonverbal expression and body position]. [Lighting], [camera angle], [composition], [aspect ratio]. The character is silent and must not form words or syllables with the mouth. Keep lips closed and motionless unless the specified physical action strictly requires mouth movement. No text, no logos, no watermark, no other people."`);
+  L.push(`2. Last-frame prompt: "Edit this image, which is the first frame of a video. Keep exactly the same person, face, hairstyle, clothing, props, background colour, lighting, framing and camera angle. Change only this: [the single change]. The character remains completely silent: no dialogue, voice, lip-sync, mouthing words or syllables, or speech-like mouth movement. Keep the lips closed and still unless the physical action specifically requires mouth movement. Correct human anatomy with natural hands and five fingers on each hand. Keep it photorealistic and seamless with the original. No text, no logos, no other people."`);
+  L.push(`3. Video prompt: "Photorealistic stock footage, [framing], [camera angle]. [Person description], wearing [outfit], [background, same words as the first frame]. [One or two sentences describing continuous movement and nonverbal expression]. The character is silent from beginning to end: absolutely no dialogue, voice, speaking, singing, whispering, lip-sync, mouthing words or syllables, or speech-like mouth movement. Lips stay closed and still unless mouth movement is essential to the physical action. Emotion is shown only through eyes, eyebrows, gaze, blinks, head tilt, closed-mouth smile, posture, shoulders, and gestures. Camera: locked-off static camera with no movement. [Speed]. [Lighting], [composition], [aspect ratio]. One single continuous shot with no cuts, no scene changes and no transitions. The background colour stays exactly the same throughout. The person's face, hair, clothing and props stay consistent throughout, with natural human anatomy and realistic hand movement. No text, no logos, no other people."`);
   if(subj!=="orang") L.push(`For object-only scenes, drop the person and anatomy sentences and describe the object, its material and its motion instead.`);
   L.push(``);
   L.push(`COMPLIANCE (an item that breaks these is rejected by the stock site)`);
@@ -1027,6 +1095,7 @@ function buildMaster(rows){
   L.push(`- Count the items. There must be exactly ${n}, in the order of the scene list.`);
   L.push(`- Check that every action from the list was used once and that no two scenes share the same core gesture.`);
   L.push(`- Check that no first frame starts from a neutral expression.`);
+  if(subj!=="objek") L.push(`- Final silent check: remove every cue that could make a character look like it is talking. The mouth must not form words or syllables; expressions must be nonverbal only.`);
   L.push(`- If the answer gets too long, stop at the end of a complete item and tell me the last number you finished. When I say "lanjutkan", continue from the next number in the same format, without repeating earlier items.`);
   return L.join("\n");
 }

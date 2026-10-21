@@ -533,7 +533,6 @@ const OPT = {
 };
 
 const TOGGLES = [
-  {id:"metadata",l:"Sertakan judul dan 25 keyword Adobe Stock",def:true},
   {id:"ruang",l:"Beberapa adegan dengan ruang kosong untuk teks iklan",def:true},
   {id:"aman",l:"Mode aman artefak: tekankan tangan dan jari yang natural",def:true},
   {id:"slow",l:"Slow motion untuk gerakan yang cocok (lompat, rambut, cipratan)",def:true},
@@ -607,6 +606,7 @@ const state = Object.assign({}, DEFAULTS, {tema:DEFAULTS.tema.slice(), hindari:"
 TOGGLES.forEach(t=>state[t.id]=t.def);
 const KEY = "prompt-induk-v2";
 try{ Object.assign(state, JSON.parse(localStorage.getItem(KEY) || "{}")); }catch(e){}
+state.metadata = false; // judul & keyword tidak dipakai
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
 
 const ALL = {};

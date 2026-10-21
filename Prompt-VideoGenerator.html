@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Perakit Prompt Induk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDEFF3;--panel:#FFFFFF;--panel2:#F5F6F9;--line:#D5DAE3;--text:#1A2130;--muted:#566175;
+  --accent:#9A6207;--accent-bg:#F8E6C4;--cool:#23788D;--cool-bg:#DCEFF3;--warn:#A33A2B;--warn-bg:#F7E1DD;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#171D29;--panel:#212A3A;--panel2:#1B2331;--line:#35415B;--text:#ECEAE4;--muted:#9EA8BC;
+    --accent:#F0B24A;--accent-bg:#3B3222;--cool:#7CC4D6;--cool-bg:#1E3540;--warn:#F2A193;--warn-bg:#3D2420;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#171D29;--panel:#212A3A;--panel2:#1B2331;--line:#35415B;--text:#ECEAE4;--muted:#9EA8BC;
+  --accent:#F0B24A;--accent-bg:#3B3222;--cool:#7CC4D6;--cool-bg:#1E3540;--warn:#F2A193;--warn-bg:#3D2420;
+}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 "Figtree","Segoe UI",system-ui,-apple-system,sans-serif}
+h1,h2,h3{font-family:"Bricolage Grotesque","Figtree","Segoe UI",system-ui,sans-serif;line-height:1.15}
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px}
+.top{padding:32px 0 8px}
+.top h1{font-size:clamp(1.9rem,4.2vw,2.9rem);font-weight:800;margin:0 0 8px;letter-spacing:-.01em}
+.top p{margin:0;color:var(--muted);max-width:72ch}
+.layout{max-width:1240px;margin:0 auto;padding:0 20px 56px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,470px);gap:32px;align-items:start}
+.step{padding:20px 0;border-top:1px solid var(--line)}
+.step-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.num{flex:none;width:28px;height:28px;border-radius:50%;background:var(--text);color:var(--bg);display:grid;place-items:center;font-weight:700;font-size:.85rem}
+.step h2{font-size:1.12rem;margin:0;font-weight:600}
+.group{margin-top:12px}
+.group>.lbl,label.lbl{display:block;font-size:.86rem;color:var(--muted);margin-bottom:7px;font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:inherit;font-size:.88rem;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--text);color:var(--bg);border-color:var(--text)}
+.field{width:100%;font:inherit;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--text)}
+textarea.field{min-height:76px;resize:vertical}
+.hint{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+.note{font-size:.88rem;padding:9px 12px;border-radius:8px;margin:10px 0 0;background:var(--accent-bg);color:var(--text)}
+.note.warn{background:var(--warn-bg);color:var(--warn)}
+.switch{font:inherit;font-size:.92rem;display:flex;align-items:center;gap:10px;background:none;border:0;color:var(--text);cursor:pointer;padding:5px 0;text-align:left}
+.track{width:42px;height:23px;border-radius:12px;background:var(--line);position:relative;flex:none}
+.track::after{content:"";position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:var(--panel)}
+.switch[aria-checked="true"] .track{background:var(--accent)}
+.switch[aria-checked="true"] .track::after{transform:translateX(19px)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--cool);outline-offset:2px}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.btn{font:inherit;font-weight:600;font-size:.9rem;padding:9px 14px;border-radius:8px;border:1px solid var(--text);background:var(--text);color:var(--bg);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--text)}
+.btn.small{font-size:.84rem;padding:7px 12px}
+.picks{list-style:none;margin:12px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px}
+.picks li{font-size:.86rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 10px;display:flex;gap:8px;align-items:baseline}
+.picks li b{color:var(--accent);font-weight:700;min-width:2.2ch}
+.picks li .k{margin-left:auto;font-size:.72rem;font-weight:600;color:var(--cool)}
+.picks li.ai{border-style:dashed;color:var(--muted)}
+.stat{font-size:.86rem;color:var(--muted);margin-top:10px}
+.out{position:sticky;top:calc(env(safe-area-inset-top,0px) + 14px);max-height:calc(100vh - 28px);overflow:auto}
+.outbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:12px}
+.outbox h3{margin:0;font-size:1rem}
+pre.master{white-space:pre-wrap;word-break:break-word;font:.82rem/1.5 "Figtree",system-ui,sans-serif;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px;margin:10px 0 0;max-height:52vh;overflow:auto}
+@media (max-width:920px){.layout{grid-template-columns:minmax(0,1fr)}.out{position:static;max-height:none;overflow:visible}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Perakit Prompt Induk</h1>
+    <p>Atur maunya di sini, lalu salin satu prompt induk. Tool ini mengambil gerakan dari kamus besar di dalamnya dan mencatat gerakan yang sudah disalin, jadi batch berikutnya selalu memakai gerakan yang belum pernah dipakai sampai seluruh kamus habis.</p>
+  </header>
+</div>
+
+<main class="layout">
+  <div>
+    <section class="step">
+      <div class="step-head"><span class="num">1</span><h2>Hasil yang diminta</h2></div>
+      <div class="group"><span class="lbl">Bentuk keluaran</span><div class="chips" id="g-format"></div></div>
+      <div class="group"><span class="lbl">Jumlah set prompt</span><div class="chips" id="g-jumlah"></div></div>
+      <p class="hint" id="hint-jumlah"></p>
+    </section>
+
+    <section class="step">
+      <div class="step-head"><span class="num">2</span><h2>Isi adegan</h2></div>
+      <div class="group"><span class="lbl">Subjek</span><div class="chips" id="g-subjek"></div></div>
+      <div class="group"><span class="lbl">Tema gerakan (bisa pilih lebih dari satu)</span><div class="chips" id="g-tema"></div></div>
+      <div class="group">
+        <label class="lbl" for="niche">Tema khusus atau kata kunci tambahan, opsional</label>
+        <input id="niche" class="field" type="text" placeholder="misalnya: nuansa Ramadan, kerja remote, UMKM kuliner">
+      </div>
+      <div class="group"><span class="lbl">Musim atau event</span><div class="chips" id="g-event"></div></div>
+    </section>
+
+    <section class="step">
+      <div class="step-head"><span class="num">3</span><h2>Tampilan</h2></div>
+      <div class="group"><span class="lbl">Latar</span><div class="chips" id="g-latar"></div></div>
+      <div class="group"><span class="lbl">Framing</span><div class="chips" id="g-framing"></div></div>
+      <div class="group"><span class="lbl">Rasio</span><div class="chips" id="g-rasio"></div></div>
+      <div class="group" id="wrap-orang"><span class="lbl">Ragam orang</span><div class="chips" id="g-orang"></div></div>
+      <div class="group"><span class="lbl">Kegunaan yang disasar</span><div class="chips" id="g-guna"></div></div>
+    </section>
+
+    <section class="step">
+      <div class="step-head"><span class="num">4</span><h2>Aturan tambahan</h2></div>
+      <div class="group" id="toggles"></div>
+    </section>
+
+    <section class="step">
+      <div class="step-head"><span class="num">5</span><h2>Gerakan batch ini</h2></div>
+      <p class="hint" style="margin-top:0">Gerakan diambil acak dari kamus sesuai tema. Saat kamu menekan Salin, gerakan ini dicatat sebagai terpakai dan tidak akan muncul lagi sampai semua gerakan di tema itu habis.</p>
+      <div class="btns">
+        <button type="button" class="btn small" id="repick">Ambil gerakan baru</button>
+        <button type="button" class="btn small ghost" id="clear-used">Reset riwayat gerakan</button>
+      </div>
+      <div id="pick-note"></div>
+      <p class="stat" id="pick-stat"></p>
+      <ul class="picks" id="picks"></ul>
+    </section>
+
+    <section class="step">
+      <div class="step-head"><span class="num">6</span><h2>Hindari pengulangan manual</h2></div>
+      <label class="lbl" for="hindari">Adegan lain yang sudah pernah kamu buat di luar tool ini, pisahkan dengan koma. Daftar ini ikut masuk ke prompt induk.</label>
+      <textarea id="hindari" class="field" placeholder="pusing memegang dahi, menggigit burger, wisuda melempar topi"></textarea>
+      <p class="hint">Riwayat gerakan dan daftar ini tersimpan di browser ini saja.</p>
+    </section>
+  </div>
+
+  <aside class="out">
+    <div class="outbox">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <h3>Prompt induk</h3>
+        <span class="hint" id="len" style="margin:0"></span>
+      </div>
+      <div class="btns">
+        <button type="button" class="btn" id="copy">Salin prompt induk</button>
+        <button type="button" class="btn ghost" id="reset">Kembalikan pengaturan</button>
+      </div>
+      <pre class="master" id="master"></pre>
+    </div>
+  </aside>
+</main>
+
+<script>
+// ================= KAMUS GERAKAN =================
+// Format: [nama Indonesia, aksi dalam bahasa Inggris]
+const ACTIONS = {
+  emosi:[
+    ["Kaget terkejut","gasping in shock with both hands rising to the cheeks and eyes wide open"],
+    ["Tertawa lepas","laughing hard, leaning back with one hand on the stomach"],
+    ["Menangis sedih","crying quietly and wiping a tear from the cheek with the back of the hand"],
+    ["Marah frustrasi","shouting in frustration with both fists clenched at chest height"],
+    ["Bingung garuk kepala","scratching the back of the head with a puzzled frown and tilting the head"],
+    ["Lega","exhaling with relief, shoulders dropping and one hand pressed to the chest"],
+    ["Merayakan kemenangan","celebrating a win with both arms raised high and mouth open in a cheer"],
+    ["Kecewa","slumping the shoulders and slowly shaking the head in disappointment"],
+    ["Malu menutup wajah","covering the face with both open palms in embarrassment, then peeking out"],
+    ["Bosan","resting the chin on one hand and letting out a long bored sigh"],
+    ["Takut mundur","flinching backwards in fear with both open palms raised defensively"],
+    ["Jijik","recoiling in disgust, wrinkling the nose and turning the head away"],
+    ["Curiga","narrowing the eyes suspiciously and leaning slowly toward the camera"],
+    ["Bangga","standing tall with hands on hips and a proud confident smile"],
+    ["Gugup","biting the lower lip and nervously tugging at a sleeve"],
+    ["Berpikir keras","looking up thoughtfully while tapping the chin with one index finger"],
+    ["Mengantuk menguap","yawning widely and rubbing one eye with the back of the wrist"],
+    ["Terharu","pressing one hand to the heart with teary, deeply moved eyes"],
+    ["Cuek angkat bahu","shrugging with both palms turned up and an indifferent face"],
+    ["Stres pijat pelipis","rubbing both temples with eyes shut tight under stress"],
+    ["Dapat ide","eyes widening with a sudden idea while pointing one index finger upward"],
+    ["Menolak tegas","holding one open palm toward the camera to say stop while shaking the head"],
+    ["Mengangguk setuju","nodding firmly with a warm, agreeing smile"],
+    ["Kesal memutar mata","rolling the eyes in annoyance and crossing the arms"],
+    ["Rindu melamun","gazing into the distance with a wistful, longing expression"]
+  ],
+  kerja:[
+    ["Presentasi percaya diri","presenting confidently, gesturing with an open hand toward empty space"],
+    ["Mengetik cepat di laptop","typing fast on a laptop with focused eyes, screen facing away from the camera"],
+    ["Menelepon sambil berjalan","talking on a phone while walking briskly and nodding"],
+    ["Menawarkan jabat tangan","reaching one hand toward the camera to offer a handshake with a friendly smile"],
+    ["Pegal lembur","rubbing the back of a stiff neck after long hours at a desk"],
+    ["Membawa kardus pindah kerja","carrying a plain cardboard box of office belongings"],
+    ["Menjelaskan grafik di udara","drawing an imaginary rising chart in the air with one finger"],
+    ["Rapat video","waving and talking to a laptop camera during a video meeting, screen facing away"],
+    ["Kabar baik di HP","pumping one fist after reading good news on a phone"],
+    ["Stres tumpukan kerja","holding the head in both hands behind a tall stack of blank papers"],
+    ["Merapikan blazer","straightening a blazer collar before an interview"],
+    ["Menulis catatan rapat","writing notes in a blank notebook while listening and nodding"],
+    ["Kopi pagi sebelum kerja","sipping coffee from a plain mug while checking a phone"],
+    ["Terburu-buru telat","rushing with a bag over one shoulder and glancing back anxiously"],
+    ["Menyerahkan map","handing a plain folder toward the camera"],
+    ["Kerja santai di sofa","working on a laptop on a sofa with legs stretched out, screen facing away"],
+    ["Bingung menatap laptop","leaning closer to a laptop in confusion, screen facing away"],
+    ["Bertepuk tangan","clapping hands in applause with a broad smile"],
+    ["Wawancara kerja","sitting upright, answering interview questions with calm open hands"],
+    ["Mengangkat laptop bangga","turning a laptop with a solid green screen toward the camera proudly"]
+  ],
+  sehat:[
+    ["Batuk ke siku","coughing into the elbow"],
+    ["Bersin","sneezing into a plain white tissue"],
+    ["Demam","touching the forehead to check for fever with a pale, tired face"],
+    ["Sakit perut","holding the stomach in pain and bending slightly forward"],
+    ["Sakit punggung","pressing one hand on the lower back and grimacing"],
+    ["Leher kaku","rubbing a stiff neck and slowly tilting the head"],
+    ["Sakit gigi","holding the jaw with one hand in toothache pain"],
+    ["Minum obat","taking a white pill with a glass of water"],
+    ["Memakai masker","putting on a plain light-blue medical face mask"],
+    ["Hand sanitizer","rubbing hands together with clear sanitizer gel"],
+    ["Pusing vertigo","swaying dizzily with one hand on the head"],
+    ["Sesak napas","breathing heavily with one hand on the chest"],
+    ["Dokter menjelaskan","a fictional doctor in a plain white coat explaining with open hands"],
+    ["Perawat menenangkan","a fictional nurse in plain scrubs giving a reassuring nod and smile"],
+    ["Gatal alergi","scratching an itchy forearm with a frustrated face"],
+    ["Meditasi","meditating cross-legged with eyes closed, breathing slowly"],
+    ["Minum air putih","drinking a full glass of water to stay hydrated"],
+    ["Mata lelah","rubbing tired eyes after a long time looking at a screen"],
+    ["Lutut nyeri","holding a sore knee while seated, wincing"],
+    ["Mual","covering the mouth with one hand, feeling nauseous"]
+  ],
+  cantik:[
+    ["Mengoles krim wajah","applying moisturizer to the cheeks with fingertips"],
+    ["Memakai sheet mask","smoothing a plain white sheet mask onto the face"],
+    ["Menyisir rambut panjang","brushing long hair with a plain hairbrush"],
+    ["Menyemprot parfum","spraying perfume on the wrist from an unbranded glass bottle"],
+    ["Bercermin genggam","checking hair in a small handheld mirror with its back toward the camera"],
+    ["Memakai lipstik","applying lipstick from an unbranded tube"],
+    ["Mencukur jenggot","shaving foam off the jaw with a plain razor"],
+    ["Menepuk toner","gently patting toner onto the face with both palms"],
+    ["Memakai sunscreen","dabbing white sunscreen on the nose and cheeks"],
+    ["Mengibas rambut","flipping freshly washed hair over the shoulder"],
+    ["Kulit halus puas","touching a smooth cheek with a satisfied smile"],
+    ["Cemas lihat jerawat","inspecting a small blemish on the cheek with a worried face"],
+    ["Mengeringkan rambut handuk","towel-drying hair with a plain white towel"],
+    ["Krim tangan","rubbing hand cream into the backs of the hands"],
+    ["Serum tetes","applying serum from a plain glass dropper onto the cheek"],
+    ["Mengikat rambut","tying hair into a high ponytail"]
+  ],
+  makan:[
+    ["Gigitan besar sandwich","taking a big bite of a sandwich"],
+    ["Menyeruput mi","slurping noodles from a bowl with chopsticks"],
+    ["Mencium aroma sup","smelling a bowl of hot soup with eyes closed in delight"],
+    ["Kepedasan","fanning the open mouth after eating something too spicy"],
+    ["Minum es segar","drinking an iced drink through a straw and smiling"],
+    ["Menolak gorengan","pushing away a plate of fries with one hand"],
+    ["Makan salad sehat","eating a fresh salad with a fork"],
+    ["Mencicipi masakan","tasting from a wooden spoon and nodding approval"],
+    ["Kekenyangan","patting a full belly and leaning back"],
+    ["Kelaparan","holding the stomach hungrily while staring at food"],
+    ["Menuang jus","pouring orange juice into a glass"],
+    ["Makan es krim","licking an ice cream cone happily"],
+    ["Membuka kotak bekal","opening a plain lunch box with an excited face"],
+    ["Meniup teh panas","blowing gently on a hot cup of tea"],
+    ["Memotong buah","slicing an apple on a wooden board"],
+    ["Menyuapkan ke kamera","offering a forkful of food toward the camera"]
+  ],
+  rumah:[
+    ["Menyapu","sweeping the floor with a broom"],
+    ["Melipat baju","folding clean laundry into a neat pile"],
+    ["Menyiram tanaman pot","watering a potted plant with a small watering can"],
+    ["Memeluk bantal","hugging a cushion on a sofa"],
+    ["Mengepel lantai","mopping the floor"],
+    ["Menyedot debu","vacuuming the floor with an unbranded vacuum cleaner"],
+    ["Membuka kado","unwrapping a plain gift box"],
+    ["Membawa belanjaan","carrying two plain paper grocery bags"],
+    ["Mengangkat kardus pindahan","lifting a heavy cardboard moving box"],
+    ["Mengelap meja","spraying and wiping a table clean"],
+    ["Memasak menumis","stirring vegetables in a frying pan"],
+    ["Membaca santai","reading a book with a blank cover on a sofa"],
+    ["Bangun tidur menggeliat","stretching both arms wide after waking up"],
+    ["Menyajikan teh","pouring tea from a plain teapot toward the camera"],
+    ["Menepuk bantal sofa","fluffing sofa pillows"],
+    ["Menjemur pakaian","hanging a shirt on a clothes line"]
+  ],
+  olahraga:[
+    ["Jogging di tempat","jogging in place with energetic arm swings"],
+    ["Jumping jack","doing jumping jacks"],
+    ["Push up","doing push-ups"],
+    ["Squat","doing bodyweight squats"],
+    ["Angkat dumbbell","doing a bicep curl with a plain dumbbell"],
+    ["Peregangan lengan","stretching both arms overhead"],
+    ["Yoga pose pohon","balancing in the tree yoga pose"],
+    ["Lompat tali","jumping rope"],
+    ["Tinju bayangan","shadow boxing with quick punches"],
+    ["Mengelap keringat","wiping sweat off the face with a towel after training"],
+    ["Minum botol olahraga","drinking from a plain sports bottle after a workout"],
+    ["Plank","holding a plank position"],
+    ["Lunge","doing alternating lunges"],
+    ["Menendang bola","kicking a football"],
+    ["Dribel basket","dribbling a basketball"],
+    ["Mengayun raket","swinging a badminton racket"],
+    ["Ngos-ngosan","bent over with hands on knees, breathing hard after running"],
+    ["Lompat girang di udara","jumping high in the air with joy"]
+  ],
+  tekno:[
+    ["Scroll HP tersenyum","scrolling a phone and smiling, screen facing away"],
+    ["Selfie","taking a selfie with the back of the phone toward the camera"],
+    ["Kaget baca pesan","reacting with shock to a message on a phone, screen facing away"],
+    ["Memakai VR","exploring with a VR headset and reaching out with one hand"],
+    ["Mendengarkan musik","bobbing the head to music with plain over-ear headphones"],
+    ["Main game HP","gaming intensely on a phone held sideways, screen facing away"],
+    ["Cari sinyal","holding a phone up high searching for signal"],
+    ["HP mati kesal","shaking a dead phone in frustration"],
+    ["Merekam vlog","talking to a phone held at arm's length while vlogging"],
+    ["Mengetik chat dua jempol","typing a message with both thumbs and grinning"],
+    ["Memotret dengan kamera","taking a photo with an unbranded camera"],
+    ["Perintah suara","speaking a voice command into a phone held near the mouth"],
+    ["Membuka kotak gadget","unboxing a plain white device box with excitement"],
+    ["Main konsol","gripping a plain game controller and leaning in"],
+    ["Menunjukkan layar HP","showing a phone with a solid green screen toward the camera"],
+    ["Mengusap layar tak terlihat","swiping through an invisible floating screen in the air"]
+  ],
+  uang:[
+    ["Banyak tas belanja","carrying many plain shopping bags happily"],
+    ["Bayar pakai kartu","holding out a plain blank card toward the camera to pay"],
+    ["Mengisi celengan","dropping a coin into a ceramic piggy bank"],
+    ["Kaget struk panjang","staring in shock at a long blank receipt"],
+    ["Dompet kosong","opening an empty wallet and showing it to the camera"],
+    ["Belanja online","shopping on a phone and smiling, screen facing away"],
+    ["Menabung di toples","putting coins into a glass jar"],
+    ["Kantong kosong","pulling out empty trouser pockets with a helpless face"],
+    ["Menerima amplop","receiving a plain envelope happily with both hands"],
+    ["Membandingkan dua barang","holding two plain products and comparing them"],
+    ["Memeluk celengan","hugging a piggy bank tightly"],
+    ["Pusing tagihan","holding a stack of blank bills and sighing"]
+  ],
+  sekolah:[
+    ["Angkat tangan bertanya","raising one hand to ask a question"],
+    ["Menulis di buku","writing in a notebook at a desk"],
+    ["Memakai ransel","swinging a backpack onto the shoulders"],
+    ["Memegang ijazah","holding a rolled diploma tied with a ribbon"],
+    ["Membawa tumpukan buku","carrying a tall stack of books"],
+    ["Frustrasi ujian","dropping the head onto a desk over open books"],
+    ["Guru menjelaskan","a fictional teacher explaining with an open hand"],
+    ["Membalik halaman cepat","flipping pages of a book quickly"],
+    ["Menghapus kesalahan","erasing a mistake in a notebook"],
+    ["Belajar online","studying online with a headset in front of a laptop, screen facing away"],
+    ["Kaca pembesar","looking curiously through a magnifying glass"],
+    ["Memeluk buku senang","hugging a notebook happily after good news"],
+    ["Menggambar sketsa","sketching in a sketchbook with a pencil"],
+    ["Mengunyah pensil","chewing the end of a pencil while thinking"]
+  ],
+  alam:[
+    ["Menanam bibit","planting a seedling into dark soil"],
+    ["Memanen sayur","harvesting vegetables into a woven basket"],
+    ["Menyiram dengan selang","watering plants with a garden hose"],
+    ["Mencium bunga","smelling a flower with eyes closed"],
+    ["Menghirup udara segar","taking a deep breath of fresh air with arms open wide"],
+    ["Memungut sampah","picking up litter into a plain bag"],
+    ["Memeluk pohon","hugging a tree trunk"],
+    ["Mencangkul","hoeing soil with a garden hoe"],
+    ["Segenggam tanah","showing a handful of rich soil to the camera"],
+    ["Memetik buah","picking fruit from a branch"],
+    ["Menebar benih","scattering seeds from the palm"],
+    ["Memangkas tanaman","pruning a plant with garden shears"],
+    ["Membawa hasil panen","carrying a full harvest basket"],
+    ["Melindungi mata dari matahari","shading the eyes with one hand and looking far away"]
+  ],
+  cuaca:[
+    ["Kehujanan","running while covering the head from rain"],
+    ["Membuka payung","opening an umbrella"],
+    ["Kepanasan mengipas","fanning the face with one hand in the heat"],
+    ["Kedinginan menggigil","shivering and rubbing both arms"],
+    ["Angin kencang","holding a hat down as strong wind blows the hair"],
+    ["Menadah hujan","holding out one palm to catch raindrops"],
+    ["Berjemur menikmati matahari","tilting the face up to enjoy the sunshine"],
+    ["Menutup jaket","zipping up a thick jacket"],
+    ["Memakai kacamata hitam","sliding on a pair of sunglasses"],
+    ["Melilitkan syal","wrapping a scarf around the neck"],
+    ["Khawatir langit mendung","looking up worriedly at the sky"],
+    ["Mengibas rambut basah","shaking water out of wet hair"]
+  ],
+  travel:[
+    ["Menarik koper","pulling a rolling suitcase while walking"],
+    ["Melambai pamit","waving goodbye"],
+    ["Bingung baca peta","turning a blank paper map around in confusion"],
+    ["Memotret pemandangan","taking a photo of the view with a phone, back of the phone toward the camera"],
+    ["Mengepak koper","packing folded clothes into an open suitcase"],
+    ["Mendaki dengan ransel","hiking uphill with a backpack"],
+    ["Bersantai di kursi pantai","lounging on a beach chair"],
+    ["Mengangkat koper berat","lifting a heavy suitcase with effort"],
+    ["Menunjuk tujuan","pointing excitedly into the distance"],
+    ["Topi pantai","posing with a wide sun hat and sunglasses"],
+    ["Duduk di atas koper","sitting on top of an overstuffed suitcase to close it"]
+  ],
+  iklan:[
+    ["Menunjuk ruang kosong samping","pointing at empty space beside them with a big smile"],
+    ["Memegang produk polos","holding a plain unbranded box toward the camera"],
+    ["Jempol rekomendasi","giving a thumbs up toward the camera"],
+    ["Wow menunjuk samping","mouth open in amazement while pointing sideways at empty space"],
+    ["Pengumuman megafon","shouting an announcement into a plain megaphone"],
+    ["Mempersembahkan dua telapak","presenting empty space with both palms open"],
+    ["Papan kosong","holding a blank white sign board"],
+    ["Menunjuk ke kamera","pointing directly at the camera with a confident grin"],
+    ["Tangan bersilang yakin","standing with arms crossed and a confident smile"],
+    ["Berbisik rahasia promo","cupping one hand beside the mouth to whisper a secret"],
+    ["Hadiah giveaway","holding a plain gift box excitedly toward the camera"],
+    ["Menunjuk ke atas","pointing upward at empty space above the head"],
+    ["Menunjuk ke bawah","pointing down toward the bottom of the frame"],
+    ["Menekan tombol di udara","pressing an invisible button in the air"],
+    ["Mengedipkan mata","winking at the camera with a playful smile"]
+  ],
+  objek:[
+    ["Kopi dituang ke mug","coffee pouring into a plain white mug with rising steam"],
+    ["Kotak hadiah terbuka","the lid of a plain gift box popping open"],
+    ["Koin bertumpuk","coins stacking up one by one into a tall pile"],
+    ["Bunga mekar","a flower slowly blooming"],
+    ["Es batu jatuh ke gelas","ice cubes dropping into a glass of water with a splash"],
+    ["Pil tumpah dari botol","white pills spilling from an unbranded bottle"],
+    ["Botol kosmetik berputar","a plain cosmetic bottle slowly rotating on a round pedestal"],
+    ["Sepatu putih berputar","a plain white sneaker slowly rotating"],
+    ["Bola memantul","a ball bouncing and settling"],
+    ["Pesawat kertas","a paper plane gliding across the frame"],
+    ["Balon mengembang","a balloon inflating"],
+    ["Api lilin","a candle flame flickering gently"],
+    ["Jam pasir","sand falling through an hourglass"],
+    ["Tetesan air","a water drop splashing onto a still surface"],
+    ["Sayuran tercebur","fresh vegetables splashing into water"],
+    ["Koin masuk celengan","a coin dropping into a piggy bank"],
+    ["Kartu melayang","a plain blank card floating and turning in the air"],
+    ["HP layar hijau berputar","a phone with a solid green screen slowly rotating"],
+    ["Pita satin berkibar","a satin ribbon fluttering in the air"],
+    ["Kelopak bunga jatuh","flower petals drifting down"],
+    ["Gelembung sabun","soap bubbles floating and popping"],
+    ["Ledakan bubuk warna","a burst of coloured powder exploding outward"],
+    ["Kue dipotong","a knife slicing through a layered cake"],
+    ["Madu menetes","honey dripping slowly from a wooden dipper"],
+    ["Cipratan susu","milk splashing in a crown shape"],
+    ["Kardus menutup","cardboard box flaps folding closed"],
+    ["Payung berputar","an open umbrella spinning"],
+    ["Daun melayang turun","a green leaf twirling down"],
+    ["Teh celup dicelup","a tea bag dipping into a glass cup of hot water"],
+    ["Puzzle menyatu","puzzle pieces sliding together"],
+    ["Domino jatuh","a row of dominoes toppling"]
+  ]
+};
+
+const OPT = {
+  format:[{id:"html",l:"Halaman HTML siap pakai"},{id:"json",l:"Data JSON"},{id:"teks",l:"Daftar teks biasa"},{id:"csv",l:"CSV"}],
+  jumlah:[{id:"10",l:"10"},{id:"25",l:"25"},{id:"50",l:"50"},{id:"100",l:"100"}],
+  subjek:[{id:"orang",l:"Orang"},{id:"objek",l:"Objek tanpa orang"},{id:"campur",l:"Campuran orang dan objek"}],
+  tema:[
+    {id:"emosi",l:"Emosi & reaksi",en:"human emotions and reactions"},
+    {id:"kerja",l:"Kerja & kantor",en:"work, office and business life"},
+    {id:"sehat",l:"Kesehatan & medis",en:"health, illness and medical care"},
+    {id:"cantik",l:"Kecantikan & perawatan",en:"beauty, skincare and personal care"},
+    {id:"makan",l:"Makanan & minuman",en:"food and drinks"},
+    {id:"rumah",l:"Keluarga & rumah",en:"family and home life"},
+    {id:"olahraga",l:"Olahraga & kebugaran",en:"sports and fitness"},
+    {id:"tekno",l:"Teknologi & gawai",en:"technology, phones and gadgets"},
+    {id:"uang",l:"Uang & belanja",en:"money, shopping and finance"},
+    {id:"sekolah",l:"Pendidikan",en:"education and studying"},
+    {id:"alam",l:"Alam & pertanian",en:"nature, plants and agriculture"},
+    {id:"cuaca",l:"Cuaca & musim",en:"weather and seasons"},
+    {id:"travel",l:"Perjalanan",en:"travel and holidays"},
+    {id:"iklan",l:"Iklan & promosi",en:"advertising and promotion gestures"}
+  ],
+  event:[
+    {id:"none",l:"Tanpa event (evergreen)"},
+    {id:"ramadan",l:"Ramadan & Lebaran",en:"Ramadan and Eid al-Fitr"},
+    {id:"imlek",l:"Imlek",en:"Lunar New Year"},
+    {id:"natal",l:"Natal & Tahun Baru",en:"Christmas and New Year"},
+    {id:"valentine",l:"Valentine",en:"Valentine's Day"},
+    {id:"paskah",l:"Paskah",en:"Easter"},
+    {id:"halloween",l:"Halloween",en:"Halloween"},
+    {id:"sekolahbaru",l:"Tahun ajaran baru",en:"back to school season"}
+  ],
+  latar:[
+    {id:"polos",l:"Background warna polos"},
+    {id:"lokasi",l:"Lokasi nyata yang diburamkan"},
+    {id:"campur",l:"Campuran keduanya"},
+    {id:"chroma",l:"Green screen semua"}
+  ],
+  framing:[{id:"campur",l:"Campuran lengkap"},{id:"dekat",l:"Dominan close-up"},{id:"jauh",l:"Dominan badan penuh"}],
+  rasio:[{id:"169",l:"16:9"},{id:"916",l:"9:16"},{id:"both",l:"Campuran"}],
+  orang:[
+    {id:"dunia",l:"Campuran internasional"},
+    {id:"barat",l:"Dominan Eropa & Amerika"},
+    {id:"asia",l:"Dominan Asia"},
+    {id:"asteng",l:"Dominan Asia Tenggara"},
+    {id:"lansia",l:"Dominan usia matang"}
+  ],
+  guna:[{id:"semua",l:"Semua"},{id:"iklan",l:"Iklan"},{id:"berita",l:"Berita & penjelasan"},{id:"ilustrasi",l:"Ilustrasi konten"}]
+};
+
+const TOGGLES = [
+  {id:"metadata",l:"Sertakan judul dan kata kunci Adobe Stock",def:true},
+  {id:"ruang",l:"Beberapa adegan dengan ruang kosong untuk teks iklan",def:true},
+  {id:"aman",l:"Mode aman artefak: hindari gestur jari yang rumit",def:true},
+  {id:"props",l:"Izinkan properti (mug, HP, kardus, dan sejenisnya)",def:true},
+  {id:"slow",l:"Izinkan beberapa adegan slow motion",def:true},
+  {id:"loop",l:"Sisipkan beberapa adegan yang bisa di-loop",def:false},
+  {id:"alasan",l:"Minta AI menjelaskan alasan tiap adegan dipilih",def:false}
+];
+
+const COLOURS = ["light grey","pure white","warm beige","pastel blue","bright yellow","soft pink","sage green","dark charcoal","terracotta orange","deep teal","lilac","mint green","navy blue","peach"];
+const ANGLES = ["eye-level angle","slightly low angle","slightly high angle","three-quarter side view"];
+const FRAMES = {
+  full:"full-body shot (head to toe)",
+  tq:"three-quarter shot (knees up)",
+  waist:"waist-up medium shot",
+  chest:"chest-up medium close-up",
+  face:"face close-up"
+};
+const FRAME_WEIGHTS = {
+  campur:{full:20,tq:15,waist:25,chest:25,face:15},
+  dekat:{waist:25,chest:40,face:35},
+  jauh:{full:50,tq:35,waist:15}
+};
+
+// ================= STATE =================
+const DEFAULTS = {
+  format:"html", jumlah:"50", subjek:"orang", tema:["emosi","kerja","sehat","olahraga","iklan"], event:"none",
+  latar:"polos", framing:"campur", rasio:"169", orang:"dunia", guna:"semua", niche:""
+};
+const state = Object.assign({}, DEFAULTS, {tema:DEFAULTS.tema.slice(), hindari:"", used:[], picks:[], extra:0, seed:1, newRound:false});
+TOGGLES.forEach(t=>state[t.id]=t.def);
+const KEY = "prompt-induk-v2";
+try{ Object.assign(state, JSON.parse(localStorage.getItem(KEY) || "{}")); }catch(e){}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+
+const ALL = {};
+Object.keys(ACTIONS).forEach(t=>ACTIONS[t].forEach(a=>{
+  const id = t+":"+a[0];
+  ALL[id] = {id, t, n:a[0], en:a[1], kind: t==="objek" ? "objek" : "orang"};
+}));
+
+function rng(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function shuffle(arr, r){ r=r||Math.random; const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function pools(){
+  const people = state.subjek==="objek" ? [] : state.tema.flatMap(t=>(ACTIONS[t]||[]).map(a=>ALL[t+":"+a[0]]));
+  const objs = state.subjek==="orang" ? [] : ACTIONS.objek.map(a=>ALL["objek:"+a[0]]);
+  return {people, objs};
+}
+function need(){
+  const n = Number(state.jumlah);
+  const nObj = state.subjek==="objek" ? n : state.subjek==="campur" ? Math.round(n/3) : 0;
+  return {nPeople:n-nObj, nObj};
+}
+function takeFrom(pool, k){
+  if(k<=0) return [];
+  const used = new Set(state.used);
+  let out = shuffle(pool.filter(p=>!used.has(p.id))).slice(0,k);
+  if(out.length < k){
+    const ids = new Set(pool.map(p=>p.id));
+    state.used = state.used.filter(id=>!ids.has(id));
+    state.newRound = true;
+    const taken = new Set(out.map(o=>o.id));
+    out = out.concat(shuffle(pool.filter(p=>!taken.has(p.id))).slice(0,k-out.length));
+  }
+  return out;
+}
+function pickBatch(){
+  state.newRound = false;
+  const {people, objs} = pools();
+  const {nPeople, nObj} = need();
+  const a = takeFrom(people, nPeople), b = takeFrom(objs, nObj);
+  state.picks = shuffle(a.concat(b)).map(p=>p.id);
+  state.extra = (nPeople - a.length) + (nObj - b.length);
+  state.seed = Math.floor(Math.random()*1e9);
+}
+
+// Atur framing, sudut, latar, rasio per adegan (stabil selama seed sama)
+function assign(){
+  const r = rng(state.seed);
+  const items = state.picks.map(id=>ALL[id]).filter(Boolean);
+  const people = items.filter(p=>p.kind==="orang");
+  const w = FRAME_WEIGHTS[state.framing], keys = Object.keys(w), tot = keys.reduce((s,k)=>s+w[k],0);
+  let frames = [];
+  keys.forEach(k=>{ for(let i=0;i<Math.round(w[k]/tot*people.length);i++) frames.push(k); });
+  while(frames.length<people.length) frames.push(keys[Math.floor(r()*keys.length)]);
+  frames = shuffle(frames.slice(0,people.length), r);
+
+  let colours = [];
+  function nextColour(){
+    if(!colours.length){
+      let c = shuffle(COLOURS, r);
+      if(nextColour.last && c[0]===nextColour.last) c.push(c.shift());
+      colours = c;
+    }
+    return nextColour.last = colours.shift();
+  }
+  const half = shuffle(items.map((_,i)=>i%2===0), r);
+  const ratioHalf = shuffle(items.map((_,i)=>i%2===0), r);
+  let fi = 0;
+  return items.map((p,i)=>{
+    let bg;
+    const useSolid = state.latar==="polos" || (state.latar==="campur" && half[i]);
+    if(state.latar==="chroma") bg = "solid chroma key green";
+    else if(useSolid) bg = "solid " + nextColour();
+    else bg = "a real location that fits the action, softly blurred";
+    const ratio = state.rasio==="169" ? "16:9" : state.rasio==="916" ? "9:16" : (ratioHalf[i] ? "16:9" : "9:16");
+    if(p.kind==="orang"){
+      return {p, framing:FRAMES[frames[fi++]], angle:ANGLES[Math.floor(r()*ANGLES.length)], bg, ratio};
+    }
+    return {p, framing:"product shot (choose close-up, medium or top-down to suit the motion)", angle:"", bg, ratio};
+  });
+}
+
+// ================= TEKS PROMPT =================
+const SOLID_RULE = `Solid colour backgrounds: the assigned colour fills the entire background as one flat, uniform, evenly lit colour, with no visible room, no floor line or horizon, no studio equipment, no texture, no gradient and no vignette. When the feet are in frame, the floor is the exact same colour and blends seamlessly into the background, with only a soft, subtle natural shadow under the feet. The outfit and props must clearly contrast with the background colour, never the same or a similar shade. Write the background in all three prompts with the same words: "isolated on a solid [colour] background".`;
+const LOCATION_RULE = `Real locations: choose a location that fits the action (office, living room, kitchen, cafe, street, park, bedroom, clinic, gym, shop), with the background softly blurred by a shallow depth of field. Never use the same location more than three times in the set, and describe it with the same words in all three prompts.`;
+const CHROMA_RULE = `Green screen: an evenly lit solid chroma key green background with no shadows or wrinkles on the backdrop and no green spill on the subject. When the feet are in frame, the floor is the same green. The person must not wear anything green and no prop may be green.`;
+const ORANG_TEXT = {
+  dunia:"Invent a pool of 20 fictional people with a wide international mix of appearance, skin tone, hair, body type, gender and age from the twenties to the seventies, and rotate through them so no person is reused more than three times.",
+  barat:"Invent a pool of 20 fictional people who mostly look European or North American, still varying skin tone, hair, body type, gender and age from the twenties to the seventies, and rotate through them so no person is reused more than three times.",
+  asia:"Invent a pool of 20 fictional people who mostly look East, South or Southeast Asian, varying skin tone, hair, body type, gender and age from the twenties to the seventies, and rotate through them so no person is reused more than three times.",
+  asteng:"Invent a pool of 20 fictional people who mostly look Southeast Asian (Indonesian, Malaysian, Filipino, Thai, Vietnamese), varying skin tone, hair, body type, gender and age from the twenties to the seventies, and rotate through them so no person is reused more than three times.",
+  lansia:"Invent a pool of 20 fictional people mostly aged 45 and above, with a wide international mix of appearance, skin tone, hair, body type and gender, and rotate through them so no person is reused more than three times."
+};
+const GUNA_TEXT = {
+  semua:"Make the set useful for advertising, for news and explainer videos, and for general content illustration.",
+  iklan:"Lean every scene toward what advertisers and brands would buy: aspirational, positive, clean and easy to add a message to.",
+  berita:"Lean every scene toward illustrative b-roll for news, explainer and educational videos about everyday topics.",
+  ilustrasi:"Lean every scene toward what content creators use to illustrate a point: relatable everyday moments and light humour."
+};
+const FORMAT_TEXT = {
+  html:`Return ONE complete, self-contained HTML file and nothing else outside it.
+The HTML file must:
+- keep all data in a JavaScript array inside the file, and render the cards from that array;
+- show every item as a card with its number, its Indonesian scene name, the person, the framing, the angle, the background and its use tags;
+- give each card four buttons: copy first-frame prompt, copy last-frame prompt, copy video prompt, copy everything;
+- include a search box and filter buttons by category and by use;
+- show the shared negative prompt once at the top with its own copy button;
+- include a "sudah dibuat" checkbox per card, stored in localStorage inside a try/catch;
+- work offline with no external libraries, support light and dark mode with prefers-color-scheme, and be readable on a phone.
+All visible labels in the page must be in Indonesian.`,
+  json:`Return ONE JSON array and nothing else. Each element must have exactly these keys:
+{"no": number, "nama": string (Indonesian scene name), "kategori": string, "kegunaan": array of strings, "orang": string, "framing": string, "sudut": string, "latar": string, "prompt_frame_awal": string, "prompt_frame_akhir": string, "prompt_video": string}`,
+  teks:`Return a plain numbered list. For each item write the Indonesian scene name as a heading, then three labelled blocks: "Frame awal:", "Frame akhir:", "Video:". Do not add commentary between items.`,
+  csv:`Return ONE CSV block and nothing else, with this header row:
+no,nama,kategori,kegunaan,orang,framing,latar,prompt_frame_awal,prompt_frame_akhir,prompt_video
+Quote every field with double quotes and escape internal quotes by doubling them.`
+};
+
+function buildMaster(rows){
+  const n = Number(state.jumlah);
+  const temas = state.tema.map(id=>(OPT.tema.find(o=>o.id===id)||{}).en).filter(Boolean).join(", ");
+  const ev = OPT.event.find(o=>o.id===state.event);
+  const subj = state.subjek;
+  const L = [];
+  L.push(`You are helping me produce AI stock footage for Adobe Stock. I generate a first frame and a last frame with an image model, then feed both frames plus a video prompt into an image-to-video model that makes one 15 second clip.`);
+  L.push(``);
+  L.push(`TASK: write ${n} complete scene sets, following the SCENE LIST below in order. Each set contains three prompts in English: a first-frame image prompt, a last-frame edit prompt, and a video prompt.`);
+  L.push(``);
+  L.push(`SUBJECT AND THEME`);
+  if(subj==="orang") L.push(`- Every scene shows exactly one fictional person acting out the given action.`);
+  else if(subj==="objek") L.push(`- Every scene shows objects only, with no people and no body parts visible.`);
+  else L.push(`- Scenes marked "person" show exactly one fictional person; scenes marked "objects only" show no people and no body parts.`);
+  L.push(`- Overall themes: ${temas || "everyday life"}.`);
+  if(state.niche.trim()) L.push(`- Extra direction from me: ${state.niche.trim()}.`);
+  if(ev && ev.id!=="none") L.push(`- Tie the whole set to this season or event: ${ev.en}. Adapt the outfit, props and setting of each action so it reads clearly as this event, but keep the core gesture.`);
+  else L.push(`- Keep the scenes evergreen, not tied to any specific holiday.`);
+  if(subj!=="objek") L.push(`- ${ORANG_TEXT[state.orang]}`);
+  L.push(`- ${GUNA_TEXT[state.guna]}`);
+  L.push(``);
+  L.push(`SCENE LIST (use every line exactly once, in this order)`);
+  L.push(`Each line gives the Indonesian scene name, the core action, and the assigned framing, angle, background and aspect ratio. Keep the core action exactly as given. If an assigned framing would hide the action (for example a face close-up for a jump), switch to the nearest framing that shows it clearly.`);
+  rows.forEach((x,i)=>{
+    const who = x.p.kind==="orang" ? "person" : "objects only";
+    const parts = [`${i+1}. ${x.p.n} [${who}] — action: ${x.p.en}`, `framing: ${x.framing}`];
+    if(x.angle) parts.push(`angle: ${x.angle}`);
+    parts.push(`background: ${x.bg}`, `aspect ratio: ${x.ratio}`);
+    L.push(parts.join(" | "));
+  });
+  if(state.extra>0){
+    const start = rows.length+1;
+    L.push(`${start} to ${n}. Invent ${state.extra} more scenes yourself within the themes above. Each must use a core action that is different from every action in this list and in the avoid list, and different from each other. Use the same background, framing and aspect ratio rules.`);
+  }
+  L.push(``);
+  L.push(`BACKGROUND RULES`);
+  if(state.latar==="polos") L.push(`- ${SOLID_RULE}`);
+  else if(state.latar==="lokasi") L.push(`- ${LOCATION_RULE}`);
+  else if(state.latar==="campur"){ L.push(`- ${SOLID_RULE}`); L.push(`- ${LOCATION_RULE}`); }
+  else L.push(`- ${CHROMA_RULE}`);
+  L.push(``);
+  L.push(`VARIETY RULES`);
+  L.push(`- No two scenes may share the same core gesture, even with a different person or background.`);
+  if(state.hindari.trim()) L.push(`- I already made these scenes elsewhere. Do not repeat them or anything close to them: ${state.hindari.trim().replace(/\s*\n\s*/g,", ")}.`);
+  L.push(``);
+  L.push(`THE FIRST FRAME IS THE MOST IMPORTANT PART`);
+  L.push(`- The first frame must already be inside the action, with the emotion or motion clearly visible. Never start from a neutral, blank, calm face. It has to work as a still thumbnail on its own.`);
+  L.push(`- The last frame is the peak or the next beat of the same action, in the same place, with the same subject and the same camera position.`);
+  L.push(``);
+  L.push(`PROMPT STRUCTURE (follow this skeleton every time)`);
+  L.push(`1. First-frame prompt: "Photorealistic stock photo, [framing] of [full description of the fictional person including age, hair and build], wearing [full outfit], [background, written exactly as the rules say]. [One or two sentences describing the person already mid-action, with the expression and body position]. [Lighting], [camera angle], [composition], [aspect ratio]. Natural skin texture, realistic facial proportions, sharp focus on the face. No text, no logos, no watermark, no other people."`);
+  L.push(`2. Last-frame prompt: "Edit this image, which is the first frame of a video. Keep exactly the same person, face, hairstyle, clothing, props, background colour, lighting, framing and camera angle. Change only this: [the single change]. Correct human anatomy with natural hands and five fingers on each hand. Keep it photorealistic and seamless with the original. No text, no logos, no other people."`);
+  L.push(`3. Video prompt: "Photorealistic stock footage, [framing], [camera angle]. [Person description], wearing [outfit], [background, same words as the first frame]. [One or two sentences describing the continuous motion from the first frame to the last]. The emotion is clearly visible from the very first frame to the last. Camera: locked-off static camera with no movement. [Speed]. [Lighting], [composition], [aspect ratio]. One single continuous shot with no cuts, no scene changes and no transitions. The background colour stays exactly the same throughout. The person's face, hair, clothing and props stay consistent throughout, with natural human anatomy and realistic hand movement. No text, no logos, no other people."`);
+  if(subj!=="orang") L.push(`For object-only scenes, drop the person and anatomy sentences and describe the object, its material and its motion instead.`);
+  L.push(``);
+  L.push(`COMPLIANCE (an item that breaks these is rejected by the stock site)`);
+  L.push(`- No text, letters, numbers, logos or brand names anywhere, including on props, packaging, clothing and screens.`);
+  L.push(`- Phone and laptop screens must face away from the camera, or be described as a solid plain colour.`);
+  L.push(`- Books, papers, cards and labels must be described as blank or unreadable.`);
+  L.push(`- People are fictional and must not resemble real or famous people. Say "a fictional ..." in the description.`);
+  if(state.props) L.push(`- Simple props are allowed, and they must be plain and unbranded.`);
+  else L.push(`- Do not add props beyond what the given action requires. Any prop must be plain and unbranded.`);
+  if(state.aman) L.push(`- Artifact safety: prefer open palms, single-hand gestures and relaxed fingers. Avoid interlocked fingers, counting on fingers, and hands crossing in front of the face. When hands are near the face, say so explicitly and keep the pose simple.`);
+  if(state.slow) L.push(`- A few scenes may be slow motion where it genuinely helps, such as jumping, hair movement or splashing. State it in the video prompt. The rest stay at natural real-time speed.`);
+  else L.push(`- Keep every scene at natural real-time speed.`);
+  if(state.loop) L.push(`- Make about a fifth of the scenes loopable: the last frame is identical to the first frame, the motion returns to its starting position, and the video prompt says so.`);
+  if(state.ruang) L.push(`- About a quarter of the scenes should leave generous empty space on one side of the frame for the buyer's text, and the composition sentence must say so.`);
+  L.push(``);
+  L.push(`ALSO PROVIDE`);
+  L.push(`- One shared negative prompt for all scenes, covering cuts, text, watermarks, logos, extra people, hand and finger defects, identity changes, background colour shifts, morphing, flicker and blur.`);
+  L.push(`- For every item: the Indonesian scene name from the list, a category, and use tags (Iklan, Berita, Ilustrasi).`);
+  if(state.metadata) L.push(`- For each item, an English title of 6 to 12 words describing the subject and the action, and 25 keywords, each one or two words, lowercase, ordered from most to least relevant, with no duplicates.`);
+  if(state.alasan) L.push(`- For each item, one short Indonesian sentence explaining who would buy this clip and why.`);
+  L.push(``);
+  L.push(`OUTPUT FORMAT`);
+  L.push(FORMAT_TEXT[state.format]);
+  L.push(``);
+  L.push(`BEFORE YOU FINISH`);
+  L.push(`- Count the items. There must be exactly ${n}, in the order of the scene list.`);
+  L.push(`- Check that every action from the list was used once and that no two scenes share the same core gesture.`);
+  L.push(`- Check that no first frame starts from a neutral expression.`);
+  L.push(`- If the answer gets too long, stop at the end of a complete item and tell me the last number you finished. When I say "lanjutkan", continue from the next number in the same format, without repeating earlier items.`);
+  return L.join("\n");
+}
+
+// ================= UI =================
+const $ = s=>document.querySelector(s);
+const REPICK_KEYS = ["tema","subjek","jumlah"];
+
+function chips(el, opts, key, multi){
+  el.innerHTML = "";
+  opts.forEach(o=>{
+    const b = document.createElement("button");
+    b.type="button"; b.className="chip"; b.textContent=o.l;
+    const on = multi ? state[key].includes(o.id) : state[key]===o.id;
+    b.setAttribute("aria-pressed", String(on));
+    b.addEventListener("click",()=>{
+      if(multi){
+        const i = state[key].indexOf(o.id);
+        if(i>-1){ if(state[key].length>1) state[key].splice(i,1); } else state[key].push(o.id);
+      } else state[key]=o.id;
+      if(REPICK_KEYS.includes(key)) pickBatch();
+      render();
+    });
+    el.appendChild(b);
+  });
+}
+function renderToggles(){
+  const box = $("#toggles"); box.innerHTML="";
+  TOGGLES.forEach(t=>{
+    const b = document.createElement("button");
+    b.type="button"; b.className="switch"; b.setAttribute("role","switch");
+    b.setAttribute("aria-checked", String(state[t.id]));
+    const tr = document.createElement("span"); tr.className="track";
+    const tx = document.createElement("span"); tx.textContent = t.l;
+    b.append(tr, tx);
+    b.addEventListener("click",()=>{ state[t.id]=!state[t.id]; render(); });
+    box.appendChild(b);
+  });
+}
+function renderPicks(rows){
+  const ul = $("#picks"); ul.innerHTML="";
+  rows.forEach((x,i)=>{
+    const li = document.createElement("li");
+    const b = document.createElement("b"); b.textContent = i+1;
+    const s = document.createElement("span"); s.textContent = x.p.n;
+    const k = document.createElement("span"); k.className="k";
+    k.textContent = x.p.kind==="objek" ? "objek" : x.ratio;
+    li.append(b, s, k); ul.appendChild(li);
+  });
+  if(state.extra>0){
+    const li = document.createElement("li"); li.className="ai";
+    li.textContent = `${rows.length+1}–${state.jumlah}: dikarang AI (${state.extra} adegan)`;
+    ul.appendChild(li);
+  }
+  const {people, objs} = pools();
+  const used = new Set(state.used);
+  const all = people.concat(objs);
+  const sisa = all.filter(p=>!used.has(p.id)).length;
+  $("#pick-stat").textContent = `Kamus tema terpilih: ${all.length} gerakan, ${sisa} belum pernah disalin.`;
+
+  const note = $("#pick-note"); note.innerHTML="";
+  const msgs = [];
+  if(state.extra>0) msgs.push({w:true, t:`Tema yang dipilih hanya punya ${state.jumlah-state.extra} gerakan. ${state.extra} sisanya dikarang AI, jadi tidak dijamin bebas ulang. Tambah tema atau kurangi jumlah supaya semuanya dari kamus.`});
+  if(state.newRound) msgs.push({w:false, t:"Sebagian gerakan di tema ini sudah habis terpakai, jadi putaran baru dimulai. Gerakan lama bisa muncul lagi, tapi framing, warna, dan orangnya diacak ulang."});
+  const allUsed = state.picks.length && state.picks.every(id=>used.has(id));
+  if(allUsed) msgs.push({w:false, t:"Set ini sudah pernah disalin. Tekan Ambil gerakan baru untuk batch berikutnya."});
+  msgs.forEach(m=>{ const p=document.createElement("p"); p.className = "note"+(m.w?" warn":""); p.textContent=m.t; note.appendChild(p); });
+}
+
+function render(){
+  chips($("#g-format"), OPT.format, "format");
+  chips($("#g-jumlah"), OPT.jumlah, "jumlah");
+  chips($("#g-subjek"), OPT.subjek, "subjek");
+  chips($("#g-tema"), OPT.tema, "tema", true);
+  chips($("#g-event"), OPT.event, "event");
+  chips($("#g-latar"), OPT.latar, "latar");
+  chips($("#g-framing"), OPT.framing, "framing");
+  chips($("#g-rasio"), OPT.rasio, "rasio");
+  chips($("#g-orang"), OPT.orang, "orang");
+  chips($("#g-guna"), OPT.guna, "guna");
+  renderToggles();
+  $("#wrap-orang").hidden = state.subjek==="objek";
+  $("#hint-jumlah").textContent = Number(state.jumlah) >= 50
+    ? "Jumlah besar sering terpotong di tengah jalan. Prompt induk sudah berisi aturan agar AI berhenti di item utuh dan melanjutkan saat kamu ketik lanjutkan."
+    : "Jumlah kecil biasanya selesai dalam satu jawaban dan kualitasnya lebih terjaga.";
+  const rows = assign();
+  renderPicks(rows);
+  const master = buildMaster(rows);
+  $("#master").textContent = master;
+  $("#len").textContent = `${master.length.toLocaleString("id-ID")} karakter`;
+  save();
+}
+
+$("#niche").addEventListener("input", e=>{ state.niche = e.target.value; render(); });
+$("#hindari").addEventListener("input", e=>{ state.hindari = e.target.value; render(); });
+$("#repick").addEventListener("click", ()=>{ pickBatch(); render(); });
+$("#clear-used").addEventListener("click", ()=>{
+  if(!confirm("Hapus semua riwayat gerakan yang sudah terpakai?")) return;
+  state.used = []; pickBatch(); render();
+});
+$("#copy").addEventListener("click", async (e)=>{
+  const btn = e.currentTarget, text = $("#master").textContent;
+  try{ await navigator.clipboard.writeText(text); }
+  catch(err){
+    const ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); }catch(_){}
+    ta.remove();
+  }
+  const set = new Set(state.used); state.picks.forEach(id=>set.add(id)); state.used = Array.from(set);
+  render();
+  btn.textContent="Tersalin"; setTimeout(()=>btn.textContent="Salin prompt induk",1500);
+});
+$("#reset").addEventListener("click", ()=>{
+  Object.assign(state, DEFAULTS, {tema:DEFAULTS.tema.slice()});
+  TOGGLES.forEach(t=>state[t.id]=t.def);
+  $("#niche").value = "";
+  pickBatch(); render();
+});
+
+$("#niche").value = state.niche || "";
+$("#hindari").value = state.hindari || "";
+if(!state.picks.length || state.picks.some(id=>!ALL[id])) pickBatch();
+render();
+</script>
+</body>
+</html>

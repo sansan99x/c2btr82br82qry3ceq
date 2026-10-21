@@ -61,6 +61,18 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .picks li b{color:var(--accent);font-weight:700;min-width:2.2ch}
 .picks li .k{margin-left:auto;font-size:.72rem;font-weight:600;color:var(--cool)}
 .picks li.ai{border-style:dashed;color:var(--muted)}
+.action-results{display:grid;gap:6px;margin-top:8px}
+.action-result{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.action-result .action-desc{min-width:0;flex:1}
+.action-result strong{display:block;font-size:.88rem;font-weight:700}
+.action-result small{display:block;color:var(--muted);font-size:.78rem;line-height:1.4;margin-top:2px}
+.action-result .btn{flex:none;font-size:.78rem;padding:6px 9px}
+.pinned-wrap{margin-top:10px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel2)}
+.pinned-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.85rem;font-weight:700}
+.pinned-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.pin-chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px 7px;font-size:.8rem}
+.pin-chip button{border:0;background:transparent;color:var(--warn);font:inherit;cursor:pointer;padding:0 2px}
+
 .stat{font-size:.86rem;color:var(--muted);margin-top:10px}
 .out{position:sticky;top:calc(env(safe-area-inset-top,0px) + 14px);max-height:calc(100vh - 28px);overflow:auto;padding-bottom:12px}
 .outbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:12px}
@@ -93,7 +105,7 @@ summary{cursor:pointer;font-size:.84rem;font-weight:600;color:var(--cool)}
 <div class="wrap">
   <header class="top">
     <h1>Perakit Prompt Video</h1>
-    <p>Atur maunya, lalu klik Buat prompt. Tool ini mengambil gerakan dari kamus di dalamnya, menyusun prompt frame awal, frame akhir, video, judul dan keyword, lalu bisa diunduh sebagai halaman HTML bertombol salin. Gerakan yang sudah dibuat dicatat, jadi batch berikutnya selalu memakai gerakan yang belum dipakai.</p>
+    <p>Pilih tema, jenis subjek, tampilan, dan jumlah adegan. Tool ini menyediakan ratusan gerakan serta menghasilkan hanya tiga prompt per adegan: frame awal, frame akhir, dan video. Hasil dapat disalin atau diunduh sebagai HTML. Gerakan yang sudah dibuat dicatat agar pengulangan diminimalkan.</p>
   </header>
 </div>
 
@@ -127,10 +139,18 @@ summary{cursor:pointer;font-size:.84rem;font-weight:600;color:var(--cool)}
 
     <section class="step">
       <div class="step-head"><span class="num">5</span><h2>Gerakan batch ini</h2></div>
-      <p class="hint" style="margin-top:0">Gerakan diambil acak dari kamus sesuai tema. Setelah dibuat atau disalin, gerakan dicatat sebagai terpakai dan baru muncul lagi setelah semua gerakan di tema itu habis.</p>
+      <p class="hint" style="margin-top:0">Gerakan diambil acak dari kamus tema terpilih. Tombol gerakan baru menghindari batch yang sedang tampil. Setelah prompt dibuat atau disalin, gerakan dicatat sebagai terpakai; gerakan lama baru boleh muncul lagi jika kamus tema habis.</p>
       <div class="btns">
         <button type="button" class="btn small" id="repick">Ambil gerakan baru</button>
         <button type="button" class="btn small ghost" id="clear-used">Reset riwayat gerakan</button>
+      </div>
+      <div class="group">
+        <label class="lbl" for="move-search">Cari dan pilih gerakan spesifik dari seluruh kamus</label>
+        <input id="move-search" class="field" type="search" placeholder="misalnya: petani, membuka paket, melompat, kucing">
+        <p class="hint">Ketik minimal 2 huruf. Klik “Masukkan ke batch” untuk mengutamakan gerakan pilihanmu pada batch berikutnya. Gerakan pilihan tetap dipertahankan saat mengambil gerakan baru dan dibersihkan setelah batch dibuat.</p>
+        <div id="action-search-results" class="action-results"></div>
+        <div id="pinned-actions"></div>
+        <div class="btns"><button type="button" class="btn small ghost" id="clear-pinned">Hapus gerakan pilihan</button></div>
       </div>
       <div id="pick-note"></div>
       <p class="stat" id="pick-stat"></p>
@@ -139,12 +159,12 @@ summary{cursor:pointer;font-size:.84rem;font-weight:600;color:var(--cool)}
 
     <section class="step">
       <div class="step-head"><span class="num">6</span><h2>Khusus mode prompt induk</h2></div>
-      <p class="hint" style="margin-top:0">Pengaturan di bawah ini hanya dipakai saat kamu menyalin prompt induk untuk dikirim ke AI.</p>
+      <p class="hint" style="margin-top:0">Format dan kegunaan mengatur prompt induk. Arahan kreatif tambahan juga diterapkan pada prompt langsung.</p>
       <div class="group"><span class="lbl">Bentuk keluaran dari AI</span><div class="chips" id="g-format"></div></div>
       <div class="group"><span class="lbl">Kegunaan yang disasar</span><div class="chips" id="g-guna"></div></div>
       <div class="group">
-        <label class="lbl" for="niche">Tema khusus atau kata kunci tambahan</label>
-        <input id="niche" class="field" type="text" placeholder="misalnya: nuansa Ramadan, kerja remote, UMKM kuliner">
+        <label class="lbl" for="niche">Arahan kreatif untuk video (berlaku untuk kedua mode)</label>
+        <input id="niche" class="field" type="text" placeholder="misalnya: petani memanen padi, nuansa Ramadan, iklan skincare minimalis">
       </div>
       <div class="group">
         <label class="lbl" for="hindari">Adegan lain yang sudah pernah kamu buat di luar tool ini, pisahkan dengan koma</label>
@@ -169,10 +189,6 @@ summary{cursor:pointer;font-size:.84rem;font-weight:600;color:var(--cool)}
         <button type="button" class="btn ghost" id="dl">Unduh HTML</button>
       </div>
       <div id="gen-note"></div>
-      <div class="neg" id="neg-box" hidden>
-        <div class="neg-head"><b>Negative prompt (untuk semua adegan)</b><span id="neg-btn"></span></div>
-        <p id="neg-text"></p>
-      </div>
       <div class="cards" id="cards"></div>
     </div>
 
@@ -193,21 +209,21 @@ summary{cursor:pointer;font-size:.84rem;font-weight:600;color:var(--cool)}
 
 <script>
 // ================= KAMUS GERAKAN =================
-// [nama, frame awal (sedang beraksi), perubahan di frame akhir, keyword, flag, baju khusus]
+// [nama, frame awal (sedang beraksi), perubahan di frame akhir, label internal lama, flag gerakan, baju khusus]
 // flag: f = butuh badan terlihat, c = cocok close-up, s = cocok slow motion, h = gerakan rambut, m = khusus pria
 const ACTIONS = {
   emosi:[
     ["Kaget terkejut","gasping in shock, both hands rising toward the cheeks and eyes wide open","both palms are pressed against the cheeks and the mouth is wide open in a full shocked gasp","shock, surprised, amazed, gasp, disbelief"],
     ["Tertawa lepas","laughing hard and starting to lean back with one hand on the stomach","the head is tipped back in a full belly laugh with the eyes squeezed shut","laughing, laughter, joy, funny, happy"],
     ["Menangis sedih","crying quietly with glossy eyes and trembling lips","the back of one hand gently wipes a tear from the cheek","crying, sad, tears, grief, sorrow","c"],
-    ["Marah frustrasi","shouting in frustration with both fists clenched at chest height","the fists are raised higher and the face is flushed with anger, mouth wide open","angry, anger, frustration, shouting, rage"],
+    ["Kesal frustrasi","frowning in frustration with both open hands raised at chest height","the person throws the hands up and lets out an exasperated sigh","frustration, annoyed, stress, exasperated, upset"],
     ["Bingung garuk kepala","frowning in confusion with one hand scratching the back of the head","the head tilts to one side and the eyebrows rise in a puzzled look","confused, puzzled, doubt, question, uncertain"],
     ["Lega","exhaling with relief, one hand pressed to the chest","the shoulders drop, the eyes close and a relieved smile appears","relief, relieved, calm, stress free, relaxed"],
     ["Merayakan kemenangan","cheering with both arms rising above the head","both arms are fully raised in victory and the mouth is open in a joyful shout","celebrate, winner, success, victory, excited","s"],
-    ["Kecewa","slumping the shoulders with a disappointed look","the head shakes slowly and the gaze drops to the floor","disappointed, sad, failure, upset, letdown"],
+    ["Kecewa","lowering the shoulders with a disappointed look","the person shakes the head slowly and lets out a quiet sigh","disappointed, sad, failure, upset, letdown"],
     ["Malu menutup wajah","covering the face with both open palms in embarrassment","the fingers part slightly and one eye peeks out shyly","embarrassed, shy, shame, awkward, blushing","c"],
     ["Bosan","resting the chin on one hand with heavy, bored eyes","the cheek sinks further into the palm and the eyes roll upward with a long sigh","bored, boredom, tired, uninterested, waiting","c"],
-    ["Takut mundur","flinching backward in fear with both open palms raised","the body leans further back and the face shows wide-eyed terror","fear, scared, afraid, frightened, panic"],
+    ["Waspada mundur","pulling back in surprise with both open palms raised","the eyes widen and the person takes a cautious half step back","cautious, surprised, alarmed, worried, reaction"],
     ["Jijik","recoiling in disgust with a wrinkled nose","the head turns fully away and one palm rises as if blocking a smell","disgust, gross, bad smell, aversion, yuck","c"],
     ["Curiga","narrowing the eyes suspiciously","the body leans slowly toward the camera and one eyebrow rises","suspicious, doubt, distrust, skeptical, mistrust","c"],
     ["Bangga","standing tall with hands on hips and a confident smile","the chin lifts slightly and the chest puffs out proudly","proud, confident, pride, self esteem, success"],
@@ -216,12 +232,12 @@ const ACTIONS = {
     ["Mengantuk menguap","starting a big yawn with heavy eyelids","the mouth is wide open in a full yawn and the back of one wrist rubs an eye","sleepy, tired, yawn, fatigue, exhausted","c"],
     ["Terharu","pressing one hand to the heart with teary, moved eyes","a soft emotional smile spreads across the face as the eyes glisten","touched, moved, grateful, emotional, love","c"],
     ["Cuek angkat bahu","shrugging with both palms turned up","the shoulders rise to the ears and the face shows clear indifference","shrug, indifferent, careless, whatever, unsure"],
-    ["Stres pijat pelipis","rubbing both temples with the eyes shut tight","the face scrunches and the head bows forward under pressure","stress, headache, pressure, overwhelmed, tension","c"],
+    ["Stres pijat pelipis","rubbing both temples with the eyes closed","the person exhales slowly and the shoulders relax a little","stress, headache, pressure, overwhelmed, tension","c"],
     ["Dapat ide","eyes widening with a sudden idea","one index finger points straight up and a bright smile appears","idea, inspiration, eureka, solution, creative"],
     ["Menolak tegas","holding one open palm toward the camera to say stop","the head shakes firmly and the arm extends further toward the camera","stop, refuse, rejection, gesture, no"],
     ["Mengangguk setuju","nodding with a warm, agreeing smile","the nod deepens and the smile widens with approval","agree, approval, nodding, positive, yes","c"],
     ["Kesal memutar mata","rolling the eyes in annoyance with the arms crossed","the head tilts back with an exaggerated eye roll and pursed lips","annoyed, irritated, eye roll, sarcastic, fed up","c"],
-    ["Rindu melamun","gazing into the distance with a wistful expression","the eyes soften and a faint nostalgic smile appears","daydreaming, nostalgia, longing, thoughtful, memories","c"]
+    ["Rindu melamun","gazing into the distance with a wistful expression","the eyes soften and a gentle nostalgic smile appears","daydreaming, nostalgia, longing, thoughtful, memories","c"]
   ],
   kerja:[
     ["Presentasi percaya diri","presenting confidently, one open hand gesturing toward empty space","the arm sweeps wider and the face lights up with an engaging smile","presentation, business, speaker, explaining, pitch"],
@@ -232,8 +248,8 @@ const ACTIONS = {
     ["Membawa kardus pindah kerja","carrying a plain cardboard box of office belongings","the box is shifted higher and the person glances back with a bittersweet smile","resign, job loss, cardboard box, career change, moving out","f"],
     ["Menjelaskan grafik di udara","drawing an imaginary rising line in the air with one finger","the finger reaches the top of the line and the face shows a confident smile","growth, chart, explaining, strategy, analysis"],
     ["Rapat video","waving at a laptop camera during a video meeting, the screen facing away from the camera","the hand lowers and the person speaks with an animated, friendly face","video call, online meeting, remote work, conference, laptop"],
-    ["Kabar baik di HP","reading a phone held with the screen facing away, eyes widening at good news","one fist pumps in the air with a big excited grin","good news, success, phone, excited, winning"],
-    ["Stres tumpukan kerja","holding the head in both hands behind a tall stack of blank papers","the head drops lower and a heavy sigh shows on the face","overworked, burnout, paperwork, stress, deadline"],
+    ["Kabar baik di HP","reading a phone held with the screen facing away, eyes widening at good news","one arm rises in a happy cheer with a big excited grin","good news, success, phone, excited, winning"],
+    ["Stres tumpukan kerja","resting the chin on one hand behind a tall stack of blank papers","the person looks up from the papers and puffs out the cheeks with a tired sigh","overworked, burnout, paperwork, stress, deadline"],
     ["Merapikan blazer","straightening a blazer collar with both hands","the hands smooth down the lapels and a confident look meets the camera","interview, preparing, confident, professional, business attire","","a tailored blazer over a plain shirt"],
     ["Menulis catatan rapat","writing in a blank notebook while listening","the pen pauses and the person nods thoughtfully","taking notes, meeting, writing, notebook, listening"],
     ["Kopi pagi sebelum kerja","sipping coffee from a plain mug while glancing at a phone held with the screen facing away","the mug lowers and a relaxed morning smile appears","morning coffee, routine, start of day, mug, relax"],
@@ -248,24 +264,24 @@ const ACTIONS = {
   sehat:[
     ["Batuk ke siku","starting to cough into the bend of the elbow","the body jerks slightly forward in a strong cough with the eyes squeezed shut","cough, flu, cold, illness, hygiene"],
     ["Bersin","about to sneeze, holding a plain white tissue near the nose","the head snaps forward into the tissue in a full sneeze","sneeze, allergy, flu, tissue, cold","c"],
-    ["Demam","touching the forehead with the back of one hand, looking pale and tired","the eyes close weakly and the shoulders sag","fever, sick, flu, temperature, illness","c"],
-    ["Sakit perut","holding the stomach with both hands and wincing","the body bends further forward in pain","stomach ache, pain, illness, digestion, cramp"],
-    ["Sakit punggung","pressing one hand on the lower back and grimacing","the body leans to one side as the pain sharpens","back pain, backache, posture, injury, ache"],
-    ["Leher kaku","rubbing a stiff neck with one hand","the head tilts slowly to the side with a pained face","neck pain, stiffness, tension, ache, posture","c"],
-    ["Sakit gigi","holding the jaw with one hand in pain","the eyes squeeze shut and the hand presses harder on the cheek","toothache, dental pain, tooth, dentist, ache","c"],
-    ["Minum obat","holding a white pill near the lips with a glass of water in the other hand","the pill is taken and the glass tips up for a sip","medicine, pill, medication, treatment, health"],
+    ["Demam","touching the forehead with the back of one hand, wrapped in a cozy blanket","the person sips from a warm mug and gives a small tired smile","fever, flu, cold, resting, illness","c"],
+    ["Sakit perut","rubbing the stomach with a mild, uncomfortable frown","the person pats the stomach gently and lets out a small sigh","stomach ache, discomfort, digestion, bloating, health"],
+    ["Sakit punggung","pressing one hand on the lower back with a mild frown","the person arches the back gently in a soothing stretch","back pain, backache, posture, stretching, ache"],
+    ["Leher kaku","rubbing a stiff neck with one hand and a mild frown","the head tilts slowly to the side in a gentle stretch","neck pain, stiffness, tension, posture, stretch","c"],
+    ["Sakit gigi","holding one cheek with a mild, uncomfortable frown","the person rubs the cheek gently and winces slightly","toothache, dental, tooth, dentist, discomfort","c"],
+    ["Mengoles balsem","rubbing a soothing balm onto the shoulder","the person rolls the shoulder and smiles with relief","balm, muscle ache, relief, massage, self care"],
     ["Memakai masker","lifting a plain light-blue medical face mask toward the face","the mask is fitted over the nose and mouth with both hands","face mask, protection, virus, hygiene, pandemic","c"],
     ["Hand sanitizer","rubbing the hands together with clear sanitizer gel","the palms rub faster and the person smiles reassuringly","hand sanitizer, clean hands, hygiene, germs, protection"],
-    ["Pusing vertigo","swaying with one hand on the head and unfocused eyes","the body tilts off balance and the other hand reaches out to steady itself","dizzy, vertigo, headache, unwell, faint"],
-    ["Sesak napas","breathing heavily with one hand on the chest","the shoulders rise with a deep laboured breath and the eyes close","shortness of breath, breathing, chest, asthma, health"],
+    ["Pusing ringan","touching the temple with one hand and blinking slowly","the person shakes the head gently and refocuses with a small smile","dizzy, headache, tired, unwell, migraine","c"],
+    ["Tarik napas dalam","placing one hand on the chest and breathing in deeply","the person exhales slowly with a calm, relieved face","breathing, deep breath, calm, relaxation, wellness"],
     ["Dokter menjelaskan","explaining with calm open hands and a reassuring face","one hand turns palm up and a gentle smile appears","doctor, medical, healthcare, consultation, professional","","a plain white doctor's coat over a light blue shirt"],
     ["Perawat menenangkan","smiling reassuringly toward the camera","the head nods gently and both hands come together at the waist","nurse, healthcare, caring, hospital, medical staff","","plain teal medical scrubs"],
     ["Gatal alergi","scratching an itchy forearm with a frustrated face","the scratching becomes more intense and the face scrunches","itchy, allergy, skin, rash, irritation"],
     ["Meditasi","sitting cross-legged with the eyes closed and hands resting on the knees","the chest rises with a slow deep breath and the face relaxes completely","meditation, mindfulness, calm, relax, wellness","f"],
     ["Minum air putih","lifting a full glass of water to the lips","the glass tips up and the person drinks with a refreshed look","drinking water, hydration, healthy, glass, wellness"],
     ["Mata lelah","rubbing tired eyes with the fingertips","the hands lower and the person blinks heavily with a weary face","eye strain, tired eyes, screen time, fatigue, vision","c"],
-    ["Lutut nyeri","sitting and holding a sore knee with both hands, wincing","the head bows toward the knee as the pain deepens","knee pain, joint pain, injury, arthritis, ache","f"],
-    ["Mual","covering the mouth with one hand, looking nauseous","the eyes widen and the body leans slightly forward","nausea, sick, unwell, motion sickness, illness","c"]
+    ["Lutut pegal","rubbing a sore knee while seated","the person stretches the leg out gently and nods","knee pain, joint, stretching, ache, recovery","f"],
+    ["Peregangan leher","gently tilting the head to one side to stretch the neck","the head tilts to the other side with a relaxed face","neck stretch, stretching, relax, posture, wellness","c"]
   ],
   cantik:[
     ["Mengoles krim wajah","dabbing white moisturizer onto the cheeks with the fingertips","the cream is smoothed in with gentle circles and a soft smile","skincare, moisturizer, face cream, beauty, routine","c"],
@@ -274,7 +290,7 @@ const ACTIONS = {
     ["Menyemprot parfum","spraying perfume onto the wrist from an unbranded glass bottle","the wrist rises to the nose and the eyes close in delight","perfume, fragrance, scent, beauty, luxury"],
     ["Bercermin genggam","checking the hair in a small handheld mirror held with its back to the camera","a confident smile appears at the reflection","mirror, appearance, grooming, beauty, self care","ch"],
     ["Memakai lipstik","applying lipstick from an unbranded tube","the lips press together and a pleased smile follows","lipstick, makeup, cosmetics, beauty, lips","c"],
-    ["Mencukur jenggot","shaving white foam off the jaw with a plain razor","a clean stripe of skin is revealed and the person checks it with satisfaction","shaving, razor, grooming, men, beard","cm"],
+    ["Busa cukur","applying white shaving foam to the jaw","the jaw is fully covered in foam and the person grins at the camera","shaving foam, grooming, men, beard, morning routine","cm"],
     ["Menepuk toner","gently patting toner onto the cheeks with both palms","the palms rest on the cheeks and the person smiles softly","toner, skincare, facial care, beauty, routine","c"],
     ["Memakai sunscreen","dabbing white sunscreen onto the nose and cheeks","the sunscreen is blended in and the person grins","sunscreen, sun protection, skincare, spf, summer","c"],
     ["Mengibas rambut","starting to flip freshly washed hair over the shoulder","the hair swings through the air in a glossy arc","hair flip, shiny hair, shampoo, beauty, hair care","sh"],
@@ -300,7 +316,7 @@ const ACTIONS = {
     ["Makan es krim","licking an ice cream cone","a big happy grin with a little ice cream on the lip","ice cream, dessert, summer, sweet, treat","c"],
     ["Membuka kotak bekal","lifting the lid of a plain lunch box","the lid is off and the face lights up with excitement","lunch box, packed lunch, meal prep, school lunch, food"],
     ["Meniup teh panas","blowing gently across a hot cup of tea","a careful sip is taken with a warm, cozy smile","tea, hot drink, cozy, cup, relaxing","c"],
-    ["Memotong buah","slicing an apple on a wooden board","the halves fall open and the person picks one up","cutting fruit, apple, kitchen, healthy, preparation"],
+    ["Mengupas jeruk","peeling an orange with the fingers","the orange is split open and a piece is offered toward the camera","orange, peeling, fruit, healthy, vitamin"],
     ["Menyuapkan ke kamera","offering a forkful of food toward the camera","the fork is fully extended with an inviting smile","sharing food, offering, tasty, invitation, try"]
   ],
   rumah:[
@@ -330,7 +346,7 @@ const ACTIONS = {
     ["Peregangan lengan","stretching both arms overhead","the body leans to one side in a deep side stretch","stretching, warm up, flexibility, exercise, wellness"],
     ["Yoga pose pohon","balancing on one leg in the tree yoga pose with palms together at the chest","the arms rise slowly overhead while keeping balance","yoga, tree pose, balance, wellness, mindfulness","f"],
     ["Lompat tali","jumping rope","the rope swings under the feet in a fast rhythm","jump rope, skipping, cardio, workout, fitness","fs"],
-    ["Tinju bayangan","throwing a quick punch","a second punch lands with a determined face","boxing, shadow boxing, fighting, workout, punch"],
+    ["Peregangan kaki","stretching one leg forward in a hamstring stretch","the person switches to the other leg with a focused face","stretching, hamstring, warm up, flexibility, exercise","f"],
     ["Mengelap keringat","wiping sweat off the face with a towel","the towel drops to the shoulder with a tired, satisfied smile","sweat, towel, after workout, exhausted, fitness"],
     ["Minum botol olahraga","drinking from a plain sports bottle","the bottle lowers and the person breathes out, refreshed","water bottle, hydration, after workout, thirst, sport"],
     ["Plank","holding a plank position","the body stays steady and the face shows strain","plank, core, workout, endurance, exercise","f"],
@@ -338,7 +354,7 @@ const ACTIONS = {
     ["Menendang bola","swinging one leg back to kick a football","the foot strikes the ball and it flies out of frame","football, soccer, kick, sport, ball","fs"],
     ["Dribel basket","dribbling a basketball","the ball bounces between the hands in a quick crossover","basketball, dribble, sport, ball, game","f"],
     ["Mengayun raket","swinging a badminton racket back","the racket swings through in a full smash","badminton, racket, smash, sport, game","fs"],
-    ["Ngos-ngosan","bent over with hands on the knees, breathing hard","the body straightens and the person takes a deep breath","exhausted, out of breath, after running, tired, effort","f"],
+    ["Atur napas habis lari","catching the breath after a run with the hands on the hips","the person smiles and wipes the forehead with the back of the hand","after running, breathing, rest, effort, fitness","f"],
     ["Lompat girang di udara","leaping upward with joy","the person is high in the air with arms and legs spread","jumping, joy, happiness, celebration, freedom","fs"]
   ],
   tekno:[
@@ -349,7 +365,7 @@ const ACTIONS = {
     ["Mendengarkan musik","wearing plain over-ear headphones with the eyes closed","the head bobs to the beat with a blissful smile","music, headphones, listening, enjoy, audio","c"],
     ["Main game HP","gaming on a phone held sideways with the screen facing away","the body tenses and then celebrates a win","mobile gaming, game, smartphone, gamer, winning"],
     ["Cari sinyal","holding a phone up high searching for signal","the arm moves around and the face grows frustrated","no signal, network, connection, smartphone, frustration"],
-    ["HP mati kesal","staring at a dead phone","the phone is shaken in frustration","dead battery, phone problem, frustration, smartphone, technology"],
+    ["HP lowbat kesal","staring at a phone with a flat battery","the person gives the phone a little shake and sighs in frustration","low battery, phone problem, frustration, smartphone, technology"],
     ["Merekam vlog","talking to a phone held at arm's length while vlogging","the free hand makes an animated gesture","vlog, vlogger, content creator, video, social media"],
     ["Mengetik chat dua jempol","typing a message with both thumbs","a grin appears as the message is sent","texting, chatting, messaging, smartphone, communication","c"],
     ["Memotret dengan kamera","raising an unbranded camera to the eye","the shutter is pressed with focused concentration","camera, photographer, photography, shooting, hobby"],
@@ -379,7 +395,7 @@ const ACTIONS = {
     ["Memakai ransel","swinging a backpack onto one shoulder","both straps are on and a ready smile appears","backpack, student, school, ready, education","f"],
     ["Memegang ijazah","holding up a rolled diploma tied with a ribbon","the diploma is raised high with a proud smile","graduation, diploma, success, education, achievement","","a plain dark graduation gown without any emblem"],
     ["Membawa tumpukan buku","carrying a tall stack of books with plain covers","the stack wobbles and is steadied with a laugh","books, studying, library, student, education"],
-    ["Frustrasi ujian","slumping over open books","the forehead drops onto the books in defeat","exam stress, student, frustrated, studying, tired"],
+    ["Lelah belajar","propping the chin on one hand over open books with a tired sigh","the person stretches the arms up, then smiles with renewed focus","studying, tired student, exam, homework, focus"],
     ["Guru menjelaskan","explaining with one open hand","the hand rises with an encouraging smile","teacher, teaching, education, explaining, lesson"],
     ["Membalik halaman cepat","flipping through the pages of a book","the right page is found with an excited look","reading, searching, book, study, research"],
     ["Menghapus kesalahan","erasing a mistake in a notebook","the page is blown clean and the person smiles","eraser, mistake, correction, studying, homework"],
@@ -387,7 +403,7 @@ const ACTIONS = {
     ["Kaca pembesar","looking through a magnifying glass","the glass moves closer and an eye appears enlarged with curiosity","magnifying glass, research, curiosity, search, investigate","c"],
     ["Memeluk buku senang","hugging a notebook","the notebook is squeezed with a joyful smile","happy student, good grades, success, education, joy"],
     ["Menggambar sketsa","sketching in a sketchbook with a pencil","the sketchbook is held back to admire the work","drawing, sketching, art, creative, hobby"],
-    ["Mengunyah pensil","chewing the end of a pencil while thinking","the pencil drops and a sudden idea brightens the face","thinking, pencil, homework, concentration, idea","c"]
+    ["Ketuk pensil berpikir","tapping a pencil on a notebook while thinking","the tapping stops and the person starts writing with a sudden idea","thinking, pencil, homework, concentration, idea"]
   ],
   alam:[
     ["Menanam bibit","lowering a seedling into dark soil","the soil is pressed around the stem with both hands","planting, seedling, gardening, growth, environment"],
@@ -455,7 +471,7 @@ const ACTIONS = {
     ["Koin bertumpuk","a short stack of plain gold coins with one coin dropping onto it","the stack has grown tall and steady","coins, stack, savings, growth, finance"],
     ["Bunga mekar","a closed flower bud on a single stem","the flower has fully bloomed with open petals","flower, blooming, spring, growth, nature"],
     ["Es batu jatuh ke gelas","ice cubes falling toward a glass of water","the cubes have splashed into the glass and bob at the surface","ice cubes, splash, water, refreshing, drink","s"],
-    ["Pil tumpah dari botol","an unbranded bottle tipped over with white pills starting to spill","the pills are scattered in front of the bottle","pills, medicine, pharmacy, health, capsules"],
+    ["Biji kopi mengalir","coffee beans starting to pour into a glass jar","the jar is filled with glossy coffee beans","coffee beans, pouring, jar, roasted, cafe","s"],
     ["Botol kosmetik berputar","a plain cosmetic bottle on a round pedestal, turned slightly to the left","the bottle has rotated to face the camera","cosmetic, product, bottle, beauty, packaging"],
     ["Sepatu putih berputar","a plain white sneaker floating in the air, seen from the side","the sneaker has rotated to a three-quarter front view","sneaker, shoe, fashion, product, sport"],
     ["Bola memantul","a ball at the top of its bounce","the ball has bounced and come to rest","ball, bounce, motion, play, sport","s"],
@@ -464,15 +480,15 @@ const ACTIONS = {
     ["Api lilin","a lit candle with a small steady flame","the flame flickers taller and sways gently","candle, flame, calm, relaxation, light"],
     ["Jam pasir","a plain hourglass with most of the sand in the top bulb","most of the sand has fallen into the bottom bulb","hourglass, time, deadline, waiting, countdown"],
     ["Tetesan air","a single water drop falling toward a still surface","the drop has hit and a crown splash rises","water drop, splash, macro, purity, liquid","s"],
-    ["Sayuran tercebur","fresh vegetables falling toward clear water","the vegetables have splashed in with bursts of bubbles","vegetables, splash, fresh, healthy, water","s"],
+    ["Sayuran tercebur","fresh vegetables falling toward clear water","the vegetables have splashed in with streams of bubbles","vegetables, splash, fresh, healthy, water","s"],
     ["Koin masuk celengan","a coin hovering above the slot of a piggy bank","the coin has slipped into the slot","piggy bank, coin, saving, finance, money"],
     ["Kartu melayang","a plain blank card floating at an angle","the card has turned to face the camera","card, payment, floating, mockup, finance"],
     ["HP layar hijau berputar","a phone with a solid green screen floating at an angle","the phone has rotated to face the camera","phone mockup, green screen, smartphone, app, advertising"],
     ["Pita satin berkibar","a loose satin ribbon starting to lift","the ribbon flutters in elegant waves","ribbon, satin, elegant, fabric, luxury","s"],
     ["Kelopak bunga jatuh","a few petals beginning to drift down","many petals are falling softly across the frame","petals, falling, romantic, spring, flower","s"],
     ["Gelembung sabun","a few soap bubbles floating","the bubbles drift and one pops","soap bubbles, floating, playful, clean, light","s"],
-    ["Ledakan bubuk warna","a small puff of coloured powder","the powder has burst outward in a bright cloud","color powder, explosion, vibrant, celebration, holi","s"],
-    ["Kue dipotong","a knife resting on top of a layered cake","the knife has sliced through, revealing the layers","cake, slicing, dessert, bakery, sweet"],
+    ["Kepulan bubuk warna","a small puff of coloured powder","the powder spreads outward in a soft, bright cloud","color powder, vibrant, holi, colorful, celebration","s"],
+    ["Potongan kue diangkat","a slice of layered cake being lifted with a cake server","the slice is lifted clear, revealing the soft layers","cake, slice, dessert, bakery, sweet"],
     ["Madu menetes","a wooden honey dipper above a bowl with honey starting to drip","a thick golden stream flows into the bowl","honey, dripping, sweet, natural, golden","s"],
     ["Cipratan susu","milk just starting to splash","the milk rises in a crown shape","milk, splash, dairy, fresh, liquid","s"],
     ["Kardus menutup","an open cardboard box with its flaps up","the flaps have folded closed","cardboard box, packaging, shipping, delivery, moving"],
@@ -483,6 +499,13 @@ const ACTIONS = {
     ["Domino jatuh","a row of standing dominoes with the first one tipping","the whole row has toppled","domino effect, chain reaction, cause and effect, business, risk","s"]
   ]
 };
+
+
+// KAMUS TAMBAHAN: memperluas pustaka gerakan tanpa judul/keyword.
+const ACTIONS_EXTRA = {"emosi":[["Mengusap air mata dengan tisu","holding a plain tissue near a tearful eye","the tissue gently wipes the cheek and the person takes a shaky breath","crying, tissue, sadness, emotion, grief","c",""],["Menahan tawa","pressing the lips together to hold back laughter","the shoulders shake and a quiet laugh escapes","laughing, amused, funny, reaction, joy","c",""],["Terkejut menutup mulut","raising one hand toward the open mouth in surprise","the palm covers the mouth and the eyes widen further","surprise, shock, reaction, astonished, gasp","c",""],["Menenangkan diri","placing both hands over the chest while breathing slowly","the shoulders relax and the face becomes composed","calm, breathe, self control, stress, wellness","c",""],["Menyesal menepuk dahi","looking down with a regretful expression and lifting one palm","the palm gently touches the forehead as the eyes close","regret, mistake, facepalm, disappointment, reaction","c",""],["Memberi tatapan skeptis","tilting the head and narrowing one eye skeptically","one eyebrow rises and the lips press into a doubtful expression","skeptical, doubt, suspicion, reaction, expression","c",""],["Menangis bahagia","covering the mouth with trembling fingers and joyful tears","the hands lower as a grateful, tearful smile appears","happy tears, joy, gratitude, emotional, reunion","c",""],["Menghela napas panjang","inhaling deeply with the eyes closed and shoulders raised","the breath leaves slowly and the shoulders sink","sigh, relief, fatigue, calm, reaction","c",""]],"kerja":[["Menyusun dokumen di meja","aligning a stack of blank papers beside a closed folder","the papers are tapped neatly against the desk and set down","office, paperwork, organize, document, productivity","",""],["Mengecek jam saat bekerja","glancing at a plain wristwatch beside a laptop","the person looks back at the laptop and resumes typing","deadline, work, time management, office, schedule","c",""],["Mengangkat telepon kantor","reaching for a plain desk phone while looking attentive","the handset reaches the ear and the free hand begins to gesture","phone call, office, communication, business, receptionist","",""],["Menunjukkan ide di papan putih","standing beside a blank whiteboard and raising a marker","the marker draws a simple unreadable diagram and the person points to it","brainstorm, teamwork, whiteboard, meeting, planning","",""],["Membaca laporan serius","holding a folder of blank papers with a focused frown","the person turns one page and nods thoughtfully","report, review, analysis, office, business","",""],["Mengatur headset kerja","adjusting a plain over-ear headset while facing a laptop","the person begins speaking clearly toward the laptop camera","remote work, headset, communication, support, meeting","c",""],["Menutup laptop selesai kerja","resting both hands on an open laptop after typing","the laptop closes and the person leans back with a satisfied breath","finished, laptop, productivity, workday, completion","",""],["Merayakan target tercapai","looking at a blank checklist and raising a clenched fist","the fist lifts higher as the person smiles with relief","goal, achievement, success, milestone, business","",""]],"sehat":[["Mengukur tekanan darah","sitting calmly while a blood pressure cuff is wrapped around the upper arm","the person looks at the monitor and listens attentively","blood pressure, checkup, healthcare, patient, clinic","f",""],["Mengecek denyut nadi","placing two fingertips on the wrist and focusing on the pulse","the person checks a simple watch and records the result on blank paper","pulse, heart rate, health, monitor, checkup","c",""],["Mengoleskan plester","holding a small plain adhesive bandage over a minor finger scratch","the bandage is pressed gently into place and inspected","first aid, bandage, minor injury, care, safety","c",""],["Menyemprot inhaler","holding a plain inhaler near the mouth and preparing to breathe in","the person uses the inhaler and breathes out slowly","inhaler, asthma, breathing, medicine, healthcare","c",""],["Mendengarkan detak jantung","a healthcare professional placing a plain stethoscope on a patient's chest","the professional moves the stethoscope slightly and listens carefully","doctor, stethoscope, examination, clinic, patient","",""],["Menggunakan kompres dingin","holding a folded cool compress against the forehead","the person adjusts the compress and relaxes the eyes","compress, recovery, rest, fever, care","c",""],["Mencuci tangan dengan sabun","rubbing soapy palms together over a sink","the person rinses the hands and shakes off excess water","handwashing, soap, hygiene, clean, health","",""],["Memeriksa postur duduk","sitting at a desk with the back slightly hunched","the person straightens the spine and adjusts the shoulders","posture, ergonomics, desk, wellness, back pain","f",""]],"cantik":[["Mengoles pelembap bibir","twisting up a plain lip balm and bringing it to the lips","the balm is applied carefully and the lips press together softly","lip balm, lips, beauty, skincare, self care","c",""],["Meratakan alas bedak","dabbing foundation onto the cheek with a plain makeup sponge","the sponge blends the makeup evenly along the cheek","makeup, foundation, beauty, cosmetics, routine","c",""],["Memakai maskara","holding a plain mascara wand near the upper eyelashes","the wand brushes the lashes upward with careful small movements","mascara, eyelashes, makeup, beauty, cosmetics","c",""],["Memijat kulit kepala","placing fingertips against the scalp and massaging in small circles","the fingers move across the scalp and the person relaxes","scalp massage, hair care, relaxation, self care, beauty","",""],["Mengoles cat kuku","steadying one hand while brushing clear polish onto a fingernail","the brush moves to the next nail with careful precision","manicure, nail polish, nails, beauty, cosmetics","c",""],["Menyeka makeup","holding a plain cotton pad against one cheek","the pad gently wipes away makeup and reveals clean skin","makeup remover, cotton pad, skincare, cleansing, beauty","c",""],["Menyemprot face mist","holding an unbranded fine-mist bottle near the face","a light mist settles on the cheeks and the person closes the eyes","face mist, hydration, skincare, refreshing, beauty","c",""],["Memilih kuas makeup","holding two plain makeup brushes and comparing their tips","one brush is selected and raised toward a makeup palette","makeup brush, cosmetics, beauty tools, selection, grooming","c",""]],"makan":[["Mengaduk adonan kue","stirring thick cake batter in a mixing bowl with a spatula","the spatula lifts a ribbon of batter and folds it back into the bowl","baking, batter, mixing, kitchen, dessert","",""],["Memecahkan telur ke mangkuk","holding an egg over a clean mixing bowl ready to crack it","the shell separates and the egg falls into the bowl","egg, cooking, ingredients, baking, food preparation","c",""],["Menghias cupcake","holding a piping bag above a plain cupcake","a neat swirl of frosting forms on top of the cupcake","cupcake, frosting, dessert, bakery, decorating","",""],["Memotong sayuran","slicing a cucumber on a cutting board with a kitchen knife","the final slice is separated and pushed into a neat pile","vegetables, chopping, cooking, ingredients, kitchen","",""],["Mengoles selai roti","spreading fruit jam across a slice of toast with a butter knife","the toast is lifted to reveal an even layer of jam","toast, jam, breakfast, spread, food","c",""],["Menuang madu ke pancake","holding a small plain pitcher above a stack of pancakes","a thin golden stream of honey lands across the pancakes","pancakes, honey, breakfast, syrup, food styling","s",""],["Mengocok minuman","shaking a sealed plain cocktail shaker with both hands","the shaker is lowered and the drink is poured into a clear glass","shaker, beverage, mixology, drink, preparation","f",""],["Membuka tutup toples biskuit","gripping the lid of a clear cookie jar","the lid twists open and a hand reaches toward the cookies","cookies, jar, snack, kitchen, treat","c",""]],"rumah":[["Menyusun bunga di vas","placing fresh stems into a plain glass vase","the stems are adjusted and the arrangement becomes balanced","flowers, vase, home decor, arranging, interior","",""],["Mengganti seprai","pulling a clean bedsheet across the mattress","the corners are tucked neatly under the mattress","bedroom, bedding, cleaning, household, routine","f",""],["Merapikan rak buku","removing a few books from a shelf and aligning them by size","the books are returned neatly and the person steps back to inspect","bookshelf, organizing, home, tidy, housework","",""],["Menyusun meja makan","placing plain plates and folded napkins around a dining table","the final napkin is aligned and the table is ready for guests","table setting, dinner, home, hospitality, dining","",""],["Membuka jendela pagi","reaching for a window handle in a softly lit room","the window opens and a light curtain moves in the breeze","window, morning, home, fresh air, curtain","f",""],["Mengganti kantong sampah","lifting a full plain trash bag from a bin","a fresh liner is fitted neatly inside the empty bin","trash, household, cleaning, waste, routine","f",""],["Menyortir cucian","holding a light shirt above two laundry baskets","the shirt is placed into the correct basket and the person continues sorting","laundry, sorting clothes, household, chores, washing","",""],["Merapikan sepatu di rak","placing a pair of shoes beside neatly arranged footwear","the shoes are aligned toe-forward on the shelf","shoes, shoe rack, organizing, home, tidy","",""]],"olahraga":[["Melakukan burpee","starting in a low squat with both hands touching the exercise mat","the person jumps back to a plank and returns to standing","burpee, cardio, training, fitness, workout","fs",""],["Melakukan mountain climber","holding a strong high plank with one knee drawn forward","the legs alternate quickly while the torso remains stable","mountain climber, core, workout, fitness, cardio","f",""],["Mengangkat kettlebell","gripping a plain kettlebell between the feet with hips hinged","the kettlebell rises to chest height and returns under control","kettlebell, strength, gym, training, exercise","f",""],["Memukul samsak","standing in boxing stance with padded gloves raised","a controlled straight punch lands on a hanging heavy bag","boxing, punch, training, fitness, sport","fs",""],["Mengayuh sepeda statis","seated on a stationary bike and gripping the handlebars","the legs pedal at a steady pace and the person breathes deeply","cycling, cardio, gym, workout, exercise","f",""],["Melakukan lompatan kotak","bending the knees in front of a low exercise box","the person jumps onto the box and stands balanced at the top","box jump, plyometrics, fitness, jump, training","fs",""],["Menyeimbangkan tubuh di papan","standing with arms out while balancing on a balance board","the board tilts gently and the person corrects their balance","balance, coordination, fitness, training, stability","f",""],["Melakukan pendinginan","standing upright and reaching one arm across the chest","the opposite arm gently draws it closer in a shoulder stretch","cooldown, stretching, recovery, exercise, wellness","f",""]],"tekno":[["Menyambungkan kabel pengisi daya","aligning a plain charging cable with the port of a phone","the cable clicks into place and the phone is set on the desk","charging, cable, smartphone, technology, battery","c",""],["Memasang earbud","holding a plain wireless earbud near one ear","the earbud is fitted and the person taps the side to check it","earbuds, audio, wireless, technology, listening","c",""],["Memindai kode dengan ponsel","holding a phone above a plain unmarked package","the phone angle adjusts as if scanning and then lowers","mobile scan, smartphone, package, digital, retail","c",""],["Menggeser penggeser layar","moving one finger across an unseen touchscreen","the finger taps once and the person nods with satisfaction","touchscreen, gesture, interface, smartphone, interaction","c",""],["Memasang baterai perangkat","holding a plain battery above an open battery compartment","the battery slides in and the cover is fitted securely","battery, device, electronics, repair, replacement","c",""],["Meniup debu keyboard","leaning over a keyboard and aiming a small air blower between keys","a puff of dust is cleared and the keys are brushed clean","keyboard, computer, cleaning, maintenance, technology","c",""],["Mengatur kamera tripod","loosening a tripod knob beside a plain camera","the camera is leveled and the knob is tightened","camera, tripod, photography, equipment, setup","",""],["Mencabut flash drive","gripping a plain unmarked USB drive connected to a laptop","the drive is removed and placed beside the laptop","usb, flash drive, laptop, data, technology","c",""]],"uang":[["Menghitung uang kertas","holding a small stack of plain unmarked banknotes","the notes are counted one by one and aligned into a neat stack","cash, counting money, finance, budget, payment","c",""],["Menyusun anggaran di kalkulator","pressing buttons on a basic calculator beside blank paperwork","the person checks the result and makes a note on the paper","budget, calculator, finance, expenses, planning","c",""],["Memasukkan kartu ke dompet","holding a plain blank bank card above an open wallet","the card slides into a slot and the wallet is closed","wallet, bank card, payment, finance, personal finance","c",""],["Membuka paket belanja online","cutting plain packing tape on a cardboard parcel","the top flaps open and a neatly wrapped unbranded item is revealed","unboxing, parcel, online shopping, delivery, package","",""],["Membandingkan harga di toko","holding two plain products and looking between them","one product is placed back while the other is kept","shopping, compare, consumer, price, retail","",""],["Menempelkan koin ke celengan","holding a coin above a piggy bank slot","the coin drops through the slot and the bank is patted proudly","coin, savings, piggy bank, money, saving","c",""],["Memeriksa tagihan di meja","studying a few blank envelopes and papers with a worried face","the person sorts the papers into two neat piles","bills, expenses, household budget, finance, paperwork","c",""],["Mengambil uang dari amplop","opening a plain envelope and sliding out unmarked banknotes","the notes are counted and placed neatly on the table","cash, envelope, salary, payment, budgeting","",""]],"sekolah":[["Menggunakan penggaris saat belajar","holding a ruler against a line in an open notebook","the ruler moves to the next line and a straight mark is drawn","ruler, homework, school, studying, stationery","c",""],["Mengangkat piala kelulusan","holding a plain trophy at chest height with a proud smile","the trophy rises overhead as the person celebrates","trophy, graduation, achievement, student, success","",""],["Membuat eksperimen sederhana","wearing clear safety glasses and pouring coloured water into a clear beaker","the liquid settles and the student observes the result closely","science, experiment, student, laboratory, education","f",""],["Menyusun balok belajar","placing colourful geometric learning blocks on a table","the final block completes a small balanced tower","learning, blocks, education, preschool, shapes","",""],["Membuka kotak pensil","unfastening a plain pencil case on a desk","the case opens to reveal neatly arranged pencils and erasers","pencil case, stationery, school supplies, student, desk","c",""],["Mengulang hafalan","looking at a small blank flashcard held near the chest","the card lowers and the student recites confidently","study, flashcards, memorization, learning, education","c",""],["Menerima hasil ujian","holding a sheet of paper with no visible writing","the eyes widen and the person smiles with relief","exam, results, school, student, achievement","c",""],["Membantu teman belajar","leaning toward a classmate's open notebook and pointing to a line","the classmate nods and begins writing independently","tutoring, teamwork, school, learning, peer support","",""]],"alam":[["Memindahkan tanaman ke pot","holding a small plant above a larger plain pot filled with soil","the plant is lowered into the pot and soil is pressed around its roots","repotting, plant, gardening, soil, houseplant","",""],["Memanen tomat matang","twisting a ripe tomato gently from a vine","the tomato is placed into a harvest basket beside the plant","tomato, harvest, gardening, farming, fresh produce","c",""],["Membersihkan daun tanaman","wiping a broad green leaf with a soft damp cloth","the leaf is turned and its surface shines clean","plant care, leaves, gardening, houseplant, cleaning","c",""],["Mengumpulkan telur di kandang","reaching carefully into a clean nesting box","an egg is lifted and placed into a woven basket","eggs, poultry, farm, collecting, agriculture","",""],["Memeriksa bibit dengan kaca pembesar","holding a small seedling close and inspecting its leaves","the magnifier moves to another leaf and the person nods","seedling, plant health, agriculture, magnifying glass, gardening","c",""],["Mengikat tanaman merambat","guiding a vine toward a support stake with soft plant ties","the vine is secured upright without bending the stem","vine, gardening, plant support, horticulture, care","c",""],["Mengisi wadah kompos","adding dry leaves and vegetable scraps to a plain compost bin","the contents are turned gently with a small garden fork","compost, organic waste, gardening, soil, sustainability","",""],["Membawa bibit di nampan","carrying a tray of small seedlings with both hands","the tray is set down carefully on a sunny bench","seedlings, nursery, farming, horticulture, plants","f",""]],"cuaca":[["Mengeringkan payung basah","holding an open umbrella over a waterproof mat","the umbrella is shaken gently and a few droplets fall away","umbrella, rain, drying, rainy weather, water drops","s",""],["Melihat embun di jendela","bringing a fingertip close to condensation on a window","the finger traces a small clear path through the mist","condensation, window, cold weather, moisture, glass","c",""],["Mengikat topi saat angin","holding the brim of a sun hat while fastening its chin strap","the person looks up as the hat stays secure in the breeze","wind, hat, outdoor, weather, protection","f",""],["Menutup tirai saat hujan","reaching toward a curtain beside a rain-speckled window","the curtain is drawn closed as raindrops run down the glass","rain, window, curtain, home, weather","f",""],["Menikmati salju dengan sarung tangan","holding out gloved hands to catch falling snowflakes","the hands turn gently as snow collects on the gloves","snow, winter, gloves, cold weather, snowfall","c",""],["Melindungi tanaman dari hujan","placing a small cover over a potted seedling outdoors","the cover is secured and the person checks the plant","rain, plant protection, gardening, weather, seedling","",""],["Membuka kerah saat panas","loosening a shirt collar and fanning the neck","the person wipes the forehead and exhales from the heat","heat, hot weather, summer, cooling off, sweat","c",""],["Mengamati awan bergerak","shading the eyes while watching clouds in the sky","the person points toward a moving cloud formation","clouds, sky, weather, observation, outdoors","f",""]],"travel":[["Menempelkan label koper polos","pressing a blank luggage tag around a suitcase handle","the tag is secured and the suitcase is rolled away","luggage tag, suitcase, airport, travel, packing","c",""],["Menyerahkan paspor di konter","holding a closed plain passport and sliding it across a counter","the passport is returned and the traveller nods politely","passport, airport, check in, travel, documents","",""],["Menaikkan koper ke bagasi","lifting a rolling suitcase toward an open car trunk","the suitcase is placed inside and adjusted securely","luggage, car trunk, road trip, travel, packing","f",""],["Memakai sabuk pengaman pesawat","pulling an airplane seatbelt across the waist while seated","the buckle clicks shut and the traveller relaxes","airplane, seatbelt, passenger, travel, safety","f",""],["Melambaikan tangan dari jendela kereta","sitting beside a train window and raising a hand in farewell","the hand waves as the train begins to move","train, goodbye, journey, passenger, travel","f",""],["Mengoles tabir surya di pantai","dabbing sunscreen onto the forearm beside a beach bag","the lotion is blended in and the arm is turned to cover another area","sunscreen, beach, holiday, skincare, sun protection","c",""],["Membuka peta lipat","holding a folded paper map with no visible text","the map opens fully and the traveller points to a route","map, navigation, tourist, travel planning, journey","",""],["Menyesuaikan tali ransel","pulling the shoulder straps of a hiking backpack snug","the pack settles comfortably and the traveller takes a step forward","backpack, hiking, adjustment, adventure, travel","f",""]],"iklan":[["Membandingkan produk di kedua tangan","holding two plain unbranded packages at equal height","the person raises one product slightly and smiles toward the camera","product comparison, advertising, choice, marketing, showcase","",""],["Membuka telapak untuk teks","turning slightly and presenting one empty palm beside the body","the palm opens wider toward a clean empty area of the frame","copy space, advertising, presenter, promotion, gesture","",""],["Menunjukkan hasil sebelum sesudah","pointing to two empty areas on either side of the body","the person alternates pointing left and right with an explanatory smile","before after, comparison, marketing, results, presentation","",""],["Memegang botol produk","holding a plain unbranded bottle upright beside the face","the bottle is rotated slowly to show its shape and label-free surface","product, bottle, commercial, packaging, promotion","",""],["Membuat gestur ajakan","extending an open hand toward the viewer in a welcoming invitation","the hand draws back and the person nods encouragingly","call to action, invitation, marketing, welcome, presenter","",""],["Menunjukkan dua pilihan","holding one open palm on each side as if weighing two options","the hands alternate slightly and the person makes a clear choice","options, decision, comparison, advertising, choice","",""],["Merapikan kemasan produk","smoothing the edge of a plain product box beside a bottle","the box is aligned with the bottle and both face the camera","packaging, product styling, display, commercial, neat","",""],["Mengacungkan tanda jempol di samping produk","holding a plain product box at chest level and raising a thumb","the thumb moves closer to the camera while the product stays visible","thumbs up, recommendation, product, advertising, approval","",""]],"sosial":[["Menyapa teman dari kejauhan","raising one hand in a friendly wave toward someone off-camera","the wave becomes more enthusiastic and ends with a warm smile","greeting, wave, friendship, social, welcome","f",""],["Berjabat tangan ramah","extending a right hand to greet someone just outside the frame","the handshake completes and both shoulders relax","handshake, greeting, partnership, social, meeting","f",""],["Mendengarkan dengan empati","leaning slightly forward with attentive eyes and open hands","the person nods slowly and offers a reassuring smile","listening, empathy, conversation, support, communication","",""],["Berbagi cerita lucu","leaning toward a friend off-camera while laughing","the person gestures animatedly and laughs again","friends, storytelling, laughter, social, fun","",""],["Melambaikan salam perpisahan","standing near a doorway and waving goodbye","the hand lowers and the person turns to leave with a smile","farewell, goodbye, wave, departure, friendship","f",""],["Mengajak duduk bersama","gesturing toward an empty chair with an inviting open palm","the person steps aside and smiles to welcome a guest","hospitality, invitation, conversation, greeting, social","f",""],["Meminta maaf dengan tulus","bringing one hand to the chest and bowing the head slightly","the person looks up with an earnest, apologetic expression","apology, regret, sincerity, relationship, emotion","",""],["Mengucapkan terima kasih","placing a hand over the heart and smiling warmly","the person gives a small appreciative nod","gratitude, thanks, appreciation, kindness, social","c",""],["Berkenalan dengan percaya diri","offering a hand forward with a friendly introduction smile","the person nods and gestures toward themselves politely","introduction, networking, meeting, people, confidence","f",""],["Menghibur teman sedih","sitting beside someone off-camera and placing a supportive hand near their shoulder","the person nods gently and offers a compassionate smile","comfort, support, friendship, empathy, caring","",""],["Bersorak bersama penonton","raising both hands toward an unseen crowd with excitement","the person claps overhead and cheers enthusiastically","crowd, celebration, audience, cheering, event","fs",""],["Meminta giliran bicara","raising one hand slightly while listening to an off-camera speaker","the person begins explaining with measured hand gestures","conversation, discussion, meeting, communication, turn taking","",""]],"keluarga":[["Menggendong bayi dengan lembut","cradling a fictional baby securely against the chest","the adult gently rocks side to side and smiles down at the baby","parenting, baby, family, care, holding","f",""],["Membacakan buku cerita","holding an open picture book toward a child sitting beside them","the adult points at a page and the child leans closer","reading, parent, child, bedtime, family","",""],["Menyisir rambut anak","gently brushing a child's hair with a plain hairbrush","the final strokes smooth the hair and the child smiles","parenting, hairbrush, child care, family, grooming","c",""],["Mengikat tali sepatu anak","kneeling to tie a child's shoelace","the knot is tightened and the adult pats the shoe gently","parent, shoes, child, caring, daily routine","f",""],["Berpelukan setelah bertemu","opening both arms toward a family member off-camera","the family members meet in a warm embrace","hug, reunion, family, affection, love","f",""],["Membantu anak memakai jaket","holding a child's jacket open while the child puts an arm through","the second arm slips into the sleeve and the jacket is straightened","parenting, jacket, child, dressing, family","",""],["Menenangkan anak yang menangis","kneeling beside a distressed child and offering a gentle hand","the child settles and leans into a reassuring hug","comfort, parent, child, emotion, caring","",""],["Menyuapi balita","holding a small spoon of soft food near a toddler's mouth","the toddler accepts the spoon and the adult smiles","feeding, toddler, parent, family, meal","c",""],["Membantu lansia berdiri","offering both hands to help an older adult rise from a chair","the older adult stands steadily and both share a relieved smile","elder care, senior, support, family, assistance","f",""],["Bermain balok bersama anak","sitting at a low table and placing a wooden block beside a child","the child adds another block and both admire the tower","playing, child development, family, blocks, learning","",""],["Merapikan mainan bersama","bending to place toys into a plain storage basket","the child adds the last toy and both look at the tidy floor","toys, cleanup, parenting, family, home","",""],["Memberi tos kepada anak","holding a palm up at a child's eye level","the child's hand meets the adult's palm in a high five","high five, parent, child, celebration, family","c",""]],"profesi":[["Koki menghias hidangan","holding a small spoon over a plated meal in a professional kitchen","the chef adds a final garnish and inspects the plate","chef, food plating, restaurant, culinary, profession","",""],["Montir memeriksa mesin","leaning over an open car hood and examining the engine carefully","the mechanic tightens a component with a plain hand tool","mechanic, auto repair, workshop, vehicle, technician","f",""],["Tukang kayu mengamplas papan","holding a sanding block against a wooden board on a workbench","the board is turned to inspect its smooth edge","carpenter, woodworking, sanding, craft, trade","f",""],["Penjahit mengukur kain","holding a measuring tape across a folded piece of fabric","the tailor checks the measurement and marks the cloth with tailor's chalk","tailor, fabric, measuring, clothing, craft","c",""],["Barista membuat latte","holding a metal milk pitcher above a plain coffee cup","the barista pours steamed milk into the cup with a steady hand","barista, coffee, latte art, cafe, beverage","c",""],["Tukang cat mengecat dinding","rolling a paint roller across a clean wall section","the roller travels upward and leaves an even coat of paint","painter, painting, renovation, wall, construction","f",""],["Tukang kebun memangkas pagar","holding garden shears beside a neatly trimmed hedge","the shears close on a small branch and the gardener checks the shape","gardener, hedge, pruning, landscaping, outdoor","f",""],["Kurir menyerahkan paket","holding a plain cardboard parcel toward a customer off-camera","the customer receives the parcel and the courier nods","delivery, courier, parcel, shipping, service","f",""],["Petugas pemadam memeriksa selang","wearing plain protective firefighting gear and holding a coiled hose","the firefighter checks the coupling and looks toward the team","firefighter, safety, hose, emergency, profession","f",""],["Ilmuwan mengamati tabung reaksi","wearing a plain lab coat and holding a clear test tube toward the light","the scientist tilts the tube and records an observation","scientist, laboratory, research, test tube, experiment","c","a plain white lab coat over a neutral shirt"],["Fotografer mengatur fokus","looking through a plain camera viewfinder mounted on a tripod","the photographer adjusts the lens ring and presses the shutter","photographer, camera, focus, studio, profession","",""],["Guru menyapa murid","standing at a classroom doorway and greeting students with an open hand","the teacher steps aside and gestures for the students to enter","teacher, classroom, education, greeting, school","f",""]],"transportasi":[["Mengayuh sepeda di jalur","riding a bicycle at a steady pace along a clear path","the rider pedals past the camera and continues forward smoothly","bicycle, cycling, commute, transport, outdoor","f",""],["Memasang helm sepeda","holding a plain bicycle helmet above the head","the helmet is fitted and the chin strap is fastened securely","helmet, cycling, safety, bicycle, commuting","c",""],["Mendorong koper ke peron","pulling a rolling suitcase along a train platform","the traveller slows and checks the direction of the arriving train","suitcase, station, commute, train, travel","f",""],["Menekan tombol lift","reaching toward a plain elevator button panel with no visible labels","the finger presses one button and the person waits calmly","elevator, button, building, commute, movement","c",""],["Memasukkan barang ke mobil","lifting a plain shopping bag into an open car trunk","the bag is set down and the trunk is closed gently","car, trunk, loading, transport, errands","f",""],["Membuka pintu taksi","reaching for a car door handle beside a parked vehicle","the door opens and the passenger begins to get in","taxi, passenger, car, transport, commute","f",""],["Mengenakan helm motor","placing a plain motorcycle helmet over the head","the chin strap is fastened and the visor is lowered","motorcycle, helmet, safety, rider, transport","c",""],["Menunggu bus di halte","standing beside a bus shelter and looking down the road","the person lifts a hand to signal an approaching bus","bus stop, commute, public transport, passenger, city","f",""],["Memasang sabuk pengaman mobil","pulling a seatbelt across the torso while seated in a car","the buckle clicks in and the person adjusts the shoulder strap","seatbelt, car, safety, passenger, driving","f",""],["Membuka pintu bagasi pesawat","lifting a small carry-on bag toward an overhead compartment","the bag slides into place and the passenger closes the bin","airplane, overhead bin, luggage, passenger, travel","f",""],["Menarik tuas rem sepeda","riding slowly and squeezing a bicycle brake lever","the bicycle slows to a gentle stop","bicycle, brake, cycling, safety, transport","f",""],["Melambaikan tangan ke kereta","standing safely behind a platform line and waving toward a passing train","the hand lowers as the train moves out of view","train, station, wave, travel, public transport","f",""]],"ritel":[["Memindai barang di kasir","passing a plain unbranded package over a checkout scanner","the item is placed in a shopping bag after scanning","cashier, checkout, retail, shopping, scanner","f",""],["Menata produk di rak","placing plain packages in a straight row on a retail shelf","the worker adjusts spacing and checks the aligned display","merchandising, retail, shelf, products, store","",""],["Membantu pelanggan memilih ukuran","holding two plain garments on hangers for a customer off-camera","one garment is presented closer for comparison","retail, customer service, clothing, shopping, assistance","",""],["Membungkus hadiah di toko","folding plain wrapping paper around a small box","the final ribbon is tied into a neat bow","gift wrapping, retail, packaging, store, present","c",""],["Menggantung pakaian di hanger","lifting a plain shirt onto a clothes rail","the hanger slides into a neat row of garments","clothing, retail, hanger, fashion, store","f",""],["Memasukkan barang ke keranjang","placing a plain packaged product into a shopping basket","the basket is lifted and the shopper continues browsing","shopping basket, retail, consumer, groceries, store","f",""],["Membuka laci kasir","reaching toward a simple cash register with no visible text","the drawer opens and the cashier organizes the cash tray","cash register, cashier, retail, payment, store","c",""],["Menyerahkan kantong belanja","holding out a plain paper shopping bag to a customer off-camera","the customer takes the bag and the salesperson smiles","shopping bag, retail, customer, service, purchase","f",""],["Memeriksa stok gudang","holding a blank clipboard beside stacked plain cardboard boxes","the worker checks the stack and makes a mark on the sheet","inventory, stock, warehouse, retail, logistics","",""],["Memajang sepatu","placing one plain sneaker on a display shelf beside its pair","the shoe is rotated to face forward and aligned with the display","shoes, display, retail, product styling, store","",""],["Memilih buah di pasar","lifting an apple from a produce display and inspecting it","the apple is placed into a plain shopping bag","market, fruit, shopping, produce, grocery","c",""],["Menyusun botol di etalase","placing plain bottles in a straight line on a counter","the final bottle is rotated to match the row","bottles, display, retail, merchandising, product","",""]],"industri":[["Memindahkan kotak di gudang","gripping a plain cardboard box at waist height in a clean warehouse","the box is placed neatly onto a low stack","warehouse, box, logistics, work, manual handling","f",""],["Memeriksa komponen produksi","holding a small unbranded component under a bright inspection light","the component is turned slowly and checked from another angle","quality control, manufacturing, inspection, component, industry","c",""],["Mengoperasikan panel mesin","standing beside an industrial machine and pressing a plain control button","a small indicator light changes and the operator watches the machine","factory, machinery, operator, manufacturing, control","f",""],["Memindahkan barang dengan troli","pushing a loaded utility cart along a clear warehouse aisle","the cart rolls to a marked stopping point and is parked","trolley, warehouse, transport, logistics, industry","f",""],["Memasang kacamata keselamatan","lifting clear protective goggles toward the eyes in a workshop","the goggles are fitted and adjusted securely","safety goggles, PPE, workshop, industrial, protection","c",""],["Memeriksa sambungan kabel","holding two insulated cable ends beside a workbench","the technician aligns the connector and secures the connection","cable, technician, electrical, repair, industrial","c",""],["Menyegel kardus pengiriman","pulling a plain tape dispenser across a cardboard box seam","the tape is cut and pressed flat along the package","packaging, shipping, factory, logistics, sealing","c",""],["Mendorong palet dengan hand truck","tilting a loaded hand truck back and gripping its handles","the operator rolls the load forward carefully","hand truck, warehouse, logistics, moving, industry","f",""],["Menimbang bahan produksi","placing a plain container on a digital scale with no visible numbers","the container settles and the worker removes a small amount of material","scale, weighing, production, quality, manufacturing","c",""],["Membersihkan permukaan kerja","wiping a metal workbench with a clean cloth","the surface is inspected and the cloth is folded away","cleaning, workshop, maintenance, safety, industry","",""],["Memeriksa helm proyek","adjusting a plain hard hat while wearing a high-visibility vest","the worker checks the chin strap and nods","construction, hard hat, PPE, safety, worker","f","a plain high-visibility safety vest and hard hat"],["Mengangkat bahan ke rak","lifting a lightweight sealed package toward a low storage shelf","the package is set down and aligned with the others","warehouse, stocking, package, storage, manual work","f",""]],"hewan":[["Membelai anjing dengan lembut","kneeling beside a friendly dog and gently stroking its back","the dog leans closer and wags its tail","dog, pet, affection, animal care, companion","f",""],["Memberi makan kucing","holding a small bowl of pet food near a cat","the bowl is set down and the cat begins eating","cat, pet food, feeding, animal care, domestic","f",""],["Menyisir bulu anjing","brushing a dog's coat with a plain grooming brush","the brush moves along the back and the dog relaxes","dog grooming, brush, pet care, coat, animal","f",""],["Mengajak kucing bermain","moving a simple feather toy above the floor near a cat","the cat reaches with its paws and follows the toy","cat, playing, pet, toy, animal behavior","f",""],["Melatih anjing duduk","holding a small plain treat above a sitting dog","the dog remains seated and receives the treat gently","dog training, obedience, pet, reward, animal","f",""],["Menuang pakan ikan","holding a small pinch of fish food above an aquarium","the food sprinkles onto the water and fish gather at the surface","fish, aquarium, feeding, pets, aquatic","c",""],["Melepas burung dari tangan","holding a small bird securely with open hands outdoors","the bird lifts off and flies upward from the hands","bird, release, wildlife, nature, flight","fs",""],["Membersihkan akuarium","using a plain cleaning pad against the aquarium glass","the pad moves upward and the water looks clear","aquarium, cleaning, fish tank, pet care, maintenance","f",""],["Memberi wortel ke kelinci","holding a fresh carrot near a calm rabbit","the rabbit takes a bite and the person smiles","rabbit, carrot, feeding, pet, animal care","c",""],["Mengamati kupu-kupu","holding still beside a flowering plant as a butterfly lands nearby","the butterfly opens its wings and takes off","butterfly, flower, wildlife, garden, nature","s",""],["Memandikan anjing","gently wetting a dog's coat with a small cup beside a tub","the person rubs in pet shampoo while the dog shakes lightly","dog bath, pet grooming, shampoo, animal care, washing","f",""],["Membawa kucing dalam carrier","placing a calm cat into a plain ventilated pet carrier","the carrier door closes securely and the person lifts the handle","cat, pet carrier, travel, safety, animal care","f",""]],"kreatif":[["Melukis dengan kuas","holding a paintbrush over a blank canvas on an easel","the brush lays down a broad colour stroke and the artist steps back","painting, artist, canvas, creativity, art","",""],["Membuat sketsa pensil","drawing curved lines in a blank sketchbook with a graphite pencil","the pencil lifts and the artist studies the sketch","drawing, sketching, pencil, illustration, creativity","c",""],["Memainkan gitar akustik","holding an acoustic guitar and strumming a chord","the fretting hand changes position and the next chord rings out","guitar, musician, music, acoustic, performance","f",""],["Memukul tuts piano","placing both hands above a piano keyboard","the fingers press a short sequence of keys and the hands lift","piano, music, musician, instrument, playing","c",""],["Merekam suara dengan mikrofon","leaning toward a plain studio microphone with headphones on","the person speaks into the microphone and gestures rhythmically","recording, microphone, podcast, audio, creator","",""],["Mengedit foto di tablet","holding a stylus above a tablet screen facing away from the camera","the stylus makes a few precise strokes and the person nods","digital art, tablet, editing, creative, stylus","c",""],["Merangkai manik-manik","threading colourful beads onto a thin string on a craft table","the string is lifted to reveal a short finished bracelet","beads, bracelet, handmade, craft, jewelry","c",""],["Melipat kertas origami","creasing a square sheet of plain coloured paper on a table","the folded paper opens into a small geometric shape","origami, paper craft, folding, handmade, creativity","c",""],["Menata lampu studio","raising a softbox light stand beside a camera setup","the light is tilted toward the subject and tightened in place","studio, lighting, photographer, setup, equipment","f",""],["Merekam video dengan kamera","holding a plain camera on a handheld stabilizer","the person slowly pans across a scene while watching the monitor","videography, camera, filming, creator, production","",""],["Menabuh drum","raising drumsticks above a simple drum kit","the sticks strike a short rhythm and rebound","drums, percussion, music, rhythm, musician","fs",""],["Membuat kerajinan tanah liat","pressing both thumbs into a soft lump of clay on a pottery wheel","the clay rises into a small bowl shape","pottery, clay, ceramics, handmade, craft","c",""]],"lingkungan":[["Memilah sampah daur ulang","holding a clean plastic bottle above a set of plain recycling bins","the bottle is placed into the correct bin and the lid closes","recycling, waste sorting, sustainability, environment, plastic","",""],["Mengisi botol minum pakai ulang","holding a reusable plain water bottle under a water dispenser","the bottle fills and the cap is screwed on","reusable bottle, hydration, sustainability, refill","c",""],["Mematikan lampu saat keluar","reaching back toward a wall light switch near a doorway","the switch is pressed and the room light turns off","energy saving, electricity, switch, sustainability, home","f",""],["Membawa tas belanja kain","holding a folded reusable cloth shopping bag beside a counter","the bag opens and groceries are placed inside","reusable bag, shopping, environment, sustainability, groceries","",""],["Menanam pohon muda","holding a young tree straight inside a prepared soil hole","the soil is pressed around the roots and the tree stands upright","tree planting, reforestation, environment, conservation, gardening","f",""],["Membersihkan pantai","bending to pick up a piece of litter using a reusable grabber","the litter is placed into a plain collection sack","beach cleanup, litter, volunteer, environment, conservation","f",""],["Memasang lampu tenaga surya","holding a small solar garden light above a patch of soil","the light is pushed into the ground and angled toward the sun","solar light, renewable energy, garden, sustainability, outdoors","f",""],["Menutup keran air","reaching toward a running faucet over a sink","the handle turns and the water stream stops","water conservation, faucet, saving water, sustainability, home","c",""],["Membuat kompos dari sisa dapur","adding vegetable scraps into a plain compost container","dry leaves are added and the mixture is stirred","compost, food waste, sustainability, gardening, recycling","",""],["Membersihkan sungai bersama","wearing plain protective gloves and lifting litter from a riverbank","the litter is deposited into a collection sack","river cleanup, conservation, volunteer, pollution, environment","f",""],["Mengisi daya sepeda listrik","connecting a plain charging plug to an electric bicycle","the cable is secured and the person checks the connection","electric bicycle, charging, clean transport, sustainable, battery","c",""],["Membawa wadah makan pakai ulang","placing homemade food into a plain reusable lunch container","the lid snaps shut and the container is placed into a bag","reusable container, lunch, zero waste, sustainable, food prep","",""]],"objek":[["Cairan berwarna dituangkan","a thin stream of coloured liquid just beginning to pour into a clear glass","the glass fills to the halfway mark and the liquid settles","liquid, pouring, colour, glass, macro","s",""],["Bubuk kopi jatuh ke portafilter","coffee grounds falling from a small scoop into a portafilter","the grounds settle into an even mound inside the basket","coffee, grounds, espresso, barista, macro","s",""],["Kapsul masuk mesin kopi","a plain coffee capsule hovering above an open coffee machine slot","the capsule drops into the slot and the lid closes","coffee capsule, machine, beverage, kitchen, close up","",""],["Tutup botol dibuka","a plain bottle with its cap beginning to twist loose","the cap lifts away and a few bubbles rise in the liquid","bottle, cap, opening, beverage, product","c",""],["Sabun cair dipompa","a finger beginning to press the pump of a plain soap dispenser","a small ribbon of soap lands on an open palm","soap, dispenser, hygiene, liquid, product","c",""],["Kertas dilipat menjadi amplop","a flat plain sheet of paper with its first corner being folded","the paper is folded into a neat envelope shape","paper, folding, envelope, stationery, craft","c",""],["Kain dilipat rapi","a soft plain fabric square lying partly unfolded on a table","the fabric is folded into a compact neat rectangle","fabric, folding, textile, tidy, product","c",""],["Ritsleting tas ditutup","an unzipped plain pouch with the zipper slider at one end","the zipper travels across and the pouch is fully closed","zipper, pouch, bag, closure, product","c",""],["Sepotong sabun berputar","a plain rectangular soap bar balanced on its edge above a surface","the soap rotates gently and settles flat on the surface","soap, rotation, skincare, product, studio","",""],["Kartu polos diselipkan ke amplop","a blank card positioned halfway above a plain envelope","the card slides fully inside and the envelope flap folds over","card, envelope, stationery, paper, motion","c",""],["Kubus es mencair","a clear ice cube with small droplets forming on its surface","the cube shrinks slightly as water pools beneath it","ice, melting, water, cold, macro","s",""],["Biji jagung meletup","a single corn kernel heating on a clean dark surface","the kernel pops open into a fluffy popcorn piece","popcorn, kernel, popping, food, macro","s",""],["Busa sabun bertambah","a small cluster of white foam on a wet surface","the foam expands gently and small bubbles merge together","foam, bubbles, soap, cleaning, macro","s",""],["Bola kaca menggelinding","a clear glass marble resting at the top of a smooth incline","the marble rolls down and comes to rest on a flat surface","marble, rolling, glass, motion, object","s",""],["Baut diputar dengan obeng","a plain metal screw aligned with the tip of a screwdriver","the screw turns down until its head sits flush with the board","screw, screwdriver, hardware, assembly, repair","c",""],["Klip kertas membuka","a plain metal paper clip lying closed on a clean tabletop","the clip is gently bent open into a wider shape","paper clip, metal, stationery, transformation, macro","c",""],["Magnet menarik klip logam","several small metal clips scattered beside a plain bar magnet","the clips slide toward and attach to the magnet","magnet, metal, attraction, science, experiment","s",""],["Kelereng masuk mangkuk","a glass marble rolling toward the rim of a ceramic bowl","the marble drops into the bowl and rolls to a stop","marble, bowl, rolling, collision, motion","s",""],["Biji tanaman tumbuh","a single seed resting in dark moist soil in a clear pot","a small green shoot emerges above the soil surface","seed, sprout, growth, plant, timelapse","s",""],["Tunas membuka daun","a tiny green seedling with two folded leaves","the leaves open wider and the stem straightens slightly","seedling, leaves, growth, botany, timelapse","s",""],["Kertas tisu ditarik","a tissue box with one white tissue just emerging from the slot","the tissue is pulled upward and separates from the next sheet","tissue, box, paper, pulling, household","c",""],["Karet gelang direntangkan","a plain rubber band resting in a loose oval shape","the band stretches into a long narrow loop and relaxes back","rubber band, stretch, elastic, motion, macro","s",""],["Roda gigi mulai berputar","two clean interlocking metal gears at rest","the gears turn together in a steady synchronized motion","gears, mechanics, rotation, machinery, engineering","s",""],["Lampu kecil dinyalakan","a plain desk lamp switched off against a neutral background","the switch is pressed and the lamp glows steadily","lamp, light, switch, illumination, product","",""],["Kipas meja mulai berputar","a compact plain desk fan with stationary blades","the blades accelerate into a smooth circular blur","fan, rotation, appliance, cooling, product","s",""],["Lilin padam tertiup","a lit plain candle with a steady small flame","a gentle puff of air extinguishes the flame and faint smoke rises","candle, extinguish, smoke, flame, close up","s",""],["Butiran air mengalir di kaca","small droplets clinging to a vertical clean glass pane","the droplets merge and slowly travel down the glass","water, droplets, glass, condensation, macro","s",""],["Kacang berputar di mangkuk","a few nuts resting in a shallow ceramic bowl","the bowl turns slowly and the nuts shift slightly in place","nuts, bowl, rotation, snack, still life","s",""],["Kotak kecil bergeser masuk rak","a plain small cardboard box just outside an empty shelf space","the box slides into the shelf and aligns with adjacent boxes","box, shelf, storage, packaging, organization","",""],["Tali pita diikat menjadi simpul","a plain satin ribbon crossed loosely above a gift box","the ribbon is pulled into a neat bow with balanced loops","ribbon, bow, gift, packaging, craft","c",""],["Bola lampu diputar ke dudukan","a plain light bulb held just above an empty socket","the bulb is turned clockwise until securely seated","light bulb, socket, installation, electricity, product","c",""],["Kertas berwarna berputar jatuh","a single lightweight coloured paper square floating above a table","the paper twirls through the air and lands flat","paper, falling, rotation, colour, motion","s",""],["Kristal gula jatuh ke mangkuk","a few translucent sugar crystals suspended above a clear glass bowl","the crystals scatter into a sparkling layer at the bottom","sugar, crystals, bowl, macro, food styling","s",""],["Kapsul serum menetes","a plain glass dropper hovering above a clear cosmetic bottle opening","a single clear serum droplet falls into the bottle","serum, dropper, skincare, liquid, cosmetic","s",""],["Botol lotion berguling","a plain unbranded lotion bottle lying on its side on a smooth surface","the bottle rolls a quarter turn and settles upright against a small stop","lotion, bottle, skincare, product, rotation","",""],["Tutup kosmetik terpasang","a plain cosmetic jar with its lid resting just above the opening","the lid lowers and twists shut until aligned","cosmetic jar, lid, skincare, packaging, product","",""],["Bedak tabur membentuk awan","a small puff of fine white powder rising above a plain compact","the powder disperses in a soft cloud and settles","powder, makeup, cosmetic, particles, macro","s",""],["Puff bedak mengembang","a clean round makeup puff compressed slightly against a flat surface","the puff springs back to its rounded shape","makeup puff, sponge, beauty tool, soft texture, macro","s",""],["Kain satin terbuka","a folded square of satin fabric resting on a clean surface","the fabric unfurls into a smooth draped sheet","satin, fabric, textile, unfolding, luxury","s",""],["Kertas gulung terbuka","a short roll of plain white paper resting on a tabletop","the roll unfurls smoothly into a flat sheet","paper, unrolling, stationery, white, motion","s",""],["Tumpukan piring bertambah","two plain ceramic plates stacked neatly with one plate hovering above","the top plate lowers and aligns with the stack","plates, ceramic, kitchenware, stacking, product","",""],["Sendok berputar di cangkir","a plain teaspoon resting inside a clear cup of tea","the spoon rotates gently around the inner edge and slows","spoon, tea, cup, stirring, beverage","s",""],["Tetesan minyak jatuh","a golden oil droplet suspended above a small pool of cooking oil","the droplet merges with the pool and sends out small ripples","oil, droplet, liquid, macro, cooking","s",""],["Biji wijen ditaburkan","a small cascade of sesame seeds falling toward a plain ceramic dish","the seeds settle into a thin scattered layer","sesame, seeds, food, falling, ingredients","s",""],["Irisan lemon berputar","a fresh lemon slice balanced upright on a smooth surface","the slice rotates slowly and rests flat","lemon, citrus, fruit, rotation, food styling","s",""],["Irisan mentimun jatuh","two cucumber slices falling toward a clean cutting board","the slices land flat and slide a short distance","cucumber, vegetable, falling, fresh food, kitchen","s",""],["Daun mint masuk gelas","fresh mint leaves hovering above a clear glass of water","the leaves drop into the glass and float at the surface","mint, leaves, water, drink, freshness","s",""],["Gelembung minuman naik","a clear glass filled with sparkling liquid and a few tiny bubbles","a stream of fine bubbles rises continuously to the surface","sparkling water, bubbles, beverage, refreshment, macro","l",""],["Es krim mulai meleleh","a neat scoop of vanilla ice cream on a plain plate","a glossy melt line forms and slowly drips along the scoop","ice cream, melting, dessert, cold, macro","s",""],["Cokelat cair membentuk pita","a thin stream of melted chocolate suspended above a plain dessert","the chocolate lands in looping ribbons and forms a glossy pattern","chocolate, pouring, dessert, syrup, food styling","s",""],["Gula bubuk ditaburkan","a fine veil of powdered sugar suspended above a plain pastry","the sugar falls evenly and creates a delicate white coating","powdered sugar, pastry, baking, dessert, dusting","s",""],["Tepung diayak","fine flour beginning to fall through a small metal sieve","the flour forms a soft mound on the work surface","flour, sieve, baking, powder, ingredients","s",""],["Biji kopi bergulir","a few roasted coffee beans resting on a dark smooth surface","the beans roll forward and settle into a loose cluster","coffee beans, roasted, rolling, cafe, macro","s",""],["Bola benang menggelinding","a compact ball of yarn resting beside a loose strand","the ball rolls forward while the strand unwinds behind it","yarn, thread, knitting, rolling, textile","s",""],["Kumparan benang berputar","a plain spool of thread standing upright on a flat surface","the spool spins rapidly and gradually slows","thread, spool, sewing, rotation, craft","s",""],["Kartu warna tersusun","several plain colour swatches scattered slightly apart","the swatches slide into a neat overlapping fan","colour swatches, design, palette, stationery, arrangement","",""],["Balok kayu tersusun","three plain wooden blocks separated on a clean table","the blocks slide into a stable balanced tower","wood, blocks, stacking, balance, minimal","s",""],["Keping puzzle berputar","three plain jigsaw pieces lying apart on a white surface","the pieces rotate and slide together into a small cluster","puzzle, pieces, rotation, assembly, problem solving","s",""],["Klip binder menjepit kertas","a black binder clip open above a small stack of blank paper","the metal arms close and the clip secures the paper stack","binder clip, paper, office supplies, clamp, product","c",""],["Penghapus menghapus garis","a plain white eraser resting beside a faint pencil line on paper","the eraser passes over the line and leaves a clean blank area","eraser, pencil, paper, stationery, erasing","c",""],["Pensil menggelinding berhenti","a plain wooden pencil resting diagonally on a desk","the pencil rolls once and comes to rest parallel to the edge","pencil, rolling, stationery, desk, motion","s",""],["Koin berputar lalu rebah","a plain metal coin spinning upright on a flat surface","the coin wobbles and falls flat onto the surface","coin, spinning, money, motion, macro","s",""],["Dadu bergulir","a plain blank dice balanced on one corner above a tabletop","the dice tumbles once and settles with a blank face visible","dice, rolling, game, cube, motion","s",""],["Bola pingpong memantul","a white ping pong ball suspended above a clean table","the ball bounces once and settles into a gentle roll","ping pong, ball, bounce, sport, motion","s",""],["Kelereng berputar dalam lingkaran","a glass marble at the start of a shallow circular track","the marble circles the track and gradually slows","marble, track, circular motion, glass, physics","s",""],["Roda mini berputar","a small plain toy wheel seen side-on and standing still","the wheel spins quickly and slows to a stop","wheel, spinning, toy, mechanics, rotation","s",""],["Pegas ditekan","a small metal coil spring standing upright at full extension","the spring compresses and rebounds to its original height","spring, compression, mechanics, metal, physics","l",""],["Magnet menarik serbuk besi","fine iron filings scattered around a plain bar magnet","the filings gather into curved patterns around the magnet","magnet, iron filings, physics, attraction, science","s",""],["Gelembung gel bening pecah","a transparent gel bubble resting on a glossy surface","the bubble collapses and spreads into a thin clear puddle","gel, bubble, liquid, texture, macro","s",""],["Tetesan lilin membeku","a small bead of melted wax hanging from the edge of a plain candle","the wax droplet falls and hardens into a small rounded bead","wax, candle, droplet, melting, macro","s",""],["Kertas aluminium berkerut","a smooth square of plain aluminium foil lying flat","the foil crumples inward into a compact reflective ball","aluminium foil, crumpling, texture, metal, motion","s",""],["Tutup kaleng bergeser","a plain unlabelled metal can with its pull tab visible","the pull tab lifts and the can opening is revealed","can, metal, opening, packaging, product","c",""],["Kardus terlipat rata","an empty plain cardboard box with its flaps opened outward","the box sides fold inward until the cardboard lies flat","cardboard, folding, packaging, recycling, box","",""],["Botol kaca berembun","a clear glass bottle with only a few moisture droplets on its surface","condensation spreads into a fine even layer across the glass","glass bottle, condensation, moisture, cooling, beverage","s",""],["Cairan berlapis menyatu","two distinct layers of coloured liquid inside a clear glass vessel","the layers swirl slowly and blend into a single gradient-free mixture","liquid, mixing, colour, glass, macro","s",""],["Busa spons diperas","a saturated plain cleaning sponge resting above a shallow tray","the sponge compresses and a thin stream of water drips out","sponge, water, squeezing, cleaning, macro","s",""],["Sikat gigi berputar","a plain unbranded electric toothbrush standing upright with its head still","the brush head begins vibrating rapidly","toothbrush, electric, hygiene, vibration, product","s",""],["Kipas kertas membuka","a folded plain paper hand fan positioned on a tabletop","the fan opens into a wide semicircle","paper fan, folding, opening, craft, product","",""],["Pita perekat ditarik","a plain tape roll with the tape end lifted slightly","the tape unrolls in a straight strip and separates cleanly","tape, adhesive, roll, office, packaging","c",""]]};
+Object.keys(ACTIONS_EXTRA).forEach(k => { ACTIONS[k] = (ACTIONS[k] || []).concat(ACTIONS_EXTRA[k]); });
+const LOOPABLE_NAMES = {"emosi": ["Lega", "Berpikir keras", "Mengangguk setuju"], "kerja": ["Menulis catatan rapat", "Mengetik cepat di laptop", "Rapat video"], "sehat": ["Meditasi", "Meminum air putih", "Tarik napas dalam"], "cantik": ["Menepuk toner", "Krim tangan"], "makan": ["Meniup teh panas", "Mencium aroma sup"], "rumah": ["Menyiram tanaman pot", "Membaca santai"], "olahraga": ["Jogging di tempat", "Plank"], "tekno": ["Scroll HP tersenyum", "Mendengarkan musik"], "alam": ["Menyiram dengan selang", "Mencium bunga"], "cuaca": ["Menadah hujan", "Berjemur menikmati matahari"], "travel": ["Bersantai di kursi pantai"], "iklan": ["Menunjuk ruang kosong samping", "Tangan bersilang yakin"], "objek": ["Kubus es mencair", "Daun melayang turun", "Cairan berwarna dituangkan", "Bola kaca menggelinding", "Kipas meja mulai berputar", "Tetesan air", "Gelembung sabun", "Pita satin berkibar", "Butiran air mengalir di kaca", "Api lilin"]};
+Object.keys(LOOPABLE_NAMES).forEach(k => (ACTIONS[k] || []).forEach(a => { if(LOOPABLE_NAMES[k].includes(a[0])) a[4] = (a[4] || "") + "l"; }));
 
 const OPT = {
   format:[{id:"html",l:"Halaman HTML siap pakai"},{id:"json",l:"Data JSON"},{id:"teks",l:"Daftar teks biasa"},{id:"csv",l:"CSV"}],
@@ -502,7 +525,16 @@ const OPT = {
     {id:"alam",l:"Alam & pertanian",en:"nature, plants and agriculture"},
     {id:"cuaca",l:"Cuaca & musim",en:"weather and seasons"},
     {id:"travel",l:"Perjalanan",en:"travel and holidays"},
-    {id:"iklan",l:"Iklan & promosi",en:"advertising and promotion gestures"}
+    {id:"iklan",l:"Iklan & promosi",en:"advertising and promotion gestures"},
+    {id:"sosial",l:"Interaksi sosial",en:"social interactions, greetings and communication"},
+    {id:"keluarga",l:"Keluarga & pengasuhan",en:"family relationships, parenting and elder care"},
+    {id:"profesi",l:"Profesi & pekerjaan",en:"skilled trades and professional work"},
+    {id:"transportasi",l:"Transportasi & komuter",en:"transportation, commuting and passenger activities"},
+    {id:"ritel",l:"Ritel & pelayanan pelanggan",en:"retail shopping and customer service"},
+    {id:"industri",l:"Industri & gudang",en:"industrial work, manufacturing and warehouse operations"},
+    {id:"hewan",l:"Hewan & hewan peliharaan",en:"pets, animal care and wildlife interactions"},
+    {id:"kreatif",l:"Seni & kreativitas",en:"art, music, crafts and creative production"},
+    {id:"lingkungan",l:"Lingkungan & keberlanjutan",en:"environmental care, recycling and sustainability"}
   ],
   event:[
     {id:"none",l:"Tanpa event (evergreen)"},
@@ -536,9 +568,8 @@ const TOGGLES = [
   {id:"ruang",l:"Beberapa adegan dengan ruang kosong untuk teks iklan",def:true},
   {id:"aman",l:"Mode aman artefak: tekankan tangan dan jari yang natural",def:true},
   {id:"slow",l:"Slow motion untuk gerakan yang cocok (lompat, rambut, cipratan)",def:true},
-  {id:"loop",l:"Sisipkan beberapa adegan yang bisa di-loop",def:false},
-  {id:"props",l:"Izinkan properti (khusus mode prompt induk)",def:true},
-  {id:"alasan",l:"Minta AI menjelaskan alasan tiap adegan (khusus mode prompt induk)",def:false}
+  {id:"loop",l:"Loop hanya untuk gerakan yang cocok",def:false},
+  {id:"props",l:"Izinkan properti sederhana pada prompt induk",def:true}
 ];
 
 const COLOURS = ["light grey","pure white","warm beige","pastel blue","bright yellow","soft pink","sage green","dark charcoal","terracotta orange","deep teal","lilac","mint green","navy blue","peach"];
@@ -586,6 +617,41 @@ const THEME_KW = {
   travel:["travel","tourism","vacation","holiday","journey","adventure"],iklan:["advertising","marketing","promotion","commercial","presenter","campaign"],
   objek:["object","product","still life","motion","concept","close up"]
 };
+
+Object.assign(OUTFITS, {
+  sosial:["smart casual shirt","plain knit sweater","casual blouse","light cardigan"],
+  keluarga:["comfortable casual shirt","soft knit cardigan","plain cotton top","comfortable homewear"],
+  profesi:["plain work shirt","simple work uniform without insignia","neutral utility shirt","plain professional uniform"],
+  transportasi:["casual jacket","plain commuter coat","comfortable travel shirt","light windbreaker"],
+  ritel:["plain polo shirt","simple retail work shirt","plain blouse","neutral cardigan"],
+  industri:["plain workwear","neutral utility shirt","plain high-visibility safety vest","simple industrial coveralls"],
+  hewan:["casual outdoor shirt","plain cotton t-shirt","comfortable gardening clothes","simple pet-care apron"],
+  kreatif:["plain artist apron","comfortable black t-shirt","simple creative casual outfit","neutral work shirt"],
+  lingkungan:["plain outdoor shirt","neutral utility vest","comfortable gardening clothes","simple long-sleeve cotton shirt"]
+});
+Object.assign(LOCATIONS, {
+  sosial:["community centre","cafe","public park","modern lobby"],
+  keluarga:["family living room","home kitchen","garden patio","bright bedroom"],
+  profesi:["professional workshop","commercial kitchen","tailor studio","service counter"],
+  transportasi:["train station","bus shelter","parking area","airport terminal"],
+  ritel:["retail store","supermarket aisle","checkout counter","storefront"],
+  industri:["clean warehouse","production floor","industrial workshop","packing station"],
+  hewan:["home interior","garden","pet grooming area","animal shelter"],
+  kreatif:["art studio","music room","craft table","photography studio"],
+  lingkungan:["community garden","recycling station","park","clean riverbank"]
+});
+Object.assign(THEME_KW, {
+  sosial:["social interaction","greeting","communication","friendship","people"],
+  keluarga:["family","parenting","caregiving","child","relationship"],
+  profesi:["profession","occupation","skilled worker","work","service"],
+  transportasi:["transport","commute","passenger","mobility","travel"],
+  ritel:["retail","customer service","shopping","store","consumer"],
+  industri:["industry","manufacturing","warehouse","safety","operations"],
+  hewan:["animal","pet care","wildlife","feeding","grooming"],
+  kreatif:["creative","art","craft","music","artist"],
+  lingkungan:["environment","sustainability","conservation","recycling","ecology"]
+});
+
 const EVENT_KW = {ramadan:["ramadan","eid"],imlek:["lunar new year","chinese new year"],natal:["christmas","new year"],valentine:["valentine","romance"],paskah:["easter","spring"],halloween:["halloween","autumn"],sekolahbaru:["back to school","new semester"]};
 const LOOKS = {
   dunia:["East Asian","South Asian","Southeast Asian","Black","white","Hispanic","Middle Eastern","mixed-race"],
@@ -595,18 +661,16 @@ const LOOKS = {
   lansia:["East Asian","South Asian","Southeast Asian","Black","white","Hispanic","Middle Eastern","mixed-race"]
 };
 const HIJAB_LOOKS = ["Indonesian","Malaysian","Middle Eastern","South Asian","Southeast Asian"];
-const NEGATIVE = "cuts, scene changes, transitions, text, letters, numbers, subtitles, watermark, logo, brand name, extra people, duplicate person, extra fingers, missing fingers, fused fingers, deformed hands, extra limbs, distorted face, identity change, face morphing, clothing change, background colour shift, flicker, jitter, warping, blur, low resolution, noise, compression artifacts, plastic skin, cartoon, illustration, 3d render";
 
 // ================= STATE =================
 const DEFAULTS = {
   format:"html", jumlah:"25", subjek:"orang", tema:["emosi","kerja","sehat","olahraga","iklan"], event:"none",
   latar:"polos", framing:"campur", rasio:"169", orang:"dunia", guna:"semua", niche:""
 };
-const state = Object.assign({}, DEFAULTS, {tema:DEFAULTS.tema.slice(), hindari:"", used:[], picks:[], extra:0, seed:1, newRound:false, mode:"langsung", result:null});
+const state = Object.assign({}, DEFAULTS, {tema:DEFAULTS.tema.slice(), hindari:"", used:[], previewed:[], pinned:[], picks:[], extra:0, seed:1, newRound:false, previewRound:false, mode:"langsung", result:null});
 TOGGLES.forEach(t=>state[t.id]=t.def);
-const KEY = "prompt-induk-v2";
+const KEY = "prompt-induk-v3-expanded";
 try{ Object.assign(state, JSON.parse(localStorage.getItem(KEY) || "{}")); }catch(e){}
-state.metadata = false; // judul & keyword tidak dipakai
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
 
 const ALL = {};
@@ -614,6 +678,8 @@ Object.keys(ACTIONS).forEach(t=>ACTIONS[t].forEach(e=>{
   const id = t+":"+e[0];
   ALL[id] = {id, t, n:e[0], a:e[1], b:e[2], k:(e[3]||"").split(",").map(s=>s.trim()).filter(Boolean), f:e[4]||"", o:e[5]||"", kind: t==="objek" ? "objek" : "orang"};
 }));
+state.pinned = Array.isArray(state.pinned) ? state.pinned.filter(id=>ALL[id]) : [];
+state.previewed = Array.isArray(state.previewed) ? state.previewed : [];
 
 function rng(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
 function shuffle(arr, r){ r=r||Math.random; const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
@@ -628,29 +694,56 @@ function pools(){
 }
 function need(){
   const n = Number(state.jumlah);
-  const nObj = state.subjek==="objek" ? n : state.subjek==="campur" ? Math.round(n/3) : 0;
+  const pinned = (state.pinned || []).map(id=>ALL[id]).filter(Boolean);
+  const pinnedPeople = pinned.filter(p=>p.kind==="orang").length;
+  const pinnedObjects = pinned.filter(p=>p.kind==="objek").length;
+  if(state.subjek==="objek") return {nPeople:0, nObj:n};
+  if(state.subjek==="orang") return {nPeople:n, nObj:0};
+  const nObj = Math.max(pinnedObjects, Math.min(n-pinnedPeople, Math.round(n/3)));
   return {nPeople:n-nObj, nObj};
 }
-function takeFrom(pool, k){
+function takeFrom(pool, k, excludedPreview = new Set(), excludedCurrent = new Set()){
   if(k<=0) return [];
   const used = new Set(state.used);
-  let out = shuffle(pool.filter(p=>!used.has(p.id))).slice(0,k);
+  const seen = excludedPreview instanceof Set ? excludedPreview : new Set(excludedPreview);
+  const current = excludedCurrent instanceof Set ? excludedCurrent : new Set(excludedCurrent);
+  let candidates = pool.filter(p=>!used.has(p.id) && !seen.has(p.id));
+  let out = shuffle(candidates).slice(0,k);
   if(out.length < k){
     const ids = new Set(pool.map(p=>p.id));
     state.used = state.used.filter(id=>!ids.has(id));
     state.newRound = true;
-    const taken = new Set(out.map(o=>o.id));
-    out = out.concat(shuffle(pool.filter(p=>!taken.has(p.id))).slice(0,k-out.length));
+    const already = new Set([...current, ...out.map(p=>p.id)]);
+    let refill = shuffle(pool.filter(p=>!already.has(p.id) && !seen.has(p.id)));
+    if(refill.length < k-out.length){
+      // All unpreviewed actions are exhausted; allow earlier previews, but never duplicate the current batch.
+      state.previewRound = true;
+      const alreadyChosen = new Set(out.map(p=>p.id));
+      refill = shuffle(pool.filter(p=>!alreadyChosen.has(p.id)));
+    }
+    out = out.concat(refill.slice(0,k-out.length));
   }
   return out;
 }
-function pickBatch(){
+function pickBatch(avoidCurrent = false){
   state.newRound = false;
+  state.previewRound = false;
   const {people, objs} = pools();
   const {nPeople, nObj} = need();
-  const a = takeFrom(people, nPeople), b = takeFrom(objs, nObj);
-  state.picks = shuffle(a.concat(b)).map(p=>p.id);
-  state.extra = (nPeople - a.length) + (nObj - b.length);
+  const current = avoidCurrent ? new Set(state.picks) : new Set();
+  const seen = avoidCurrent ? new Set([...(state.previewed || []), ...state.picks]) : new Set();
+  const pinned = (state.pinned || []).map(id=>ALL[id]).filter(Boolean).filter(p=>
+    state.subjek==="campur" || (state.subjek==="orang" && p.kind==="orang") || (state.subjek==="objek" && p.kind==="objek")
+  );
+  const pinnedIds = new Set(pinned.map(p=>p.id));
+  const pinnedPeople = pinned.filter(p=>p.kind==="orang").length;
+  const pinnedObjects = pinned.filter(p=>p.kind==="objek").length;
+  const a = takeFrom(people.filter(p=>!pinnedIds.has(p.id)), Math.max(0,nPeople-pinnedPeople), seen, current);
+  const b = takeFrom(objs.filter(p=>!pinnedIds.has(p.id)), Math.max(0,nObj-pinnedObjects), seen, current);
+  state.picks = shuffle(pinned.concat(a,b)).map(p=>p.id);
+  if(avoidCurrent) state.previewed = Array.from(new Set([...(state.previewed || []), ...state.picks]));
+  else state.previewed = state.picks.slice();
+  state.extra = Math.max(0,nPeople-pinnedPeople-a.length) + Math.max(0,nObj-pinnedObjects-b.length);
   state.seed = Math.floor(Math.random()*1e9);
 }
 function markUsed(){
@@ -764,7 +857,6 @@ function buildScenes(rows){
   const persons = Array.from({length:poolSize}, ()=>makePerson(r));
   const usage = persons.map(()=>0);
   let pi = 0;
-  const evKw = EVENT_KW[state.event] || [];
   return rows.map((x,i)=>{
     const p = x.p, isObj = p.kind==="objek";
     const ratioTxt = x.ratio==="16:9" ? "16:9 horizontal" : "9:16 vertical";
@@ -773,17 +865,17 @@ function buildScenes(rows){
     if(state.ruang && r()<0.25){ const side = r()<0.5 ? ["left","right"] : ["right","left"]; composition = `subject placed on the ${side[0]} third with generous empty space on the ${side[1]} for text`; }
     const slow = state.slow && p.f.includes("s");
     const speed = slow ? "Slow motion" : "Natural real-time speed";
-    const loop = state.loop && r()<0.2;
-    let first, lastP, video, title, info, kw = [];
+    const loop = state.loop && p.f.includes("l") && r()<0.65;
+    const brief = state.niche.trim();
+    const briefRule = brief ? ` Creative direction: ${brief}. Apply this direction through the context, styling, mood, or compatible props, but never replace the assigned core action or violate continuity, subject count, framing, or background rules.` : "";
+    let first, lastP, video, info;
 
     if(isObj){
       const bg = bgPhrase(x, true);
-      first = `Photorealistic stock photo, ${x.framing}: ${p.a}, ${bg}. ${lighting}, ${composition}, ${ratioTxt} aspect ratio. Crisp detail and realistic materials. No text, no logos, no watermark, no people, no hands.`;
+      first = `Photorealistic stock photo, ${x.framing}: ${p.a}, ${bg}. ${lighting}, ${composition}, ${ratioTxt} aspect ratio. Crisp detail and realistic materials.${briefRule} No text, no logos, no watermark, no people, no hands.`;
       lastP = loop ? "Loop scene: use the first frame again as the last frame, without changes."
-        : `Edit this image, which is the first frame of a video. Keep exactly the same objects, materials, background colour, lighting, framing and camera angle. Change only this: ${p.b}. Keep it photorealistic and seamless with the original. No text, no logos, no people, no hands.`;
-      video = `Photorealistic stock footage, ${x.framing}. ${cap(p.a)}, ${bg}. The clip opens on this moment and the motion continues smoothly until ${p.b}${loop ? ", then returns smoothly to the starting state so the clip ends exactly as it began, creating a seamless loop" : ""}. Camera: locked-off static camera with no movement. ${speed}. ${lighting}, ${composition}, ${ratioTxt} aspect ratio. One single continuous shot with no cuts, no scene changes and no transitions. The background stays exactly the same throughout. No text, no logos, no people, no hands.`;
-      const where = x.bgType==="solid" ? `on ${x.colour} background` : x.bgType==="chroma" ? "on green screen" : `on ${x.loc}`;
-      title = cap(`${shortAction(p.a)} ${where}`);
+        : `Edit this image, which is the first frame of a video. Keep exactly the same objects, materials, background colour, lighting, framing and camera angle. Change only this: ${p.b}. Keep it photorealistic and seamless with the original.${brief ? ` Preserve this creative direction: ${brief}.` : ""} No text, no logos, no people, no hands.`;
+      video = `Photorealistic stock footage, ${x.framing}. ${cap(p.a)}, ${bg}. The clip opens on this moment and the motion continues smoothly until ${p.b}${loop ? ", then returns smoothly to the starting state so the clip ends exactly as it began, creating a seamless loop" : ""}. Camera: locked-off static camera with no movement. ${speed}. ${lighting}, ${composition}, ${ratioTxt} aspect ratio. One single continuous shot with no cuts, no scene changes and no transitions. The background stays exactly the same throughout.${briefRule} No text, no logos, no people, no hands.`;
       info = `objek • ${bgText(x)} • ${x.ratio}`;
     } else {
       // pilih orang: rotasi, maks 3 kali, hijab tidak untuk gerakan rambut, pria untuk gerakan khusus
@@ -806,29 +898,13 @@ function buildScenes(rows){
       const outfit = p.o ? p.o : `a ${outfitColour(x, r)} ${item}`;
       const bg = bgPhrase(x, false);
       const hands = state.aman ? " Relaxed, natural hands with five fingers on each hand." : "";
-      first = `Photorealistic stock photo, ${x.framing} of ${who}, wearing ${outfit}, ${bg}. The person is ${p.a}, with the emotion clearly readable on the face. ${lighting}, ${x.angle}, ${composition}, ${ratioTxt} aspect ratio. Natural skin texture, realistic facial proportions, sharp focus on the face.${hands} No text, no logos, no watermark, no other people.`;
+      first = `Photorealistic stock photo, ${x.framing} of ${who}, wearing ${outfit}, ${bg}. The person is ${p.a}, with the emotion clearly readable on the face. ${lighting}, ${x.angle}, ${composition}, ${ratioTxt} aspect ratio. Natural skin texture, realistic facial proportions, sharp focus on the face.${hands}${briefRule} No text, no logos, no watermark, no other people.`;
       lastP = loop ? "Loop scene: use the first frame again as the last frame, without changes."
-        : `Edit this image, which is the first frame of a video. Keep exactly the same person, face, hairstyle, clothing, props, background colour, lighting, framing and camera angle. Change only this: ${p.b}. Correct human anatomy with natural hands and five fingers on each hand. Keep it photorealistic and seamless with the original. No text, no logos, no other people.`;
-      video = `Photorealistic stock footage, ${x.framing}, ${x.angle}. ${cap(who)}, wearing ${outfit}, ${bg}. The clip opens with the person already ${p.a}, and the motion continues smoothly until ${p.b}${loop ? ", then returns smoothly to the starting pose so the clip ends exactly as it began, creating a seamless loop" : ""}. The emotion is clearly visible from the very first frame to the last. Camera: locked-off static camera with no movement. ${speed}. ${lighting}, ${composition}, ${ratioTxt} aspect ratio. One single continuous shot with no cuts, no scene changes and no transitions. The background stays exactly the same throughout. The person's face, hair, clothing and props stay consistent throughout, with natural human anatomy and realistic hand movement. No text, no logos, no other people.`;
-      const where = x.bgType==="solid" ? `on ${x.colour} background` : x.bgType==="chroma" ? "on green screen" : `in ${x.loc}`;
-      title = cap(`${ageWord(pp.age)} ${pp.look} ${pp.gender} ${shortAction(p.a)} ${where}`);
+        : `Edit this image, which is the first frame of a video. Keep exactly the same person, face, hairstyle, clothing, props, background colour, lighting, framing and camera angle. Change only this: ${p.b}. Correct human anatomy with natural hands and five fingers on each hand. Keep it photorealistic and seamless with the original.${brief ? ` Preserve this creative direction: ${brief}.` : ""} No text, no logos, no other people.`;
+      video = `Photorealistic stock footage, ${x.framing}, ${x.angle}. ${cap(who)}, wearing ${outfit}, ${bg}. The clip opens with the person already ${p.a}, and the motion continues smoothly until ${p.b}${loop ? ", then returns smoothly to the starting pose so the clip ends exactly as it began, creating a seamless loop" : ""}. The emotion is clearly visible from the very first frame to the last. Camera: locked-off static camera with no movement. ${speed}. ${lighting}, ${composition}, ${ratioTxt} aspect ratio. One single continuous shot with no cuts, no scene changes and no transitions. The background stays exactly the same throughout. The person's face, hair, clothing and props stay consistent throughout, with natural human anatomy and realistic hand movement.${briefRule} No text, no logos, no other people.`;
       info = `${pp.gender==="woman"?"wanita":"pria"} ${pp.age} th • ${FRAMES_ID[x.fk]} • ${bgText(x)} • ${x.ratio}${loop?" • loop":""}${slow?" • slow-mo":""}`;
-      kw.push(pp.gender, ageWord(pp.age), pp.look.toLowerCase(), "one person", "people", "real time");
-      if(pp.hijab) kw.push("hijab", "muslim woman");
     }
-    // keyword
-    const base = p.k.concat(THEME_KW[p.t]||[], evKw);
-    if(x.bgType==="solid") base.push("solid background", "colored background", x.colour.split(" ").pop(), "isolated");
-    if(x.bgType==="chroma") base.push("green screen", "chroma key");
-    if(x.bgType==="loc") base.push(x.loc, "indoor");
-    if(composition.includes("empty space")) base.push("copy space");
-    if(x.ratio==="9:16") base.push("vertical video");
-    if(slow) base.push("slow motion");
-    if(loop) base.push("loop", "seamless loop");
-    const fill = isObj ? ["studio shot","simple","clean","minimal","creative","stock footage","background","concept","nobody","color"] : ["lifestyle","casual","portrait","candid","emotion","human","person","stock footage","daily life","modern"];
-    const seen = new Set(), out = [];
-    kw.concat(base, fill).forEach(k=>{ k = k.toLowerCase().trim(); if(!k || k.split(/\s+/).length>2 || seen.has(k)) return; seen.add(k); out.push(k); });
-    return {no:i+1, nama:p.n, kat:(OPT.tema.find(o=>o.id===p.t)||{l:"Objek"}).l, info, first, last:lastP, video, title, kw:out.slice(0,25).join(", ")};
+    return {no:i+1, nama:p.n, kat:(OPT.tema.find(o=>o.id===p.t)||{l:"Objek"}).l, info, first, last:lastP, video};
   });
 }
 
@@ -853,18 +929,17 @@ const FORMAT_TEXT = {
   html:`Return ONE complete, self-contained HTML file and nothing else outside it.
 The HTML file must:
 - keep all data in a JavaScript array inside the file, and render the cards from that array;
-- show every item as a card with its number, its Indonesian scene name, the person, the framing, the angle, the background and its use tags;
+- show every item as a card with its number and Indonesian scene name;
 - give each card four buttons: copy first-frame prompt, copy last-frame prompt, copy video prompt, copy everything;
-- include a search box and filter buttons by category and by use;
-- show the shared negative prompt once at the top with its own copy button;
+- include a search box and filter buttons by category;
 - include a "sudah dibuat" checkbox per card, stored in localStorage inside a try/catch;
 - work offline with no external libraries, support light and dark mode with prefers-color-scheme, and be readable on a phone.
 All visible labels in the page must be in Indonesian.`,
   json:`Return ONE JSON array and nothing else. Each element must have exactly these keys:
-{"no": number, "nama": string (Indonesian scene name), "kategori": string, "kegunaan": array of strings, "orang": string, "framing": string, "sudut": string, "latar": string, "prompt_frame_awal": string, "prompt_frame_akhir": string, "prompt_video": string}`,
+{"no": number, "nama": string (Indonesian scene name), "kategori": string, "prompt_frame_awal": string, "prompt_frame_akhir": string, "prompt_video": string}`,
   teks:`Return a plain numbered list. For each item write the Indonesian scene name as a heading, then three labelled blocks: "Frame awal:", "Frame akhir:", "Video:". Do not add commentary between items.`,
   csv:`Return ONE CSV block and nothing else, with this header row:
-no,nama,kategori,kegunaan,orang,framing,latar,prompt_frame_awal,prompt_frame_akhir,prompt_video
+no,nama,kategori,prompt_frame_awal,prompt_frame_akhir,prompt_video
 Quote every field with double quotes and escape internal quotes by doubling them.`
 };
 
@@ -935,11 +1010,9 @@ function buildMaster(rows){
   if(state.loop) L.push(`- Make about a fifth of the scenes loopable: the last frame is identical to the first frame, the motion returns to its starting position, and the video prompt says so.`);
   if(state.ruang) L.push(`- About a quarter of the scenes should leave generous empty space on one side of the frame for the buyer's text, and the composition sentence must say so.`);
   L.push(``);
-  L.push(`ALSO PROVIDE`);
-  L.push(`- One shared negative prompt for all scenes, covering cuts, text, watermarks, logos, extra people, hand and finger defects, identity changes, background colour shifts, morphing, flicker and blur.`);
-  L.push(`- For every item: the Indonesian scene name from the list, a category, and use tags (Iklan, Berita, Ilustrasi).`);
-  if(state.metadata) L.push(`- For each item, an English title of 6 to 12 words describing the subject and the action, and 25 keywords, each one or two words, lowercase, ordered from most to least relevant, with no duplicates.`);
-  if(state.alasan) L.push(`- For each item, one short Indonesian sentence explaining who would buy this clip and why.`);
+  L.push(`OUTPUT CONTENT RULES`);
+  L.push(`- Keep the Indonesian scene name and category only as organisational labels. Each item must contain exactly three prompts: first frame, last frame, and video.`);
+  L.push(`- Never generate titles, keywords, tags, buyer explanations, or any extra text fields.`);
   L.push(``);
   L.push(`OUTPUT FORMAT`);
   L.push(FORMAT_TEXT[state.format]);
@@ -963,14 +1036,13 @@ async function copyText(text, btn){
   if(btn){ btn.textContent="Tersalin"; btn.classList.add("copied"); }
 }
 function allText(s){
-  let t = `#${s.no} ${s.nama}\n\nFRAME AWAL:\n${s.first}\n\nFRAME AKHIR:\n${s.last}\n\nVIDEO:\n${s.video}\n\nNEGATIVE PROMPT:\n${NEGATIVE}`;
-  if(s.title) t += `\n\nJUDUL:\n${s.title}\n\nKEYWORD:\n${s.kw}`;
+  let t = `#${s.no} ${s.nama}\n\nFRAME AWAL:\n${s.first}\n\nFRAME AKHIR:\n${s.last}\n\nVIDEO:\n${s.video}`;
   return t;
 }
 
 // ================= EKSPOR HTML =================
 function exportHTML(res){
-  const data = JSON.stringify({id:res.id, created:res.created, neg:NEGATIVE, meta:res.meta, scenes:res.scenes}).replace(/</g,"\\u003c");
+  const data = JSON.stringify({id:res.id, created:res.created, meta:res.meta, scenes:res.scenes}).replace(/</g,"\\u003c");
   const page = `<!doctype html>
 <html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Prompt Video ${res.created}</title>
@@ -983,8 +1055,6 @@ function exportHTML(res){
 .search{flex:1 1 220px;font:inherit;padding:8px 11px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--text)}
 .chip{font:inherit;font-size:.85rem;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer}
 .chip[aria-pressed=true]{background:var(--text);color:var(--bg);border-color:var(--text)}.count{margin-left:auto;color:var(--muted);font-size:.85rem}
-.neg{margin:16px 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}.neg p{margin:6px 0 0;color:var(--muted);font-size:.88rem}
-.row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .list{display:flex;flex-direction:column;gap:12px}.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
 .card.used{opacity:.6}.top{display:flex;gap:12px;align-items:flex-start}.no{font-weight:800;font-size:1.5rem;color:var(--accent);min-width:2.2ch;line-height:1}
 h3{margin:0;font-size:1.05rem}.meta{color:var(--muted);font-size:.84rem;margin:2px 0 0}.tag{display:inline-block;margin-top:6px;font-size:.75rem;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--cool-bg);color:var(--cool)}
@@ -997,7 +1067,6 @@ details{margin-top:10px}summary{cursor:pointer;font-weight:600;font-size:.86rem;
 button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--cool);outline-offset:2px}
 </style></head><body><div class="wrap">
 <h1>Prompt Video</h1><p class="sub" id="sub"></p>
-<div class="neg"><div class="row"><b>Negative prompt (untuk semua adegan)</b><span id="neg-btn"></span></div><p id="neg"></p></div>
 <div class="bar"><input class="search" id="q" type="search" placeholder="Cari adegan"><span id="cats"></span><span class="count" id="count"></span><button type="button" class="reset" id="clear-copied">Hapus tanda salin</button></div>
 <div class="list" id="list"></div></div>
 <script>
@@ -1009,10 +1078,8 @@ const CKEY="prompt-video-copied-"+D.id;let copied={};try{copied=JSON.parse(local
 function saveC(){try{localStorage.setItem(CKEY,JSON.stringify(copied))}catch(e){}}
 async function cp(t){try{await navigator.clipboard.writeText(t)}catch(e){const a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();try{document.execCommand("copy")}catch(_){}a.remove()}}
 function paint(b){const k=b.dataset.k;if(copied[k]){b.classList.add("copied");b.textContent="\u2713 "+b.dataset.l}else{b.classList.remove("copied");b.textContent=b.dataset.l}}
-function all(s){let t="#"+s.no+" "+s.nama+"\\n\\nFRAME AWAL:\\n"+s.first+"\\n\\nFRAME AKHIR:\\n"+s.last+"\\n\\nVIDEO:\\n"+s.video+"\\n\\nNEGATIVE PROMPT:\\n"+D.neg;if(s.title)t+="\\n\\nJUDUL:\\n"+s.title+"\\n\\nKEYWORD:\\n"+s.kw;return t}
+function all(s){return "#"+s.no+" "+s.nama+"\n\nFRAME AWAL:\n"+s.first+"\n\nFRAME AKHIR:\n"+s.last+"\n\nVIDEO:\n"+s.video}
 document.getElementById("sub").textContent=D.scenes.length+" adegan • dibuat "+D.created+(D.meta?" • "+D.meta:"");
-document.getElementById("neg").textContent=D.neg;
-document.getElementById("neg-btn").appendChild(btn("Salin",D.neg,"neg"));
 document.getElementById("clear-copied").onclick=()=>{if(!confirm("Hapus semua tanda tombol yang sudah disalin?"))return;copied={};saveC();document.querySelectorAll("[data-k]").forEach(paint)};
 let cat="Semua";const cats=["Semua"].concat([...new Set(D.scenes.map(s=>s.kat))]);
 function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
@@ -1031,9 +1098,9 @@ function render(){
   cb.onchange=()=>{if(cb.checked)done[s.no]=1;else delete done[s.no];saveDone();card.classList.toggle("used",cb.checked)};
   lab.appendChild(cb);lab.appendChild(document.createTextNode("Sudah dibuat"));top.appendChild(lab);card.appendChild(top);
   const bs=el("div","btns"),K=s.no+"-";bs.appendChild(btn("Frame awal",s.first,K+"awal"));bs.appendChild(btn("Frame akhir",s.last,K+"akhir"));bs.appendChild(btn("Video",s.video,K+"video"));
-  if(s.title)bs.appendChild(btn("Judul & keyword",s.title+"\\n\\n"+s.kw,K+"meta"));bs.appendChild(btn("Salin semua",all(s),K+"all","all",[K+"awal",K+"akhir",K+"video",K+"meta"]));card.appendChild(bs);
+bs.appendChild(btn("Salin semua",all(s),K+"all","all",[K+"awal",K+"akhir",K+"video"]));card.appendChild(bs);
   const d=el("details");d.appendChild(el("summary",null,"Lihat prompt"));
-  [["Frame awal",s.first],["Frame akhir",s.last],["Video",s.video]].concat(s.title?[["Judul",s.title],["Keyword",s.kw]]:[]).forEach(([l,t])=>{d.appendChild(el("div","lbl",l));d.appendChild(el("pre","p",t))});
+  [["Frame awal",s.first],["Frame akhir",s.last],["Video",s.video]].forEach(([l,t])=>{d.appendChild(el("div","lbl",l));d.appendChild(el("pre","p",t))});
   card.appendChild(d);list.appendChild(card)});
  document.getElementById("count").textContent=n+" adegan"}
 document.getElementById("q").addEventListener("input",render);render();
@@ -1062,12 +1129,57 @@ function chips(el, opts, key, multi){
         const i = state[key].indexOf(o.id);
         if(i>-1){ if(state[key].length>1) state[key].splice(i,1); } else state[key].push(o.id);
       } else state[key]=o.id;
-      if(REPICK_KEYS.includes(key)) pickBatch();
+      if(key==="subjek") state.pinned=(state.pinned||[]).filter(id=>state.subjek==="campur" || (state.subjek==="orang" && ALL[id]?.kind==="orang") || (state.subjek==="objek" && ALL[id]?.kind==="objek"));
+      if(key==="jumlah") state.pinned=(state.pinned||[]).slice(0,Number(state.jumlah));
+      if(REPICK_KEYS.includes(key)){ state.previewed = []; pickBatch(); }
       render();
     });
     el.appendChild(b);
   });
 }
+function renderActionSearch(){
+  const q = $("#move-search").value.trim().toLowerCase();
+  const results = $("#action-search-results");
+  results.innerHTML = "";
+  if(q.length < 2){
+    results.appendChild(el("p","hint","Ketik dua huruf atau lebih untuk mencari di seluruh kamus gerakan."));
+  } else {
+    const compatible = p => state.subjek==="campur" || (state.subjek==="orang" && p.kind==="orang") || (state.subjek==="objek" && p.kind==="objek");
+    const found = Object.values(ALL).filter(p=>compatible(p) && (p.n+" "+p.t+" "+p.a+" "+p.b+" "+p.k.join(" ")).toLowerCase().includes(q)).slice(0,12);
+    if(!found.length) results.appendChild(el("p","hint","Tidak ada gerakan yang cocok. Coba kata lain atau ubah jenis subjek."));
+    found.forEach(p=>{
+      const row=el("div","action-result"), desc=el("div","action-desc");
+      desc.appendChild(el("strong",null,p.n));
+      const category=(OPT.tema.find(o=>o.id===p.t)||{l:"Objek tanpa orang"}).l;
+      desc.appendChild(el("small",null,category+" · "+p.a+" → "+p.b));
+      const added=(state.pinned||[]).includes(p.id);
+      const b=el("button","btn small",added?"Sudah dipilih":"Masukkan ke batch");
+      b.type="button"; b.disabled=added || (state.pinned||[]).length>=Number(state.jumlah);
+      b.addEventListener("click",()=>{
+        if(!state.pinned) state.pinned=[];
+        if(state.pinned.length>=Number(state.jumlah)) return;
+        if(!state.pinned.includes(p.id)) state.pinned.push(p.id);
+        pickBatch(true); render();
+      });
+      row.append(desc,b); results.appendChild(row);
+    });
+    if(found.length===12) results.appendChild(el("p","hint","Menampilkan 12 hasil pertama. Perjelas kata pencarian untuk hasil yang lebih spesifik."));
+  }
+  const wrap=$("#pinned-actions");wrap.innerHTML="";
+  const pins=(state.pinned||[]).map(id=>ALL[id]).filter(Boolean);
+  const box=el("div","pinned-wrap"),head=el("div","pinned-head");
+  head.appendChild(el("span",null,"Gerakan pilihanmu ("+pins.length+")"));
+  head.appendChild(el("span","hint",pins.length+" / "+state.jumlah));box.appendChild(head);
+  if(!pins.length) box.appendChild(el("p","hint","Belum ada gerakan pilihan. Batch akan diisi secara acak dari tema yang dipilih."));
+  else{
+    const list=el("div","pinned-list");
+    pins.forEach(p=>{const chip=el("span","pin-chip");chip.appendChild(el("span",null,p.n));const rm=el("button",null,"×");rm.type="button";rm.setAttribute("aria-label","Hapus "+p.n);rm.onclick=()=>{state.pinned=state.pinned.filter(id=>id!==p.id);pickBatch(true);render();};chip.appendChild(rm);list.appendChild(chip);});
+    box.appendChild(list);
+  }
+  wrap.appendChild(box);
+  $("#clear-pinned").disabled=!pins.length;
+}
+
 function renderToggles(){
   const box = $("#toggles"); box.innerHTML="";
   TOGGLES.forEach(t=>{
@@ -1088,7 +1200,7 @@ function renderPicks(rows){
     const b = document.createElement("b"); b.textContent = i+1;
     const s = document.createElement("span"); s.textContent = x.p.n;
     const k = document.createElement("span"); k.className="k";
-    k.textContent = x.p.kind==="objek" ? "objek" : FRAMES_ID[x.fk];
+    k.textContent = (x.p.kind==="objek" ? "objek" : FRAMES_ID[x.fk]) + ((state.pinned||[]).includes(x.p.id) ? " • pilihanmu" : "");
     li.append(b, s, k); ul.appendChild(li);
   });
   if(state.extra>0){
@@ -1100,11 +1212,13 @@ function renderPicks(rows){
   const used = new Set(state.used);
   const all = people.concat(objs);
   const sisa = all.filter(p=>!used.has(p.id)).length;
-  $("#pick-stat").textContent = `Kamus tema terpilih: ${all.length} gerakan, ${sisa} belum pernah dipakai.`;
+  $("#pick-stat").textContent = `Kamus keseluruhan: ${Object.keys(ALL).length} gerakan unik. Tema terpilih: ${all.length} gerakan, ${sisa} belum pernah dipakai.`;
   const note = $("#pick-note"); note.innerHTML="";
   const msgs = [];
   if(state.extra>0) msgs.push({w:true, t:`Tema yang dipilih hanya punya ${state.jumlah-state.extra} gerakan. Mode prompt langsung hanya membuat ${state.jumlah-state.extra} adegan; mode prompt induk meminta AI mengarang sisanya. Tambah tema supaya penuh.`});
-  if(state.newRound) msgs.push({w:false, t:"Sebagian gerakan di tema ini sudah habis terpakai, jadi putaran baru dimulai. Gerakan lama bisa muncul lagi dengan orang, framing, dan warna yang diacak ulang."});
+  if(state.newRound) msgs.push({w:false, t:"Sebagian gerakan di tema ini sudah habis terpakai, jadi putaran riwayat pemakaian dimulai lagi. Pengulangan hanya terjadi bila stok unik tidak cukup."});
+  if(state.previewRound) msgs.push({w:false, t:"Semua gerakan yang belum pernah tampil di pratinjau sudah habis. Batch ini mulai memakai beberapa gerakan lama lagi, tanpa mengulang gerakan di batch yang sama."});
+  if(state.loop && !state.picks.some(id=>ALL[id] && ALL[id].f.includes("l"))) msgs.push({w:false, t:"Mode loop aktif, tetapi batch ini belum memiliki gerakan yang ditandai cocok untuk loop. Tidak ada adegan yang dipaksa menjadi loop."});
   if(state.picks.length && state.picks.every(id=>used.has(id))) msgs.push({w:false, t:"Gerakan di daftar ini sudah pernah dipakai. Klik Buat prompt untuk otomatis mengambil batch baru."});
   msgs.forEach(m=>{ const p=document.createElement("p"); p.className = "note"+(m.w?" warn":""); p.textContent=m.t; note.appendChild(p); });
 }
@@ -1116,7 +1230,7 @@ function copyBtn(label, text, key, extra, also){
     await copyText(text, b);
     state.copied = state.copied || {};
     [key].concat(also||[]).forEach(k=>state.copied[k]=1); save();
-    setTimeout(()=>document.querySelectorAll("#cards [data-k], #neg-box [data-k]").forEach(paintBtn), 800);
+    setTimeout(()=>document.querySelectorAll("#cards [data-k]").forEach(paintBtn), 800);
   });
   return b;
 }
@@ -1124,9 +1238,6 @@ function renderResult(){
   const res = state.result, box = $("#cards");
   box.innerHTML = "";
   $("#dl").disabled = !res;
-  $("#neg-box").hidden = !res;
-  $("#neg-text").textContent = NEGATIVE;
-  $("#neg-btn").innerHTML = ""; $("#neg-btn").appendChild(copyBtn("Salin", NEGATIVE, "neg"));
   if(!res){ $("#res-info").textContent = ""; box.appendChild(el("p","hint","Belum ada hasil. Atur pilihan di kiri, lalu klik Buat prompt.")); return; }
   $("#res-info").textContent = `${res.scenes.length} adegan • ${res.created}`;
   res.scenes.forEach(s=>{
@@ -1140,11 +1251,11 @@ function renderResult(){
     const bs = el("div","btns");
     const K = s.no+"-";
     bs.append(copyBtn("Frame awal", s.first, K+"awal"), copyBtn("Frame akhir", s.last, K+"akhir"), copyBtn("Video", s.video, K+"video"));
-    if(s.title) bs.appendChild(copyBtn("Judul & keyword", s.title+"\n\n"+s.kw, K+"meta"));
-    bs.appendChild(copyBtn("Salin semua", allText(s), K+"all", "all", [K+"awal",K+"akhir",K+"video",K+"meta"]));
+  
+    bs.appendChild(copyBtn("Salin semua", allText(s), K+"all", "all", [K+"awal",K+"akhir",K+"video"]));
     card.appendChild(bs);
     const d = el("details"); d.appendChild(el("summary",null,"Lihat prompt"));
-    [["Frame awal",s.first],["Frame akhir",s.last],["Video",s.video]].concat(s.title?[["Judul",s.title],["Keyword",s.kw]]:[]).forEach(([l,t])=>{ d.appendChild(el("div","p-label",l)); d.appendChild(el("pre","ptxt",t)); });
+    [["Frame awal",s.first],["Frame akhir",s.last],["Video",s.video]].forEach(([l,t])=>{ d.appendChild(el("div","p-label",l)); d.appendChild(el("pre","ptxt",t)); });
     card.appendChild(d);
     box.appendChild(card);
   });
@@ -1169,11 +1280,12 @@ function render(){
   chips($("#g-orang"), OPT.orang, "orang");
   chips($("#g-guna"), OPT.guna, "guna");
   renderToggles();
+  renderActionSearch();
   renderMode();
   $("#wrap-orang").hidden = state.subjek==="objek";
   $("#hint-jumlah").textContent = state.mode==="induk" && Number(state.jumlah) >= 50
     ? "Untuk mode prompt induk, jumlah besar sering terpotong oleh AI. 25 biasanya selesai dalam satu jawaban."
-    : "Mode prompt langsung bisa membuat berapa pun sekaligus tanpa terpotong.";
+    : "Kamus diperluas dengan ratusan gerakan. Pilih tema yang sesuai untuk mengurangi adegan yang tidak relevan.";
   const rows = assign();
   renderPicks(rows);
   const master = buildMaster(rows);
@@ -1186,17 +1298,18 @@ $("#tab-langsung").addEventListener("click", ()=>{ state.mode="langsung"; render
 $("#tab-induk").addEventListener("click", ()=>{ state.mode="induk"; render(); });
 $("#niche").addEventListener("input", e=>{ state.niche = e.target.value; render(); });
 $("#hindari").addEventListener("input", e=>{ state.hindari = e.target.value; render(); });
-$("#repick").addEventListener("click", ()=>{ pickBatch(); render(); });
+$("#repick").addEventListener("click", ()=>{ pickBatch(true); render(); });
+$("#move-search").addEventListener("input", renderActionSearch);
+$("#clear-pinned").addEventListener("click", ()=>{ state.pinned=[]; pickBatch(true); render(); });
 $("#clear-used").addEventListener("click", ()=>{
   if(!confirm("Hapus semua riwayat gerakan yang sudah terpakai?")) return;
-  state.used = []; pickBatch(); render();
+  state.used = []; state.previewed = []; pickBatch(); render();
 });
 $("#gen").addEventListener("click", ()=>{
   const used = new Set(state.used);
-  if(!state.picks.length || state.picks.every(id=>used.has(id))) pickBatch();
+  if(!state.picks.length || state.picks.every(id=>used.has(id))) pickBatch(true);
   const rows = assign();
   const scenes = buildScenes(rows);
-  if(!state.metadata) scenes.forEach(s=>{ s.title=""; s.kw=""; });
   const d = new Date(), pad = n=>String(n).padStart(2,"0");
   const temaL = state.tema.map(id=>(OPT.tema.find(o=>o.id===id)||{}).l).join(", ");
   state.result = {
@@ -1208,6 +1321,7 @@ $("#gen").addEventListener("click", ()=>{
   };
   state.copied = {};
   markUsed();
+  state.pinned = [];
   render(); renderResult();
   const gn = $("#gen-note"); gn.innerHTML="";
   const p = el("p","note", `${scenes.length} adegan siap. Klik Unduh HTML untuk menyimpan halamannya. Klik Buat prompt lagi untuk batch berikutnya dengan gerakan baru.`);
@@ -1218,11 +1332,14 @@ $("#copy").addEventListener("click", async (e)=>{
   const btn = e.currentTarget;
   await copyText($("#master").textContent, null);
   markUsed();
+  state.pinned = [];
   render();
   btn.textContent="Tersalin"; setTimeout(()=>btn.textContent="Salin prompt induk",1500);
 });
 $("#reset").addEventListener("click", ()=>{
   Object.assign(state, DEFAULTS, {tema:DEFAULTS.tema.slice()});
+  state.pinned = [];
+  state.previewed = [];
   TOGGLES.forEach(t=>state[t.id]=t.def);
   $("#niche").value = "";
   pickBatch(); render();
